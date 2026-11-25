@@ -263,7 +263,7 @@ export default function ModuleRbacManager({
                   <ModIcon className="h-3.5 w-3.5 shrink-0" />
                   <span>{mod.name}</span>
                   {mod.hasStandardRole && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-success"></span>
                   )}
                 </AppButton>
               );
@@ -318,10 +318,10 @@ export default function ModuleRbacManager({
                         </div>
                         <div>
                           <h3 className="text-sm font-semibold text-heading">{mod.name}</h3>
-                          <span className="text-[10px] font-mono text-muted">{mod.code}</span>
+                          <span className="text-[11px] font-mono text-muted">{mod.code}</span>
                         </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-success-soft text-success-text border border-success-border">
                         STANDARD
                       </span>
                     </div>
@@ -332,15 +332,15 @@ export default function ModuleRbacManager({
 
                     <div className="grid grid-cols-3 gap-2 py-2.5 px-3 bg-elevated/50 rounded-lg text-center mb-4 border border-border/50">
                       <div>
-                        <span className="block text-[10px] text-subtle">Roles</span>
+                        <span className="block text-[11px] text-subtle">Roles</span>
                         <span className="text-xs font-bold text-heading">{mod.totalRoles}</span>
                       </div>
                       <div>
-                        <span className="block text-[10px] text-subtle">Perms</span>
+                        <span className="block text-[11px] text-subtle">Perms</span>
                         <span className="text-xs font-bold text-heading">{mod.totalPermissions}</span>
                       </div>
                       <div>
-                        <span className="block text-[10px] text-subtle">Users</span>
+                        <span className="block text-[11px] text-subtle">Users</span>
                         <span className="text-xs font-bold text-heading">{mod.assignedUsersCount}</span>
                       </div>
                     </div>
@@ -388,7 +388,7 @@ export default function ModuleRbacManager({
                   <h2 className="text-sm font-semibold text-heading">
                     {title || `${manifest?.name || activeModuleCode} · RBAC Access Policies`}
                   </h2>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-sunken text-muted">
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-mono bg-sunken text-muted">
                     {activeModuleCode}
                   </span>
                 </div>
@@ -414,8 +414,8 @@ export default function ModuleRbacManager({
             <div
               className={`p-3.5 rounded-lg border text-xs flex items-center gap-2 ${
                 statusMessage.type === "success"
-                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                  : "bg-rose-500/10 border-rose-500/20 text-rose-400"
+                  ? "bg-success-soft border-success-border text-success-text"
+                  : "bg-danger-soft border-danger-border text-danger-text"
               }`}
             >
               {statusMessage.type === "success" ? (
@@ -452,11 +452,11 @@ export default function ModuleRbacManager({
                   <div className="flex items-center justify-between gap-2 mb-1.5">
                     <span className="font-semibold text-sm text-heading">{r.name}</span>
                     {r.role_code === "STANDARD" ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-success-soft text-success-text border border-success-border">
                         STANDARD
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sunken text-muted">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-sunken text-muted">
                         v{r.policy_version}
                       </span>
                     )}
@@ -483,11 +483,11 @@ export default function ModuleRbacManager({
                       {activeRole.name} ({activeRole.role_code})
                     </h3>
                     {activeRole.is_customized ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-warning-soft text-warning-text border border-warning-border">
                         Customized Policy
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-info-soft text-info-text border border-info-border">
                         Manifest Default
                       </span>
                     )}
@@ -560,7 +560,7 @@ export default function ModuleRbacManager({
                                     {perm.name}
                                   </span>
                                   {perm.isSensitive && (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[11px] font-bold bg-danger-soft text-danger-text border border-danger-border">
                                       <Lock className="h-2.5 w-2.5" />
                                       Sensitive
                                     </span>
@@ -569,7 +569,7 @@ export default function ModuleRbacManager({
                                 <p className="text-[11px] text-subtle mt-0.5 leading-relaxed">
                                   {perm.description}
                                 </p>
-                                <span className="text-[10px] text-muted/60 font-mono mt-1 block">
+                                <span className="text-[11px] text-muted/60 font-mono mt-1 block">
                                   {perm.code}
                                 </span>
                               </div>
@@ -613,7 +613,7 @@ export default function ModuleRbacManager({
                           {new Date(log.executed_at).toLocaleString()}
                         </AppTableCell>
                         <AppTableCell>
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-success-text">
                             <ShieldCheck className="h-3 w-3" />
                             {log.sync_status}
                           </span>
@@ -622,7 +622,7 @@ export default function ModuleRbacManager({
                         <AppTableCell className="text-xs">
                           {(log.modified_roles || []).join(", ") || "—"}
                         </AppTableCell>
-                        <AppTableCell className="text-muted font-mono text-[10px]">
+                        <AppTableCell className="text-muted font-mono text-[11px]">
                           {log.executed_by}
                         </AppTableCell>
                       </AppTableRow>

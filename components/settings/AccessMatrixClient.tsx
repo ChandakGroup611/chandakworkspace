@@ -219,7 +219,7 @@ export default function AccessMatrixClient({ moduleRoles, users }: AccessMatrixC
                             {role.role_code}
                           </code>
                           {isStandard && (
-                            <AppBadge variant="accent" className="text-[10px] px-1 py-0">
+                            <AppBadge variant="accent" className="text-[11px] px-1 py-0">
                               STANDARD
                             </AppBadge>
                           )}
@@ -238,7 +238,7 @@ export default function AccessMatrixClient({ moduleRoles, users }: AccessMatrixC
                           {role.permissions.map((p) => (
                             <span
                               key={p}
-                              className="inline-flex items-center text-[10px] bg-surface border border-border px-1.5 py-0.5 rounded font-mono text-foreground"
+                              className="inline-flex items-center text-[11px] bg-surface border border-border px-1.5 py-0.5 rounded font-mono text-foreground"
                             >
                               {p}
                             </span>
@@ -288,7 +288,7 @@ export default function AccessMatrixClient({ moduleRoles, users }: AccessMatrixC
                       <div className="text-xs text-muted-foreground truncate">{u.email}</div>
                     </div>
                     {isSuper ? (
-                      <AppBadge variant="danger" className="text-[10px] shrink-0">
+                      <AppBadge variant="danger" className="text-[11px] shrink-0">
                         SUPER ADMIN
                       </AppBadge>
                     ) : (
@@ -320,10 +320,10 @@ export default function AccessMatrixClient({ moduleRoles, users }: AccessMatrixC
                 </div>
 
                 {isSuperAdminUser ? (
-                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 text-sm text-foreground flex items-start gap-3">
-                    <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div className="bg-success-soft border border-success-border rounded-lg p-4 text-sm text-foreground flex items-start gap-3">
+                    <ShieldCheck className="h-5 w-5 text-success-text shrink-0 mt-0.5" />
                     <div>
-                      <div className="font-semibold text-emerald-600 dark:text-emerald-400">
+                      <div className="font-semibold text-success-text">
                         Root Super Administrator Global Authority
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
@@ -385,7 +385,7 @@ export default function AccessMatrixClient({ moduleRoles, users }: AccessMatrixC
                                     {roleDef.permissions.map((p) => (
                                       <span
                                         key={p}
-                                        className="text-[10px] bg-background border border-border px-1.5 py-0.5 rounded font-mono text-muted-foreground"
+                                        className="text-[11px] bg-background border border-border px-1.5 py-0.5 rounded font-mono text-muted-foreground"
                                       >
                                         {p}
                                       </span>

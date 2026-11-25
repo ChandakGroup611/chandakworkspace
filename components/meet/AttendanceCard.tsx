@@ -191,9 +191,9 @@ export default function AttendanceCard({
             <div className="my-6 flex flex-col items-center">
               <div className="p-4 bg-white rounded-xl shadow-lg border border-border">
                 {/* SVG QR Visual */}
-                <div className="w-44 h-44 flex flex-col items-center justify-center bg-slate-100 text-slate-900 rounded p-2 text-center text-xs break-all font-mono select-all">
-                  <QrCode className="w-28 h-28 text-slate-900 mb-2" />
-                  <span className="text-[12px] text-slate-600 line-clamp-2">{qrString.slice(0, 36)}...</span>
+                <div className="w-44 h-44 flex flex-col items-center justify-center bg-sunken text-foreground rounded p-2 text-center text-xs break-all font-mono select-all">
+                  <QrCode className="w-28 h-28 text-foreground mb-2" />
+                  <span className="text-[12px] text-subtle line-clamp-2">{qrString.slice(0, 36)}...</span>
                 </div>
               </div>
 

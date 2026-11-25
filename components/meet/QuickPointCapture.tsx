@@ -111,7 +111,7 @@ export function QuickPointCapture({
       />
 
       <div className="flex items-center gap-1.5 text-[11px] text-muted">
-        <span className="hidden sm:inline-flex items-center gap-1 rounded bg-sunken px-1.5 py-0.5 font-mono text-[10.5px]">
+        <span className="hidden sm:inline-flex items-center gap-1 rounded bg-sunken px-1.5 py-0.5 font-mono text-[11px]">
           Enter <CornerDownLeft className="h-2.5 w-2.5" />
         </span>
         <button

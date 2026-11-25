@@ -26805,7 +26805,7 @@ export default function FleetDeskHost({
                         {/* Quick KPI Strip */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                           <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground flex items-center gap-1">
+                            <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
                               <Gauge className="h-3 w-3 text-theme-btn-primary" />
                               <span>Current Odometer</span>
                             </span>
@@ -26815,7 +26815,7 @@ export default function FleetDeskHost({
                           </div>
 
                           <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground flex items-center gap-1">
+                            <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
                               <User className="h-3 w-3 text-theme-btn-primary" />
                               <span>Assigned Driver</span>
                             </span>
@@ -26825,7 +26825,7 @@ export default function FleetDeskHost({
                           </div>
 
                           <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground flex items-center gap-1">
+                            <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
                               <ShieldCheck className="h-3 w-3 text-theme-btn-primary" />
                               <span>Comprehensive Ins.</span>
                             </span>
@@ -26837,7 +26837,7 @@ export default function FleetDeskHost({
                           </div>
 
                           <div className="p-2.5 rounded-lg bg-surface border border-border/60 space-y-0.5">
-                            <span className="text-[10.5px] font-bold text-muted-foreground flex items-center gap-1">
+                            <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
                               <Wind className="h-3 w-3 text-theme-btn-primary" />
                               <span>PUC Certificate</span>
                             </span>
@@ -26929,49 +26929,49 @@ export default function FleetDeskHost({
 
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 text-xs">
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Registered Owner</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Registered Owner</span>
                               <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.registered_owner || "—"}>
                                 {selectedVehicleForSale.registered_owner || "—"}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">RTO Transport Office</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">RTO Transport Office</span>
                               <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.rto_office || "—"}>
                                 {selectedVehicleForSale.rto_office || "—"}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">RTO Registered Mobile (RMN)</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">RTO Registered Mobile (RMN)</span>
                               <div className="font-mono font-semibold text-foreground truncate">
                                 {selectedVehicleForSale.rto_rmn || "—"}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">VIN / Chassis Number</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">VIN / Chassis Number</span>
                               <div className="font-mono font-semibold text-foreground truncate" title={selectedVehicleForSale.vin_chassis_number || "—"}>
                                 {selectedVehicleForSale.vin_chassis_number || "—"}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Engine Number</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Engine Number</span>
                               <div className="font-mono font-semibold text-foreground truncate" title={selectedVehicleForSale.engine_number || "—"}>
                                 {selectedVehicleForSale.engine_number || "—"}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Registration Date</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Registration Date</span>
                               <div className="font-mono font-semibold text-foreground">
                                 {selectedVehicleForSale.registration_date ? String(selectedVehicleForSale.registration_date).split("T")[0] : "—"}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Purchase / Invoice Date</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Purchase / Invoice Date</span>
                               <div className="font-mono font-semibold text-foreground">
                                 {selectedVehicleForSale.purchase_date
                                   ? String(selectedVehicleForSale.purchase_date).split("T")[0]
@@ -26982,28 +26982,28 @@ export default function FleetDeskHost({
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Purchase Vendor / Dealer</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Purchase Vendor / Dealer</span>
                               <div className="font-semibold text-foreground truncate" title={selectedVehicleForSale.purchase_vendor || "—"}>
                                 {selectedVehicleForSale.purchase_vendor || "—"}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Transmission &amp; Fuel</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Transmission &amp; Fuel</span>
                               <div className="font-semibold text-foreground">
                                 {selectedVehicleForSale.transmission || "Manual"} • {selectedVehicleForSale.fuel_type || "Petrol"}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Seating Capacity</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Seating Capacity</span>
                               <div className="font-semibold text-foreground">
                                 {selectedVehicleForSale.seating_capacity ? `${selectedVehicleForSale.seating_capacity} Persons` : "—"}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Paint Finish</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Paint Finish</span>
                               <div className="font-semibold text-foreground flex items-center gap-1.5 truncate">
                                 {selectedVehicleForSale.paint_color && (
                                   <span
@@ -27016,7 +27016,7 @@ export default function FleetDeskHost({
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">HSRP Security Plate</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">HSRP Security Plate</span>
                               <div className="font-semibold text-foreground">
                                 {selectedVehicleForSale.has_hsrp_plate ? "Affixed & Valid" : "Standard"}
                               </div>
@@ -27040,14 +27040,14 @@ export default function FleetDeskHost({
 
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 text-xs">
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Basic / Ex-Factory Price</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Basic / Ex-Factory Price</span>
                               <div className="font-mono font-semibold text-foreground">
                                 ₹{Number(selectedVehicleForSale.basic_price || selectedVehicleForSale.purchase_price || 0).toLocaleString("en-IN")}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">
+                              <span className="text-[11px] font-bold text-muted-foreground">
                                 GST {selectedVehicleForSale.gst_percentage ? `(${selectedVehicleForSale.gst_percentage}%)` : ""}
                               </span>
                               <div className="font-mono font-semibold text-foreground">
@@ -27056,7 +27056,7 @@ export default function FleetDeskHost({
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">
+                              <span className="text-[11px] font-bold text-muted-foreground">
                                 Cess {selectedVehicleForSale.cess_percentage ? `(${selectedVehicleForSale.cess_percentage}%)` : ""}
                               </span>
                               <div className="font-mono font-semibold text-foreground">
@@ -27065,63 +27065,63 @@ export default function FleetDeskHost({
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Ex-Showroom Price</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Ex-Showroom Price</span>
                               <div className="font-mono font-semibold text-foreground">
                                 ₹{Number(selectedVehicleForSale.ex_showroom_price || 0).toLocaleString("en-IN")}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">RTO Road Tax</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">RTO Road Tax</span>
                               <div className="font-mono font-semibold text-foreground">
                                 ₹{Number(selectedVehicleForSale.rto_road_tax || 0).toLocaleString("en-IN")}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">TCS (Tax Collected at Source)</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">TCS (Tax Collected at Source)</span>
                               <div className="font-mono font-semibold text-foreground">
                                 ₹{Number(selectedVehicleForSale.tcs_amount || 0).toLocaleString("en-IN")}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Initial Insurance Premium</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Initial Insurance Premium</span>
                               <div className="font-mono font-semibold text-foreground">
                                 ₹{Number(selectedVehicleForSale.insurance_cost || 0).toLocaleString("en-IN")}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">HSRP Smart Card Fee</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">HSRP Smart Card Fee</span>
                               <div className="font-mono font-semibold text-foreground">
                                 ₹{Number(selectedVehicleForSale.hsrp_smart_card_fee || 0).toLocaleString("en-IN")}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Fastag Charges</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Fastag Charges</span>
                               <div className="font-mono font-semibold text-foreground">
                                 ₹{Number(selectedVehicleForSale.fastag_charges || 0).toLocaleString("en-IN")}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Fitted Accessories</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Fitted Accessories</span>
                               <div className="font-mono font-semibold text-foreground">
                                 ₹{Number(selectedVehicleForSale.accessories_cost || 0).toLocaleString("en-IN")}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-sunken/40 border border-border/60 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-muted-foreground">Extended Warranty</span>
+                              <span className="text-[11px] font-bold text-muted-foreground">Extended Warranty</span>
                               <div className="font-mono font-semibold text-foreground">
                                 ₹{Number(selectedVehicleForSale.extended_warranty_cost || 0).toLocaleString("en-IN")}
                               </div>
                             </div>
 
                             <div className="p-2.5 rounded-lg bg-theme-btn-primary/10 border border-theme-btn-primary/30 space-y-0.5">
-                              <span className="text-[10.5px] font-bold text-theme-btn-primary">Total Landed On-Road CapEx</span>
+                              <span className="text-[11px] font-bold text-theme-btn-primary">Total Landed On-Road CapEx</span>
                               <div className="font-mono font-bold text-theme-btn-primary text-sm">
                                 ₹{origCost.toLocaleString("en-IN")}
                               </div>
@@ -27316,7 +27316,7 @@ export default function FleetDeskHost({
                               <div className="font-mono font-bold text-foreground text-sm">
                                 ₹{origCost.toLocaleString("en-IN")}
                               </div>
-                              <span className="text-[10.5px] text-muted-foreground block">Original CapEx</span>
+                              <span className="text-[11px] text-muted-foreground block">Original CapEx</span>
                             </div>
 
                             <div className="p-3 rounded-lg border border-border bg-sunken/40 space-y-1">
@@ -27327,7 +27327,7 @@ export default function FleetDeskHost({
                               <div className="font-mono font-bold text-foreground text-sm">
                                 ₹{totalServiceSpend.toLocaleString("en-IN")}
                               </div>
-                              <span className="text-[10.5px] text-muted-foreground block">
+                              <span className="text-[11px] text-muted-foreground block">
                                 {vServices.length} Job card services logged
                               </span>
                             </div>
@@ -27340,7 +27340,7 @@ export default function FleetDeskHost({
                               <div className="font-mono font-bold text-foreground text-sm">
                                 ₹{totalPartsValue.toLocaleString("en-IN")}
                               </div>
-                              <span className="text-[10.5px] text-muted-foreground block">
+                              <span className="text-[11px] text-muted-foreground block">
                                 {vParts.length} Parts &amp; accessories mounted
                               </span>
                             </div>
@@ -27353,7 +27353,7 @@ export default function FleetDeskHost({
                               <div className="font-mono font-extrabold text-foreground text-sm">
                                 ₹{totalInvestedCapital.toLocaleString("en-IN")}
                               </div>
-                              <span className="text-[10.5px] text-theme-btn-primary font-medium block">
+                              <span className="text-[11px] text-theme-btn-primary font-medium block">
                                 Purchase + Services + Parts
                               </span>
                             </div>
@@ -28750,14 +28750,14 @@ export default function FleetDeskHost({
                   <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
                     <span className="text-xs font-bold text-muted-foreground">HSRP &amp; RSA Fitment</span>
                     <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                      <span className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${
                         viewingVehicle.has_hsrp_plate !== false
                           ? "bg-success-soft text-success-text border-success/30"
                           : "bg-sunken text-muted border-border"
                       }`}>
                         HSRP: {viewingVehicle.has_hsrp_plate !== false ? "Verified" : "Pending"}
                       </span>
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                      <span className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${
                         viewingVehicle.has_roadside_assistance !== false
                           ? "bg-info-soft text-info-text border-info/30"
                           : "bg-sunken text-muted border-border"
@@ -28932,7 +28932,7 @@ export default function FleetDeskHost({
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-muted-foreground">Pollution Under Control (PUC)</span>
                       {isElectricFuel(viewingVehicle.fuel_type) ? (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-success-soft text-success-text border border-success/30">Exempt (EV)</span>
+                        <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-success-soft text-success-text border border-success/30">Exempt (EV)</span>
                       ) : viewingVehicle.puc_expiry_date ? (
                         <div>{renderExpiryBadge(viewingVehicle.puc_expire_days ?? calculateDaysRemaining(viewingVehicle.puc_expiry_date))}</div>
                       ) : null}
@@ -29001,7 +29001,7 @@ export default function FleetDeskHost({
                               <h5 className="text-xs font-bold text-foreground truncate" title={doc.title || doc.file_name}>
                                 {doc.title || doc.file_name}
                               </h5>
-                              <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-sunken bg-surface border border-border text-muted-foreground">
+                              <span className="text-[11px] font-semibold px-1.5 py-0.2 rounded bg-sunken bg-surface border border-border text-muted-foreground">
                                 {doc.doc_type || "DOCUMENT"}
                               </span>
                             </div>

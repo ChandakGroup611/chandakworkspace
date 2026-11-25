@@ -705,7 +705,7 @@ export default function SessionWorkspaceClient({
                         <RotateCcw className="h-2.5 w-2.5" /> {pt.carry_forward_count}x carried
                       </span>
                       {pt.carry_forward_count >= 3 && (
-                        <span className="inline-flex items-center gap-1 rounded bg-danger-soft px-1.5 py-0.5 text-[10.5px] font-medium text-danger-text">
+                        <span className="inline-flex items-center gap-1 rounded bg-danger-soft px-1.5 py-0.5 text-[11px] font-medium text-danger-text">
                           <AlertTriangle className="h-3 w-3" /> Repeatedly Carried
                         </span>
                       )}

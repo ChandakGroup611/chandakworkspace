@@ -197,7 +197,7 @@ export default function ProviderDashboard() {
                     <label className="text-sm font-semibold text-muted-foreground flex items-center justify-between">
                       <span>Password / app password</span>
                       {prov.config.hasPassword && (
-                        <span className="text-[11px] font-normal text-emerald-600 dark:text-emerald-400">Stored securely</span>
+                        <span className="text-[11px] font-normal text-success-text">Stored securely</span>
                       )}
                     </label>
                     <div className="relative">
@@ -250,7 +250,7 @@ export default function ProviderDashboard() {
                   <label className="text-sm font-semibold text-muted-foreground flex items-center justify-between">
                     <span>API key</span>
                     {prov.config.hasApiKey && (
-                      <span className="text-[11px] font-normal text-emerald-600 dark:text-emerald-400">Stored securely</span>
+                      <span className="text-[11px] font-normal text-success-text">Stored securely</span>
                     )}
                   </label>
                   <div className="relative">

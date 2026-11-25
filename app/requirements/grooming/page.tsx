@@ -216,7 +216,7 @@ function ReqCard({ req }: { req: any }) {
       <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
         <div className="flex min-w-0 items-center gap-2 text-[12px] text-muted">
           {creator && (
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[10.5px] font-semibold text-accent-soft-text" title={creator}>
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-semibold text-accent-soft-text" title={creator}>
               {creator.split(/\s+/).slice(0, 2).map((n: string) => n[0]?.toUpperCase()).join("")}
             </span>
           )}

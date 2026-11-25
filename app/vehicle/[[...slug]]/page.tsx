@@ -18,7 +18,7 @@ import FleetDeskHost from "@/components/vehicle/FleetDeskHost";
 
 export const metadata = {
   title: "Fleet · Chandak Workspace",
-  description: "Enterprise fleet management, vehicle allocation, drivers, trip sheets & maintenance."
+  description: "Vehicles, drivers, trips, renewals and maintenance."
 };
 
 export const dynamic = "force-dynamic";

@@ -226,7 +226,7 @@ export function ChandakMessengerDrawer({
 
           <div className="flex items-center gap-2">
             {notifPerm === "granted" ? (
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[11px] font-medium" title="System desktop notifications active">
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded bg-success-soft text-success-text text-[11px] font-medium" title="System desktop notifications active">
                 <BellRing className="h-3 w-3" />
                 <span>PC Alerts Active</span>
               </span>
@@ -234,7 +234,7 @@ export function ChandakMessengerDrawer({
               <button
                 type="button"
                 onClick={requestNotif}
-                className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 text-[11px] font-medium transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-warning-soft text-warning-text hover:bg-warning-soft text-[11px] font-medium transition-colors cursor-pointer"
                 title="Click to enable computer system notifications"
               >
                 <Bell className="h-3 w-3" />

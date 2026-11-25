@@ -160,13 +160,13 @@ export function ContractDetailDrawer({
               </h2>
               <AppBadge 
                 variant={isSubscription ? "warning" : "accent"} 
-                className="text-[10px] font-semibold"
+                className="text-[11px] font-semibold"
               >
                 {record.contract_type || "AMC"}
               </AppBadge>
               <AppBadge 
                 variant={record.status === "Active" ? "success" : "neutral"} 
-                className="text-[10px]"
+                className="text-[11px]"
               >
                 {record.status || "Active"}
               </AppBadge>
@@ -320,7 +320,7 @@ export function ContractDetailDrawer({
                 <div>
                   <span className="text-muted block">Status:</span>
                   <span className="mt-0.5 inline-block">
-                    <AppBadge variant={record.status === "Active" ? "success" : "neutral"} className="text-[10.5px]">
+                    <AppBadge variant={record.status === "Active" ? "success" : "neutral"} className="text-[11px]">
                       {record.status || "Active"}
                     </AppBadge>
                   </span>
@@ -417,7 +417,7 @@ export function ContractDetailDrawer({
                     <Boxes className="h-4 w-4 text-theme-icon" /> 3. Itemwise Solution Breakdown ({lineItems.length} Line Items)
                   </h4>
                   {record.is_line_item_wise && (
-                    <AppBadge variant="accent" className="text-[10px]">Line-Item Wise Pricing Active</AppBadge>
+                    <AppBadge variant="accent" className="text-[11px]">Line-Item Wise Pricing Active</AppBadge>
                   )}
                 </div>
 
@@ -470,7 +470,7 @@ export function ContractDetailDrawer({
                     <div key={idx} className="p-3 rounded-lg border border-border bg-surface text-xs space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-foreground">{m.phaseName || `Phase #${idx + 1}`}</span>
-                        <AppBadge variant={m.status === "Amount Released" ? "success" : "neutral"} className="text-[10px]">
+                        <AppBadge variant={m.status === "Amount Released" ? "success" : "neutral"} className="text-[11px]">
                           {m.status || "Pending"}
                         </AppBadge>
                       </div>

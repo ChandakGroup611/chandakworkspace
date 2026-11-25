@@ -59,7 +59,7 @@ export default function MyWorkClient({ initialItems }: MyWorkClientProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading flex items-center gap-2">
             <CheckSquare className="h-6 w-6 text-theme-btn-primary" />
             My Work
           </h1>
@@ -105,7 +105,7 @@ export default function MyWorkClient({ initialItems }: MyWorkClientProps) {
               }`}
             >
               <span>{label}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              <span className={`px-1.5 py-0.2 rounded-full text-[11px] ${
                 selectedModule === mod ? "bg-background text-foreground" : "bg-muted text-muted-foreground"
               }`}>
                 {count}
@@ -169,7 +169,7 @@ export default function MyWorkClient({ initialItems }: MyWorkClientProps) {
                     </AppTableCell>
                     <AppTableCell>
                       {item.priority ? (
-                        <AppBadge variant={priorityVariant} className="text-[10px]">
+                        <AppBadge variant={priorityVariant} className="text-[11px]">
                           {item.priority}
                         </AppBadge>
                       ) : (
@@ -177,7 +177,7 @@ export default function MyWorkClient({ initialItems }: MyWorkClientProps) {
                       )}
                     </AppTableCell>
                     <AppTableCell>
-                      <AppBadge variant="neutral" className="text-[10px]">
+                      <AppBadge variant="neutral" className="text-[11px]">
                         {item.status}
                       </AppBadge>
                     </AppTableCell>

@@ -514,7 +514,7 @@ export default function TicketReportsClient() {
         >
           <div className="text-[11px] font-semibold text-subtle">Tickets</div>
           <div className="text-xl font-bold text-foreground mt-0.5">{kpis.total}</div>
-          <div className="text-[10px] text-muted mt-0.5">All authorized records</div>
+          <div className="text-[11px] text-muted mt-0.5">All authorized records</div>
         </button>
 
         <button
@@ -523,13 +523,13 @@ export default function TicketReportsClient() {
           className={cn(
             "p-3 rounded-lg border text-left transition-all",
             kpiCard === "OPEN"
-              ? "bg-sky-500/10 border-sky-500/40 shadow-xs ring-2 ring-sky-500/30"
+              ? "bg-info-soft border-info-border shadow-xs ring-2 ring-sky-500/30"
               : "bg-surface/60 border-border hover:bg-surface hover:border-border-active"
           )}
         >
-          <div className="text-[11px] font-semibold text-sky-600 dark:text-sky-400">Open</div>
-          <div className="text-xl font-bold text-sky-700 dark:text-sky-300 mt-0.5">{kpis.open}</div>
-          <div className="text-[10px] text-muted mt-0.5">Active tickets</div>
+          <div className="text-[11px] font-semibold text-info-text">Open</div>
+          <div className="text-xl font-bold text-info-text mt-0.5">{kpis.open}</div>
+          <div className="text-[11px] text-muted mt-0.5">Active tickets</div>
         </button>
 
         <button
@@ -538,13 +538,13 @@ export default function TicketReportsClient() {
           className={cn(
             "p-3 rounded-lg border text-left transition-all",
             kpiCard === "CLOSED"
-              ? "bg-emerald-500/10 border-emerald-500/40 shadow-xs ring-2 ring-emerald-500/30"
+              ? "bg-success-soft border-success-border shadow-xs ring-2 ring-emerald-500/30"
               : "bg-surface/60 border-border hover:bg-surface hover:border-border-active"
           )}
         >
-          <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Closed</div>
-          <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300 mt-0.5">{kpis.closed}</div>
-          <div className="text-[10px] text-muted mt-0.5">Completed & resolved</div>
+          <div className="text-[11px] font-semibold text-success-text">Closed</div>
+          <div className="text-xl font-bold text-success-text mt-0.5">{kpis.closed}</div>
+          <div className="text-[11px] text-muted mt-0.5">Completed & resolved</div>
         </button>
 
         <button
@@ -553,13 +553,13 @@ export default function TicketReportsClient() {
           className={cn(
             "p-3 rounded-lg border text-left transition-all",
             kpiCard === "OVERDUE"
-              ? "bg-rose-500/10 border-rose-500/40 shadow-xs ring-2 ring-rose-500/30"
+              ? "bg-danger-soft border-danger-border shadow-xs ring-2 ring-rose-500/30"
               : "bg-surface/60 border-border hover:bg-surface hover:border-border-active"
           )}
         >
-          <div className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">Overdue</div>
-          <div className="text-xl font-bold text-rose-700 dark:text-rose-300 mt-0.5">{kpis.overdue}</div>
-          <div className="text-[10px] text-muted mt-0.5">Passed due date</div>
+          <div className="text-[11px] font-semibold text-danger-text">Overdue</div>
+          <div className="text-xl font-bold text-danger-text mt-0.5">{kpis.overdue}</div>
+          <div className="text-[11px] text-muted mt-0.5">Passed due date</div>
         </button>
 
         <button
@@ -568,13 +568,13 @@ export default function TicketReportsClient() {
           className={cn(
             "p-3 rounded-lg border text-left transition-all",
             kpiCard === "UNASSIGNED"
-              ? "bg-amber-500/10 border-amber-500/40 shadow-xs ring-2 ring-amber-500/30"
+              ? "bg-warning-soft border-warning-border shadow-xs ring-2 ring-amber-500/30"
               : "bg-surface/60 border-border hover:bg-surface hover:border-border-active"
           )}
         >
-          <div className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">Unassigned</div>
-          <div className="text-xl font-bold text-amber-700 dark:text-amber-300 mt-0.5">{kpis.unassigned}</div>
-          <div className="text-[10px] text-muted mt-0.5">Needs owner</div>
+          <div className="text-[11px] font-semibold text-warning-text">Unassigned</div>
+          <div className="text-xl font-bold text-warning-text mt-0.5">{kpis.unassigned}</div>
+          <div className="text-[11px] text-muted mt-0.5">Needs owner</div>
         </button>
       </div>
 
@@ -734,7 +734,7 @@ export default function TicketReportsClient() {
                 aria-label="Created from"
                 className="h-6 px-1.5 text-xs rounded border border-border bg-surface text-foreground"
               />
-              <span className="text-[10px] text-muted">to</span>
+              <span className="text-[11px] text-muted">to</span>
               <input
                 type="date"
                 value={createdTo}
@@ -767,7 +767,7 @@ export default function TicketReportsClient() {
                 aria-label="Due from"
                 className="h-6 px-1.5 text-xs rounded border border-border bg-surface text-foreground"
               />
-              <span className="text-[10px] text-muted">to</span>
+              <span className="text-[11px] text-muted">to</span>
               <input
                 type="date"
                 value={dueTo}

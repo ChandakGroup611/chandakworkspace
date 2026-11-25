@@ -93,7 +93,7 @@ type FunctionalModuleCode = Exclude<DesignRbacPolicy["module"], "ALL">;
 const MODULE_LIST: Array<{ code: FunctionalModuleCode; label: string; icon: any }> = [
   { code: "BUILDING_MATRIX", label: "Building section matrix", icon: Building2 },
   { code: "DESIGN_MATRIX", label: "Tender matrix", icon: Layers },
-  { code: "DMS", label: "Enterprise DMS folder vault", icon: FolderTree },
+  { code: "DMS", label: "DMS folders", icon: FolderTree },
   { code: "LOOK_AHEAD", label: "Look-Ahead Forecast", icon: Sparkles },
   { code: "LIAISON", label: "Statutory Liaisoning", icon: ShieldCheck },
   { code: "STAGES", label: "Design stages roadmap", icon: Calendar },

@@ -245,7 +245,7 @@ function Plate({ number, ev }: { number: string; ev: boolean }) {
       className="inline-flex items-stretch overflow-hidden rounded-md font-mono text-[17px] font-bold tracking-[0.12em]"
       style={{ background: ev ? "#0f7a3a" : "#ffffff", color: ev ? "#ffffff" : "#111111", border: "2px solid #111111", boxShadow: "0 2px 6px rgba(0,0,0,0.18)" }}
     >
-      <span className="flex flex-col items-center justify-center px-1.5 text-[9px] tracking-normal" style={{ background: "#1f3d99", color: "#ffffff" }}>IND</span>
+      <span className="flex flex-col items-center justify-center px-1.5 text-[11px] tracking-normal" style={{ background: "#1f3d99", color: "#ffffff" }}>IND</span>
       <span className="px-3 py-1">{number}</span>
     </span>
   );

@@ -283,7 +283,7 @@ export default function RealtimeNotificationsDrawer() {
               <div className="p-1.5 rounded-lg bg-accent-soft text-primary shrink-0">
                 <Sparkles className="h-4 w-4" />
               </div>
-              <span className="text-sm font-semibold text-heading">Enterprise Stream</span>
+              <span className="text-sm font-semibold text-heading">Activity</span>
             </div>
           }
           subtitle="Live database mutations"

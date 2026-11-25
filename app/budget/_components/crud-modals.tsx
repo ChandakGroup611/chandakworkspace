@@ -2578,7 +2578,7 @@ export function BudgetsRegistryTable({
                     <div className="space-y-0.5">
                       <div className="font-semibold text-xs text-ink">{period.fy} · {period.quarter}</div>
                       <div className="text-[11px] text-muted">As on {period.asOnFormatted}</div>
-                      <div className="text-[10px] text-muted">{period.range}</div>
+                      <div className="text-[11px] text-muted">{period.range}</div>
                     </div>
                   </td>
                   <td>

@@ -209,7 +209,7 @@ export function UserPerformanceWorkingSheetModal({
         {/* MODAL HEADER */}
         <div className="p-4 md:p-5 border-b flex flex-wrap items-center justify-between gap-4 theme-card-structural">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 via-accent/20 to-success-soft border border-primary/30 flex items-center justify-center text-primary font-semibold text-lg shadow-sm">
+            <div className="w-12 h-12 rounded-lg bg-accent-soft border border-border flex items-center justify-center text-primary font-semibold text-lg shadow-sm">
               {data?.user?.fullName ? data.user.fullName.substring(0, 2).toUpperCase() : (userNameOrId?.substring(0, 2).toUpperCase() || "UP")}
             </div>
             <div>
@@ -320,7 +320,7 @@ export function UserPerformanceWorkingSheetModal({
               <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
                 
                 {/* Overall Score */}
-                <div className="p-4 rounded-lg bg-gradient-to-br from-primary/10 via-surface to-surface dark:from-primary/15 border border-primary/20 shadow-sm relative overflow-hidden group">
+                <div className="p-4 rounded-lg bg-surface border border-border shadow-sm relative overflow-hidden group">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-primary">Performance index</span>
                     <Award className="w-4 h-4 text-primary" />

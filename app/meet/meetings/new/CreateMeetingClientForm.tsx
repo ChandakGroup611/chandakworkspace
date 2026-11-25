@@ -521,7 +521,7 @@ export default function CreateMeetingClientForm({ masters, recordMode = "create"
               ))}
             </select>
             {roomId && (
-              <span className="text-[11px] text-emerald-400 font-medium mt-1 inline-flex items-center gap-1">
+              <span className="text-[11px] text-success-text font-medium mt-1 inline-flex items-center gap-1">
                 ✓ Available for this time slot (M365 Free)
               </span>
             )}
@@ -534,7 +534,7 @@ export default function CreateMeetingClientForm({ masters, recordMode = "create"
               <div className="flex items-center gap-2">
                 <Video className="h-4 w-4 text-primary shrink-0" />
                 <span className="text-[13px] font-semibold text-foreground">Microsoft Teams Meeting Link</span>
-                <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded">
+                <span className="text-[11px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded">
                   Direct Teams Parameters
                 </span>
               </div>

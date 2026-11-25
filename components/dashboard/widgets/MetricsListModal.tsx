@@ -458,7 +458,7 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
               <SlidersHorizontal className="w-3 h-3" />
               <span>Dimension Filters</span>
               {totalActiveFilterCount > 0 && (
-                <span className="ml-0.5 px-1 py-0.2 rounded-full text-[10px] bg-primary text-primary-foreground">
+                <span className="ml-0.5 px-1 py-0.2 rounded-full text-[11px] bg-primary text-primary-foreground">
                   {totalActiveFilterCount}
                 </span>
               )}
@@ -709,12 +709,12 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
                         {(m.workspaceName || m.subWorkspaceName) && (
                           <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[11px] text-muted truncate">
                             {m.workspaceName && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-surface/80 border border-border text-[10.5px] font-medium text-foreground">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-surface/80 border border-border text-[11px] font-medium text-foreground">
                                 {m.workspaceName}
                               </span>
                             )}
                             {m.subWorkspaceName && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-accent-soft text-accent-soft-text border border-border text-[10.5px] font-medium">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-accent-soft text-accent-soft-text border border-border text-[11px] font-medium">
                                 {m.subWorkspaceName}
                               </span>
                             )}

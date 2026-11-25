@@ -555,7 +555,7 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                               </button>
                               <button
                                 onClick={() => openConversion(block, "point")}
-                                className="px-2 py-1 text-[12px] font-semibold rounded bg-surface border border-border hover:bg-elevated text-purple-400"
+                                className="px-2 py-1 text-[12px] font-semibold rounded bg-surface border border-border hover:bg-elevated text-accent-soft-text"
                               >
                                 → Point
                               </button>

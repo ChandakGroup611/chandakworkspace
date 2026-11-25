@@ -486,11 +486,11 @@ export function AccessSettings({
           <div className="space-y-1.5 flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-bold text-heading">Super Administrator Master Authority</h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-warning-soft text-warning-text font-bold uppercase tracking-wider">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-warning-soft text-warning-text font-bold uppercase tracking-wider">
                 Unrestricted Bypass Active
               </span>
               {isSuperAdmin && (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-success-soft text-success-text font-semibold">
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-success-soft text-success-text font-semibold">
                   You are signed in as Super Admin
                 </span>
               )}
@@ -667,11 +667,11 @@ export function AccessSettings({
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-[13px]">{r.name}</span>
                     {r.is_system ? (
-                      <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-primary/20 text-primary font-bold uppercase">
+                      <span className="px-1.5 py-0.2 rounded text-[11px] font-mono bg-primary/20 text-primary font-bold uppercase">
                         System
                       </span>
                     ) : (
-                      <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-line text-muted font-medium">
+                      <span className="px-1.5 py-0.2 rounded text-[11px] font-mono bg-line text-muted font-medium">
                         Custom
                       </span>
                     )}
@@ -925,11 +925,11 @@ export function AccessSettings({
                       <div className="flex flex-col items-center gap-1">
                         <span className="font-bold text-[13px]">{r.name}</span>
                         {r.is_system ? (
-                          <span className="px-1.5 py-0.2 rounded text-[10px] bg-primary/20 text-primary font-bold">
+                          <span className="px-1.5 py-0.2 rounded text-[11px] bg-primary/20 text-primary font-bold">
                             System
                           </span>
                         ) : (
-                          <span className="px-1.5 py-0.2 rounded text-[10px] bg-line text-muted">
+                          <span className="px-1.5 py-0.2 rounded text-[11px] bg-line text-muted">
                             Custom
                           </span>
                         )}

@@ -411,7 +411,7 @@ export function AMCSubscriptionsListTab({
                             {rec.currency || "INR"} {cost.toLocaleString()}
                           </span>
                           {rec.monthly_amortized_cost && (
-                            <span className="text-[10.5px] text-muted font-mono">
+                            <span className="text-[11px] text-muted font-mono">
                               ~{rec.currency || "INR"} {Number(rec.monthly_amortized_cost).toLocaleString()}/mo
                             </span>
                           )}
@@ -431,11 +431,11 @@ export function AMCSubscriptionsListTab({
                       {/* Auto-Renewal Badge */}
                       <AppTableCell>
                         {rec.auto_renewal ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[10.5px] font-semibold text-success-text border border-success-border">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-success-text border border-success-border">
                             <CheckCircle2 className="h-3 w-3" /> Auto
                           </span>
                         ) : (
-                          <span className="rounded-full bg-sunken px-2 py-0.5 text-[10.5px] font-medium text-muted">
+                          <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-medium text-muted">
                             Manual
                           </span>
                         )}

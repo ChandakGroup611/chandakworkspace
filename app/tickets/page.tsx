@@ -507,7 +507,7 @@ function TicketsPageContent() {
           >
             <div className="text-[11px] font-semibold text-subtle">Total</div>
             <div className="text-xl font-bold text-foreground mt-0.5">{tickets.length}</div>
-            <div className="text-[10px] text-muted mt-0.5">All tickets visible to you</div>
+            <div className="text-[11px] text-muted mt-0.5">All tickets visible to you</div>
           </button>
 
           <button
@@ -516,13 +516,13 @@ function TicketsPageContent() {
             className={cn(
               "p-3 rounded-lg border text-left transition-all",
               selectedCard === "OPEN"
-                ? "bg-sky-500/10 border-sky-500/40 shadow-xs ring-2 ring-sky-500/30"
+                ? "bg-info-soft border-info-border shadow-xs ring-2 ring-sky-500/30"
                 : "bg-surface/60 border-border hover:bg-surface hover:border-border-active"
             )}
           >
-            <div className="text-[11px] font-semibold text-sky-600 dark:text-sky-400">Open</div>
-            <div className="text-xl font-bold text-sky-700 dark:text-sky-300 mt-0.5">{countOpen}</div>
-            <div className="text-[10px] text-muted mt-0.5">Awaiting resolution</div>
+            <div className="text-[11px] font-semibold text-info-text">Open</div>
+            <div className="text-xl font-bold text-info-text mt-0.5">{countOpen}</div>
+            <div className="text-[11px] text-muted mt-0.5">Awaiting resolution</div>
           </button>
 
           <button
@@ -531,13 +531,13 @@ function TicketsPageContent() {
             className={cn(
               "p-3 rounded-lg border text-left transition-all",
               selectedCard === "IN_PROGRESS"
-                ? "bg-amber-500/10 border-amber-500/40 shadow-xs ring-2 ring-amber-500/30"
+                ? "bg-warning-soft border-warning-border shadow-xs ring-2 ring-amber-500/30"
                 : "bg-surface/60 border-border hover:bg-surface hover:border-border-active"
             )}
           >
-            <div className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">In progress</div>
-            <div className="text-xl font-bold text-amber-700 dark:text-amber-300 mt-0.5">{countInProgress}</div>
-            <div className="text-[10px] text-muted mt-0.5">Active investigation</div>
+            <div className="text-[11px] font-semibold text-warning-text">In progress</div>
+            <div className="text-xl font-bold text-warning-text mt-0.5">{countInProgress}</div>
+            <div className="text-[11px] text-muted mt-0.5">Active investigation</div>
           </button>
 
           <button
@@ -546,13 +546,13 @@ function TicketsPageContent() {
             className={cn(
               "p-3 rounded-lg border text-left transition-all",
               selectedCard === "RESOLVED"
-                ? "bg-emerald-500/10 border-emerald-500/40 shadow-xs ring-2 ring-emerald-500/30"
+                ? "bg-success-soft border-success-border shadow-xs ring-2 ring-emerald-500/30"
                 : "bg-surface/60 border-border hover:bg-surface hover:border-border-active"
             )}
           >
-            <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Resolved</div>
-            <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300 mt-0.5">{countResolved}</div>
-            <div className="text-[10px] text-muted mt-0.5">Closed & satisfied</div>
+            <div className="text-[11px] font-semibold text-success-text">Resolved</div>
+            <div className="text-xl font-bold text-success-text mt-0.5">{countResolved}</div>
+            <div className="text-[11px] text-muted mt-0.5">Closed & satisfied</div>
           </button>
         </div>
 
@@ -613,7 +613,7 @@ function TicketsPageContent() {
                   aria-label="Created from"
                   className="h-6 px-1.5 text-xs rounded border border-border bg-surface text-foreground"
                 />
-                <span className="text-[10px] text-muted">to</span>
+                <span className="text-[11px] text-muted">to</span>
                 <input
                   type="date"
                   value={createdTo}
@@ -648,7 +648,7 @@ function TicketsPageContent() {
                   aria-label="Due from"
                   className="h-6 px-1.5 text-xs rounded border border-border bg-surface text-foreground"
                 />
-                <span className="text-[10px] text-muted">to</span>
+                <span className="text-[11px] text-muted">to</span>
                 <input
                   type="date"
                   value={dueTo}
@@ -838,14 +838,14 @@ function TicketsPageContent() {
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono text-[12.5px] font-semibold text-accent-soft-text">{ticket.id}</span>
                             {ticket.scopeName && (
-                              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-sunken text-muted">
+                              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded bg-sunken text-muted">
                                 {ticket.scopeName}
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-1.5">
                             {overdue && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-danger bg-danger-soft border border-danger-border px-1.5 py-0.5 rounded">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-danger bg-danger-soft border border-danger-border px-1.5 py-0.5 rounded">
                                 <AlertTriangle className="h-3 w-3" /> Overdue
                               </span>
                             )}
@@ -939,7 +939,7 @@ function TicketsPageContent() {
                                   {ticket.title}
                                 </span>
                                 {overdue && (
-                                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-danger bg-danger-soft border border-danger-border px-1.5 py-0.2 rounded shrink-0">
+                                  <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-danger bg-danger-soft border border-danger-border px-1.5 py-0.2 rounded shrink-0">
                                     <AlertTriangle className="h-2.5 w-2.5" /> Overdue
                                   </span>
                                 )}

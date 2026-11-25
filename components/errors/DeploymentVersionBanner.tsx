@@ -64,8 +64,8 @@ export function DeploymentVersionBanner() {
   if (!newVersionAvailable) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg bg-slate-900 px-5 py-3 text-sm text-white shadow-2xl border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
-      <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg bg-foreground px-5 py-3 text-sm text-white shadow-2xl border border-border-active animate-in fade-in slide-in-from-bottom-2">
+      <span className="flex h-2 w-2 rounded-full bg-success animate-ping" />
       <span>New update available — refreshing application cleanly...</span>
       <AppButton
         onClick={() => {

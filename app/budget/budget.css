@@ -391,7 +391,7 @@
 .budget-app .stepper { display: flex; align-items: center; gap: 4px; margin: 0 0 0 auto; padding: 0; list-style: none; font-size: 12px; color: var(--muted); white-space: nowrap; }
 .budget-app .stepper li { display: inline-flex; align-items: center; gap: 5px; }
 .budget-app .stepper li + li::before { content: ""; width: 18px; height: 1px; background: var(--line-strong); margin-right: 4px; }
-.budget-app .stepper .dot { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line-strong); font-size: 10.5px; font-weight: 600; }
+.budget-app .stepper .dot { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line-strong); font-size: 11px; font-weight: 600; }
 .budget-app .stepper li.done { color: var(--good); }
 .budget-app .stepper li.done .dot { background: var(--good-soft); border-color: transparent; color: var(--good); }
 .budget-app .stepper li.current { color: var(--ink); font-weight: 600; }
@@ -589,7 +589,7 @@
 
 .budget-app .chip {
   display: inline-block;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: .05em;
   text-transform: uppercase;

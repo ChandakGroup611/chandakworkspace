@@ -118,7 +118,7 @@ export function TicketFormOthers({ scope, onCancel, onDiscard, onSubmit, initial
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <ChandakLoader size="md" title="Initializing operational matrix…" subtitle="Loading general request categories" />
+        <ChandakLoader size="md" title="Loading…" subtitle="Loading general request categories" />
       </div>
     );
   }

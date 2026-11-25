@@ -225,19 +225,19 @@ export function SubscriptionClient() {
       case "INSERT":
         return {
           icon: PlusCircle,
-          color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+          color: "text-success-text bg-success-soft border-success-border",
           label: "CREATED"
         };
       case "UPDATE":
         return {
           icon: Edit,
-          color: "text-sky-500 bg-sky-500/10 border-sky-500/20",
+          color: "text-info-text bg-info-soft border-info-border",
           label: "UPDATED"
         };
       case "DELETE":
         return {
           icon: AlertCircle,
-          color: "text-rose-500 bg-rose-500/10 border-rose-500/20",
+          color: "text-danger-text bg-danger-soft border-danger-border",
           label: "CANCELLED"
         };
       default:
@@ -256,7 +256,7 @@ export function SubscriptionClient() {
         <AppBadge variant="neutral" className="px-3 py-1 text-accent-soft-text border border-border-active bg-accent-soft rounded-full mb-1">
           Workspace billing & plans
         </AppBadge>
-        <h1 id="subscription-page-title" className="text-3xl md:text-5xl font-semibold tracking-tight bg-gradient-to-br from-foreground via-foreground/90 to-foreground/50 bg-clip-text text-transparent">
+        <h1 id="subscription-page-title" className="text-3xl md:text-5xl font-semibold tracking-tight text-heading">
           Subscription Management
         </h1>
         <p className="text-sm md:text-base text-muted max-w-2xl mx-auto leading-relaxed">
@@ -311,7 +311,7 @@ export function SubscriptionClient() {
                 key={plan.name}
                 className={`relative flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg ${
                   plan.highlighted 
-                    ? 'border-primary shadow-[0_0_40px_-15px_rgba(var(--accent),0.3)] bg-gradient-to-b from-accent/5 to-transparent' 
+                    ? 'border-primary shadow-[0_0_40px_-15px_rgba(var(--accent),0.3)] bg-accent-soft/40' 
                     : 'border-border/40 hover:border-border'
                 }`}
               >
@@ -412,7 +412,7 @@ export function SubscriptionClient() {
                 <AppCard key={sub.id} className="p-4 space-y-2 border-border shadow-xs hover:border-border-active transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold text-sm text-foreground truncate">{sub.software_name}</h3>
-                    <AppBadge variant="warning" className="text-[10px] shrink-0 font-semibold">
+                    <AppBadge variant="warning" className="text-[11px] shrink-0 font-semibold">
                       Subscription
                     </AppBadge>
                   </div>
@@ -485,7 +485,7 @@ export function SubscriptionClient() {
                                log.operation === 'DELETE' ? `removed ${log.software_name}` :
                                `updated ${log.software_name}`}
                             </span>
-                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide ${badge.color}`}>
+                            <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold tracking-wide ${badge.color}`}>
                               {badge.label}
                             </span>
                           </div>

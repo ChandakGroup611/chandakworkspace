@@ -931,17 +931,17 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
           className={cn(
             "group relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all",
             kpiCard === "OVERDUE"
-              ? "bg-elevated border-purple-500/50 ring-1 ring-purple-500/50 shadow-xs"
-              : "bg-surface border-border hover:border-purple-500/30 hover:bg-surface-hover"
+              ? "bg-elevated border-border-active ring-1 ring-purple-500/50 shadow-xs"
+              : "bg-surface border-border hover:border-border-active hover:bg-surface-hover"
           )}
         >
           <div className="flex items-center justify-between gap-1 mb-1">
-            <span className="text-[11.5px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Overdue</span>
-            <div className="rounded-lg p-1.5 bg-purple-500/10 text-purple-600 dark:text-purple-400">
+            <span className="text-[11.5px] font-semibold text-accent-soft-text uppercase tracking-wider">Overdue</span>
+            <div className="rounded-lg p-1.5 bg-accent-soft text-accent-soft-text">
               <Clock className="h-4 w-4" />
             </div>
           </div>
-          <div className="text-xl font-bold tracking-tight text-purple-600 dark:text-purple-400">{countOverdue}</div>
+          <div className="text-xl font-bold tracking-tight text-accent-soft-text">{countOverdue}</div>
         </button>
 
         <button

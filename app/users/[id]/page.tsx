@@ -84,20 +84,20 @@ const getModuleMeta = (code: string) => {
     case "CHANDAK_MEET":
       return {
         icon: Video,
-        badgeBg: "bg-purple-500/10 text-purple-500 border-purple-500/30",
+        badgeBg: "bg-accent-soft text-accent-soft-text border-border-active",
         description: "Meetings, agendas, points with automated carry-forward, decisions & action items."
       };
     case "ORG_BUDGET":
       return {
         icon: Landmark,
-        badgeBg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/30",
+        badgeBg: "bg-success-soft text-success-text border-success-border",
         description: "Project budgets, towers, cost heads, workings, approvals, actuals and financial reports."
       };
     default:
       return {
         icon: Layers,
         badgeBg: "bg-surface text-accent-soft-text border-border",
-        description: "Enterprise operational suite and specialized workflows."
+        description: "Operations and workflows."
       };
   }
 };
@@ -355,7 +355,7 @@ export default function UserFormPage() {
     }
   };
 
-  const inputStyle = `w-full h-11 px-4 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary ${"bg-surface border-border dark:border-border text-foreground disabled:bg-sunken disabled:text-muted disabled:dark:text-muted"
+  const inputStyle = `w-full h-11 px-4 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary ${"bg-surface border-border text-foreground disabled:bg-sunken disabled:text-muted disabled:dark:text-muted"
     }`;
 
   const labelStyle = `text-sm font-semibold mb-2 block text-foreground`;
@@ -542,7 +542,7 @@ export default function UserFormPage() {
                       <div className="w-full mt-1 pt-3 border-t border-border space-y-2 bg-surface/50 rounded-lg p-2.5">
                         <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
                           <span>Accessible Department Dashboards (User-Wise):</span>
-                          <span className="text-[10px] text-muted-foreground">{selectedDashboards.length} selected</span>
+                          <span className="text-[11px] text-muted-foreground">{selectedDashboards.length} selected</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {DASHBOARDS.map((d) => {
@@ -551,7 +551,7 @@ export default function UserFormPage() {
                               <label
                                 key={d.key}
                                 className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${isDashActive
-                                    ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
+                                    ? "bg-warning-soft border-warning-border text-foreground font-medium"
                                     : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
                                   }`}
                               >
@@ -570,7 +570,7 @@ export default function UserFormPage() {
                                 />
                                 <div className="min-w-0">
                                   <span className="block text-xs truncate font-semibold">{d.name}</span>
-                                  <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
+                                  <span className="block text-[11px] text-muted-foreground truncate">{d.description}</span>
                                 </div>
                               </label>
                             );
@@ -929,7 +929,7 @@ export default function UserFormPage() {
                         <div className="w-full mt-1 pt-3 border-t border-border space-y-2 bg-surface/50 rounded-lg p-2.5">
                           <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
                             <span>Accessible Department Dashboards (User-Wise):</span>
-                            <span className="text-[10px] text-muted-foreground">{selectedDashboards.length} selected</span>
+                            <span className="text-[11px] text-muted-foreground">{selectedDashboards.length} selected</span>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {DASHBOARDS.map((d) => {
@@ -938,7 +938,7 @@ export default function UserFormPage() {
                                 <label
                                   key={d.key}
                                   className={`flex items-start gap-2 p-2 rounded-md border text-xs cursor-pointer transition-all ${isDashActive
-                                      ? "bg-amber-500/10 border-amber-500/40 text-foreground font-medium"
+                                      ? "bg-warning-soft border-warning-border text-foreground font-medium"
                                       : "bg-surface border-border text-muted-foreground opacity-75 hover:opacity-100"
                                     }`}
                                 >
@@ -957,7 +957,7 @@ export default function UserFormPage() {
                                   />
                                   <div className="min-w-0">
                                     <span className="block text-xs truncate font-semibold">{d.name}</span>
-                                    <span className="block text-[10px] text-muted-foreground truncate">{d.description}</span>
+                                    <span className="block text-[11px] text-muted-foreground truncate">{d.description}</span>
                                   </div>
                                 </label>
                               );
@@ -982,7 +982,7 @@ export default function UserFormPage() {
                 <div>
                   <label className={labelStyle}>Account status</label>
                   <div className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${formIsActive ? ("bg-success-soft border-success-border") : ("bg-danger-soft border-danger-border")}`}>
-                    <span className={`font-semibold ${formIsActive ? "text-success-text dark:text-success-text" : "text-danger-text dark:text-danger-text"}`}>
+                    <span className={`font-semibold ${formIsActive ? "text-success-text" : "text-danger-text"}`}>
                       {formIsActive ? "Active Participant" : "Suspended"}
                     </span>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -1022,7 +1022,7 @@ export default function UserFormPage() {
                       value={formRoleId}
                       onChange={(e) => setFormRoleId(e.target.value)}
                       disabled={!isSuperAdmin || (!isRealSuperAdmin && isEditingMode && id === currentUserId)}
-                      className={`${inputStyle} appearance-none pr-10 font-semibold text-accent-soft-text dark:text-accent-soft-text`}
+                      className={`${inputStyle} appearance-none pr-10 font-semibold text-accent-soft-text`}
                     >
                       <option value="">Select Role…</option>
                       {roles

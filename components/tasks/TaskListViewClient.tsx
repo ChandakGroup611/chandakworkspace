@@ -1361,7 +1361,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
   if (permsLoading) {
     return (
       <div className="py-12 flex justify-center">
-        <ChandakLoader size="md" title="Verifying permissions…" subtitle="Loading enterprise task matrix" />
+        <ChandakLoader size="md" title="Verifying permissions…" subtitle="Loading tasks" />
       </div>
     );
   }
@@ -1395,7 +1395,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               <ArrowLeft className="h-4 w-4" aria-hidden />
               Back to hierarchy
             </button>
-            <h1 className="mt-1 text-[22px] font-semibold leading-tight tracking-[-0.01em] text-heading">Workspace tasks</h1>
+            <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading mt-1 leading-tight">Workspace tasks</h1>
             <p className="mt-0.5 flex items-center gap-1.5 text-[13.5px] text-muted">
               <Layers className="h-3.5 w-3.5" aria-hidden />
               {selectedWorkspaceId ? allWorkspaces.find(w => w.id === selectedWorkspaceId)?.workspace_name || allWorkspaces.find(w => w.id === selectedWorkspaceId)?.name || 'Selected workspace' : 'All workspaces'}

@@ -70,16 +70,16 @@ function TaskCardMessage({ content, isMe }: { content: string; isMe: boolean }) 
         className={`rounded-xl p-3 text-xs space-y-2 max-w-[280px] sm:max-w-xs ${
           isMe
             ? "bg-white/10 text-white border border-white/20"
-            : "bg-surface text-foreground border border-emerald-500/30"
+            : "bg-surface text-foreground border border-success-border"
         }`}
       >
         <div className="flex items-center justify-between gap-1.5 border-b border-current/15 pb-1.5">
-          <div className="flex items-center gap-1.5 font-bold text-emerald-400">
+          <div className="flex items-center gap-1.5 font-bold text-success-text">
             <CheckSquare className="h-4 w-4 shrink-0" />
             <span>Task Created · {data.taskCode}</span>
           </div>
           {data.workspaceName && (
-            <span className="text-[10px] opacity-75 truncate max-w-[100px]">
+            <span className="text-[11px] opacity-75 truncate max-w-[100px]">
               {data.workspaceName}
             </span>
           )}
@@ -100,7 +100,7 @@ function TaskCardMessage({ content, isMe }: { content: string; isMe: boolean }) 
             href={`/tasks/${data.taskId}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 px-3 py-1 rounded bg-emerald-600 text-white font-medium text-[11px] hover:bg-emerald-700 transition-colors shadow-xs"
+            className="inline-flex items-center gap-1 px-3 py-1 rounded bg-success text-white font-medium text-[11px] hover:bg-success transition-colors shadow-xs"
           >
             <span>Open Task</span>
             <ExternalLink className="h-3 w-3" />
@@ -121,10 +121,10 @@ function MeetingInviteMessage({ content, isMe }: { content: string; isMe: boolea
         className={`rounded-xl p-3 text-xs space-y-2 max-w-[280px] sm:max-w-xs ${
           isMe
             ? "bg-white/10 text-white border border-white/20"
-            : "bg-surface text-foreground border border-sky-500/30"
+            : "bg-surface text-foreground border border-info-border"
         }`}
       >
-        <div className="flex items-center gap-2 border-b border-current/15 pb-1.5 font-bold text-sky-400">
+        <div className="flex items-center gap-2 border-b border-current/15 pb-1.5 font-bold text-info-text">
           <Video className="h-4 w-4 shrink-0" />
           <span>Chandak Meet Invitation</span>
         </div>
@@ -149,7 +149,7 @@ function MeetingInviteMessage({ content, isMe }: { content: string; isMe: boolea
             href={data.meetUrl || "/meet/live"}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 text-white font-semibold text-xs hover:bg-sky-700 transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-info text-white font-semibold text-xs hover:bg-info transition-colors shadow-xs"
           >
             <Video className="h-3.5 w-3.5" />
             <span>Join In-Portal Room</span>
@@ -368,13 +368,13 @@ export function ConversationView({
           return {
             status: "seen",
             label: `Read by ${other?.user?.full_name || "colleague"}`,
-            icon: <CheckCheck className="h-3.5 w-3.5 text-sky-300 stroke-[3]" />,
+            icon: <CheckCheck className="h-3.5 w-3.5 text-info-text stroke-[3]" />,
           };
         }
         return {
           status: "sent",
           label: "Sent",
-          icon: <Check className="h-3.5 w-3.5 text-blue-200 stroke-[2.5]" />,
+          icon: <Check className="h-3.5 w-3.5 text-info-text stroke-[2.5]" />,
         };
       }
 
@@ -390,20 +390,20 @@ export function ConversationView({
         return {
           status: "seen",
           label: `Read by all members (${readMembers.length})`,
-          icon: <CheckCheck className="h-3.5 w-3.5 text-sky-300 stroke-[3]" />,
+          icon: <CheckCheck className="h-3.5 w-3.5 text-info-text stroke-[3]" />,
         };
       }
       if (readMembers.length > 0) {
         return {
           status: "delivered",
           label: `Read by ${readMembers.length} of ${others.length} members`,
-          icon: <CheckCheck className="h-3.5 w-3.5 text-blue-200 stroke-[2.5]" />,
+          icon: <CheckCheck className="h-3.5 w-3.5 text-info-text stroke-[2.5]" />,
         };
       }
       return {
         status: "sent",
         label: "Sent",
-        icon: <Check className="h-3.5 w-3.5 text-blue-200 stroke-[2.5]" />,
+        icon: <Check className="h-3.5 w-3.5 text-info-text stroke-[2.5]" />,
       };
     },
     [conversation.type, participants, currentUserId]
@@ -531,7 +531,7 @@ export function ConversationView({
               )}
             </span>
             {isDirect && (
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-surface" />
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-surface" />
             )}
           </div>
 
@@ -551,12 +551,12 @@ export function ConversationView({
             type="button"
             onClick={handleStartCall}
             disabled={startingCall}
-            className="p-2 text-muted hover:text-emerald-500 hover:bg-surface-hover rounded-lg transition-colors"
+            className="p-2 text-muted hover:text-success-text hover:bg-surface-hover rounded-lg transition-colors"
             title="Start Video Meeting (Chandak Meet)"
             aria-label="Start Video Call"
           >
             {startingCall ? (
-              <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
+              <Loader2 className="h-4 w-4 animate-spin text-success-text" />
             ) : (
               <Video className="h-4 w-4" />
             )}
@@ -699,11 +699,11 @@ export function ConversationView({
                   {msg.reply_to && (
                     <div
                       className={`text-xs px-3 py-1.5 mb-1.5 rounded-lg border-l-2 text-left ${isMe
-                        ? "bg-blue-700/80 border-white text-white"
+                        ? "bg-info-soft border-white text-white"
                         : "bg-surface-hover border-primary text-foreground"
                         }`}
                     >
-                      <p className={`font-semibold text-[11px] truncate ${isMe ? "text-blue-100" : "text-primary"}`}>
+                      <p className={`font-semibold text-[11px] truncate ${isMe ? "text-info-text" : "text-primary"}`}>
                         {msg.reply_to.sender_name}
                       </p>
                       <p className={`text-[11px] truncate ${isMe ? "text-white/80" : "text-muted"}`}>
@@ -722,7 +722,7 @@ export function ConversationView({
                     }}
                     title={isEditable ? "Double-click to edit message" : undefined}
                     className={`relative group/bubble rounded-2xl px-4 py-2.5 text-[13.5px] shadow-xs break-words leading-relaxed select-text ${isMe
-                      ? "bg-blue-600 dark:bg-blue-600 text-white rounded-br-xs shadow-sm"
+                      ? "bg-info text-white rounded-br-xs shadow-sm"
                       : "bg-surface dark:bg-elevated border border-border text-foreground rounded-bl-xs"
                       }`}
                   >
@@ -784,7 +784,7 @@ export function ConversationView({
                           }}
                           className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover text-foreground font-medium cursor-pointer"
                         >
-                          <CheckSquare className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                          <CheckSquare className="h-3.5 w-3.5 text-success-text shrink-0" />
                           <span>Create task</span>
                         </button>
 
@@ -870,7 +870,7 @@ export function ConversationView({
                                       <img
                                         src={att.url}
                                         alt={att.name}
-                                        className="max-h-60 w-auto object-cover rounded-t-lg transition-transform hover:scale-105 duration-200"
+                                        className="max-h-60 w-auto object-cover rounded-t-lg transition-transform duration-200"
                                       />
                                     </div>
                                     <div className="flex items-center justify-between p-1.5 bg-black/20 text-xs">
@@ -905,7 +905,7 @@ export function ConversationView({
                                 <div
                                   key={aIdx}
                                   className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${isMe
-                                    ? "bg-blue-700/60 border-blue-400/30 text-white"
+                                    ? "bg-info-soft border-info-border text-white"
                                     : "bg-surface-hover border-border text-foreground"
                                     }`}
                                 >
@@ -915,7 +915,7 @@ export function ConversationView({
                                       <p className="text-xs font-medium truncate" title={att.name}>
                                         {att.name}
                                       </p>
-                                      <p className="text-[10px] opacity-70">
+                                      <p className="text-[11px] opacity-70">
                                         {(att.size / 1024).toFixed(0)} KB
                                       </p>
                                     </div>
@@ -950,11 +950,11 @@ export function ConversationView({
                     )}
 
                     {/* Timestamp & Read Receipts */}
-                    <div className={`flex items-center justify-end gap-1 mt-1.5 text-[10.5px] select-none ${isMe ? "text-blue-100 font-medium" : "text-muted font-medium"
+                    <div className={`flex items-center justify-end gap-1 mt-1.5 text-[11px] select-none ${isMe ? "text-info-text font-medium" : "text-muted font-medium"
                       }`}>
                       <span>{timeStr}</span>
                       {msg.is_edited && !msg.is_deleted && (
-                        <span className="text-[10px] italic opacity-85 ml-0.5" title="Edited message">(edited)</span>
+                        <span className="text-[11px] italic opacity-85 ml-0.5" title="Edited message">(edited)</span>
                       )}
                       {isMe && !msg.is_deleted && (
                         (() => {
@@ -976,7 +976,7 @@ export function ConversationView({
                         <span
                           key={r.id}
                           onClick={() => handleToggleReaction(msg.id, r.reaction)}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs bg-surface border border-border shadow-xs cursor-pointer hover:scale-110 transition-transform"
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs bg-surface border border-border shadow-xs cursor-pointer transition-transform"
                           title={`Reacted by ${r.user_name || "Colleague"}`}
                         >
                           <span>{r.reaction}</span>
@@ -1138,7 +1138,7 @@ function renderContentWithMentions(content: string, isSender: boolean) {
         <span
           key={i}
           className={`font-semibold underline decoration-dotted px-1 py-0.2 rounded ${isSender
-            ? "bg-blue-800/80 text-white"
+            ? "bg-info-soft text-white"
             : "bg-primary/10 text-primary"
             }`}
         >
@@ -1168,7 +1168,7 @@ function VoicePlayer({ url, isSender }: { url: string; isSender: boolean }) {
 
   return (
     <div
-      className={`flex items-center gap-2 p-2 rounded-lg ${isSender ? "bg-blue-700/60 text-white" : "bg-surface-hover border border-border text-foreground"
+      className={`flex items-center gap-2 p-2 rounded-lg ${isSender ? "bg-info-soft text-white" : "bg-surface-hover border border-border text-foreground"
         }`}
     >
       <audio
@@ -1180,7 +1180,7 @@ function VoicePlayer({ url, isSender }: { url: string; isSender: boolean }) {
       <button
         type="button"
         onClick={togglePlay}
-        className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 hover:opacity-90 shadow-xs ${isSender ? "bg-white text-blue-600" : "bg-primary text-primary-foreground"
+        className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 hover:opacity-90 shadow-xs ${isSender ? "bg-white text-info-text" : "bg-primary text-primary-foreground"
           }`}
       >
         {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}

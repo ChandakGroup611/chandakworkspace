@@ -769,7 +769,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 <span className="rounded bg-sunken px-1.5 text-[12px] leading-5 text-subtle" title="Amendment version">v{requirement.amendment_version}</span>
               )}
             </div>
-            <h1 className="mt-1 break-words text-[20px] font-semibold leading-snug text-heading">
+            <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading mt-1 break-words leading-snug">
               {requirement.title || 'Untitled requirement'}
             </h1>
             <dl className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-[13px]">

@@ -366,7 +366,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
   };
 
   if (!mounted) {
-    return <div style={{ padding: '2rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>Loading next-gen command center…</div>;
+    return <div style={{ padding: '2rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>Loading the command center…</div>;
   }
 
   return (
@@ -379,7 +379,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
         <div className="topbar">
           {/* TITLE */}
           <div className="flex items-center gap-3 shrink-0">
-            <h1 className="topbar-title text-base sm:text-lg font-semibold text-foreground tracking-tight whitespace-nowrap">
+            <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading topbar-title whitespace-nowrap">
               {activeView === "portfolio" ? "My portfolio" : "Command center"}
             </h1>
           </div>

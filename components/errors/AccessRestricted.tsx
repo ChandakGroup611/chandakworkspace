@@ -67,15 +67,15 @@ export function AccessRestricted({
 
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 py-16 text-center animate-in fade-in duration-200">
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 shadow-sm">
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-warning-soft border border-warning-border text-warning-text shadow-sm">
         <ShieldAlert className="h-8 w-8" aria-hidden />
       </div>
 
-      <span className="mb-2 text-xs font-semibold tracking-wider uppercase text-amber-600 dark:text-amber-400">
+      <span className="mb-2 text-xs font-semibold tracking-wider uppercase text-warning-text">
         Access Restricted
       </span>
 
-      <h1 className="mb-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+      <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading mb-3">
         Permission Required
       </h1>
 
@@ -99,7 +99,7 @@ export function AccessRestricted({
             {isSubmitting ? "Submitting request..." : "Request access"}
           </AppButton>
         ) : (
-          <div className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+          <div className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-success-soft border border-success-border px-4 py-2 text-sm font-medium text-success-text">
             <CheckCircle2 className="h-4 w-4" aria-hidden />
             Access request sent to administrator
           </div>

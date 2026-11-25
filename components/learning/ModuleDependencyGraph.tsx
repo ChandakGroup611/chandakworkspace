@@ -80,7 +80,7 @@ export default function ModuleDependencyGraph({ onSelectModule }: ModuleDependen
           <div>
             <div className="flex items-center gap-2 text-primary font-semibold text-xs">
               <Workflow className="h-4 w-4" />
-              <span>Enterprise ecosystem architecture</span>
+              <span>How the modules connect</span>
             </div>
             <h2 className="text-xl md:text-2xl font-semibold text-foreground mt-1">
               Cross-module connections & ripple impact diagram

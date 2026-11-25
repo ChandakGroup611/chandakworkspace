@@ -364,7 +364,7 @@ export function AMCContractsListTab({
                               {rec.po_number ? `PO: ${rec.po_number}` : (rec.contract_type || "AMC")}
                             </span>
                             {rec.support_tier && (
-                              <span className="rounded bg-sunken px-1.5 py-0.2 text-[10px] font-medium text-subtle">
+                              <span className="rounded bg-sunken px-1.5 py-0.2 text-[11px] font-medium text-subtle">
                                 {rec.support_tier}
                               </span>
                             )}
@@ -396,7 +396,7 @@ export function AMCContractsListTab({
                             {rec.currency || "INR"} {cost.toLocaleString()}
                           </span>
                           {rec.billing_frequency && (
-                            <span className="text-[10.5px] text-muted">
+                            <span className="text-[11px] text-muted">
                               {rec.billing_frequency}
                             </span>
                           )}

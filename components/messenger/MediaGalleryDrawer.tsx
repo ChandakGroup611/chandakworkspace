@@ -151,7 +151,7 @@ export function MediaGalleryDrawer({
                         <p className="font-medium text-[11px] text-foreground truncate" title={attachment.name}>
                           {attachment.name}
                         </p>
-                        <p className="text-[10px] text-muted">
+                        <p className="text-[11px] text-muted">
                           {(attachment.size / 1024).toFixed(0)} KB
                         </p>
                       </div>
@@ -161,7 +161,7 @@ export function MediaGalleryDrawer({
                         <button
                           type="button"
                           onClick={() => onViewAttachment(attachment)}
-                          className="p-1.5 rounded-full bg-white text-black hover:scale-110 transition-transform shadow-md"
+                          className="p-1.5 rounded-full bg-white text-black transition-transform shadow-md"
                           title="View"
                         >
                           <Eye className="h-4 w-4" />
@@ -169,7 +169,7 @@ export function MediaGalleryDrawer({
                         <a
                           href={attachment.url}
                           download={attachment.name}
-                          className="p-1.5 rounded-full bg-white text-black hover:scale-110 transition-transform shadow-md"
+                          className="p-1.5 rounded-full bg-white text-black transition-transform shadow-md"
                           title="Download"
                         >
                           <Download className="h-4 w-4" />
@@ -194,7 +194,7 @@ export function MediaGalleryDrawer({
                 {docItems.map(({ attachment, date }, idx) => {
                   const isSpreadsheet = /\.(xlsx?|csv)$/i.test(attachment.name);
                   const Icon = isSpreadsheet ? FileSpreadsheet : FileText;
-                  const iconColor = isSpreadsheet ? "text-emerald-500" : "text-sky-500";
+                  const iconColor = isSpreadsheet ? "text-success-text" : "text-info-text";
 
                   return (
                     <div
@@ -206,7 +206,7 @@ export function MediaGalleryDrawer({
                         <p className="font-medium text-[11.5px] text-foreground truncate" title={attachment.name}>
                           {attachment.name}
                         </p>
-                        <p className="text-[10px] text-muted">
+                        <p className="text-[11px] text-muted">
                           {(attachment.size / 1024).toFixed(0)} KB · {new Date(date).toLocaleDateString()}
                         </p>
                       </div>

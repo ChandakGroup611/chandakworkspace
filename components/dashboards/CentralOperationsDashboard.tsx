@@ -28,7 +28,6 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
         <Link href="/workspaces/tasks" className="block h-full">
           <div className="h-full relative overflow-hidden rounded-lg group transition-all duration-300 theme-card-structural text-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br to-accent/10 dark:to-accent/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
             {/* Glowing Accent Top Border */}
             <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
@@ -62,7 +61,6 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
         <Link href="/workspaces/enrolled" className="block h-full">
           <div className="h-full relative overflow-hidden rounded-lg group transition-all duration-300 theme-card-structural text-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br to-success-soft opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
             {/* Glowing Accent Top Border */}
             <div className="absolute top-0 left-0 w-full h-1 bg-success" />
@@ -95,7 +93,6 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
         <Link href="/tickets" className="block h-full">
           <div className="h-full relative overflow-hidden rounded-lg group transition-all duration-300 theme-card-structural text-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br to-accent-soft opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
             {/* Glowing Accent Top Border */}
             <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
@@ -130,7 +127,6 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
         <Link href="/sla" className="block h-full">
           <div className="h-full relative overflow-hidden rounded-lg group transition-all duration-300 border bg-card text-card-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br to-danger-soft opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
             {/* Glowing Accent Top Border */}
             <div className="absolute top-0 left-0 w-full h-1 bg-danger" />

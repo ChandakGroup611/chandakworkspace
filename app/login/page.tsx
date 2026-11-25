@@ -383,9 +383,9 @@ export default function LoginPage() {
 
             {/* Desktop Notification Alert Enable */}
             {notifPerm === "default" && (
-              <div className="mb-5 flex items-center justify-between gap-3 rounded-lg border border-blue-500/20 bg-blue-500/10 p-3 text-xs text-foreground animate-in fade-in duration-200">
+              <div className="mb-5 flex items-center justify-between gap-3 rounded-lg border border-info-border bg-info-soft p-3 text-xs text-foreground animate-in fade-in duration-200">
                 <div className="flex items-center gap-2">
-                  <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <Bell className="h-4 w-4 text-info-text shrink-0" />
                   <span className="font-medium">Get desktop message alerts even when logged out</span>
                 </div>
                 <button
@@ -395,7 +395,7 @@ export default function LoginPage() {
                       Notification.requestPermission().then((p) => setNotifPerm(p));
                     }
                   }}
-                  className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] shrink-0 cursor-pointer"
+                  className="px-2.5 py-1 rounded bg-info hover:bg-info text-white font-semibold text-[11px] shrink-0 cursor-pointer"
                 >
                   Enable
                 </button>

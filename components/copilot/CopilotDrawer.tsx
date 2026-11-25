@@ -322,7 +322,7 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
       size="md"
       title={
         <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/25 shrink-0">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-warning-soft border border-warning-border shrink-0">
             <ChandakMitraIcon className="h-5 w-5 shrink-0" animated />
           </div>
           <span className="font-semibold text-foreground text-[14.5px]">Chandak Mitra</span>
@@ -338,7 +338,7 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="rounded-2xl bg-amber-500/10 p-3 border border-amber-500/25 shadow-xs mb-3 group hover:scale-105 transition-transform flex items-center justify-center">
+              <div className="rounded-2xl bg-warning-soft p-3 border border-warning-border shadow-xs mb-3 group transition-transform flex items-center justify-center">
                 <ChandakMitraIcon className="h-12 w-12" animated />
               </div>
               <h4 className="text-[14.5px] font-semibold text-foreground">Namaste! Main hoon aapka Chandak Mitra 🤝</h4>
@@ -378,7 +378,7 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px]",
                     m.role === "user"
                       ? "bg-theme-btn-primary text-theme-btn-primary-text"
-                      : "bg-amber-500/10 border border-amber-500/25 overflow-hidden"
+                      : "bg-warning-soft border border-warning-border overflow-hidden"
                   )}
                 >
                   {m.role === "user" ? <User className="h-3.5 w-3.5" /> : <ChandakMitraIcon className="h-5 w-5" />}
@@ -448,7 +448,7 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
             />
             <div className="flex items-center justify-between pt-1 border-t border-border/40">
               <span className="text-[11px] text-muted">
-                <kbd className="font-mono text-[10px]">↵</kbd> Send &bull; <kbd className="font-mono text-[10px]">Shift+↵</kbd> Newline
+                <kbd className="font-mono text-[11px]">↵</kbd> Send &bull; <kbd className="font-mono text-[11px]">Shift+↵</kbd> Newline
               </span>
               <button
                 type="submit"
@@ -500,8 +500,8 @@ function ActionPreviewCard({
 
   if (preview.status === "EXECUTED") {
     return (
-      <div className="rounded-md border border-emerald-500/30 bg-emerald-50/10 p-3 text-[12.5px] text-foreground">
-        <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
+      <div className="rounded-md border border-success-border bg-success-soft p-3 text-[12.5px] text-foreground">
+        <div className="flex items-center gap-2 text-success-text font-medium">
           <CheckCircle2 className="h-4 w-4" />
           <span>Action Executed Successfully</span>
         </div>
@@ -514,8 +514,8 @@ function ActionPreviewCard({
 
   if (preview.status === "FAILED" || preview.status === "CANCELLED") {
     return (
-      <div className="rounded-md border border-rose-500/30 bg-rose-50/10 p-3 text-[12.5px] text-foreground">
-        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-medium">
+      <div className="rounded-md border border-danger-border bg-danger-soft p-3 text-[12.5px] text-foreground">
+        <div className="flex items-center gap-2 text-danger-text font-medium">
           <AlertTriangle className="h-4 w-4" />
           <span>{preview.status === "CANCELLED" ? "Action Cancelled" : "Action Failed"}</span>
         </div>

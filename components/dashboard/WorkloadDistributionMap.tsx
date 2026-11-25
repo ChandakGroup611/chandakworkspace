@@ -10,9 +10,9 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
     let backlogOverdue = 0;
 
     const modules = [
-      { id: "tasks", name: "Workspace Tasks", active: 0, overdue: 0, capacity: 0, color: "from-accent to-primary" },
-      { id: "tickets", name: "ITSM Tickets", active: 0, overdue: 0, capacity: 0, color: "from-primary to-primary" },
-      { id: "requirements", name: "Environments", active: 0, overdue: 0, capacity: 0, color: "from-warning to-danger" },
+      { id: "tasks", name: "Workspace Tasks", active: 0, overdue: 0, capacity: 0, color: "bg-primary" },
+      { id: "tickets", name: "ITSM Tickets", active: 0, overdue: 0, capacity: 0, color: "bg-primary" },
+      { id: "requirements", name: "Environments", active: 0, overdue: 0, capacity: 0, color: "bg-warning" },
     ];
 
     activities.forEach(act => {
@@ -91,7 +91,7 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
               {/* Advanced track layout */}
               <div className="h-2 w-full theme-card-structural rounded-full overflow-hidden p-[1px]">
                 <div 
-                  className={`h-full rounded-full bg-gradient-to-r ${dept.color} transition-all duration-500 shadow-sm`} 
+                  className={`h-full rounded-full ${dept.color} transition-all duration-300 shadow-sm`} 
                   style={{ width: `${dept.capacity}%` }} 
                 />
               </div>

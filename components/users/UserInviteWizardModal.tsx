@@ -633,7 +633,7 @@ export function UserInviteWizardModal({
                           />
                           <div>
                             <span className="text-xs font-semibold text-foreground">{d.name}</span>
-                            <span className="text-[10px] text-muted-foreground ml-1.5 font-mono">({d.key})</span>
+                            <span className="text-[11px] text-muted-foreground ml-1.5 font-mono">({d.key})</span>
                           </div>
                         </label>
 
@@ -773,7 +773,7 @@ export function UserInviteWizardModal({
                       <div key={mod.code} className="p-2.5 rounded-md border border-border bg-surface flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-foreground">{mod.name}</span>
-                          <span className="text-[10px] text-muted-foreground uppercase font-mono">[{cfg.scopeType || "all"}]</span>
+                          <span className="text-[11px] text-muted-foreground uppercase font-mono">[{cfg.scopeType || "all"}]</span>
                         </div>
                         <AppBadge variant={cfg.role_code === "STANDARD" ? "success" : "neutral"}>
                           {cfg.role_code === "STANDARD" ? `${roleName} (STANDARD)` : roleName}
@@ -796,7 +796,7 @@ export function UserInviteWizardModal({
                       return (
                         <div key={d.key} className="p-2 rounded-md border border-border bg-surface flex items-center justify-between text-xs">
                           <span className="font-medium text-foreground">{d.name}</span>
-                          <span className="text-[10px] text-muted-foreground font-mono">{cfg.role_code}</span>
+                          <span className="text-[11px] text-muted-foreground font-mono">{cfg.role_code}</span>
                         </div>
                       );
                     })}

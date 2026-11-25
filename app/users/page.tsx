@@ -92,21 +92,21 @@ const OPERATIONAL_MODULES = [
     name: "Executive Dashboards",
     desc: "Department budget & expense dashboards on live IN4 data (IT, Marketing, etc.).",
     icon: LineChart,
-    color: "text-amber-500 bg-amber-500/10 border-amber-500/30"
+    color: "text-warning-text bg-warning-soft border-warning-border"
   },
   {
     code: "CHANDAK_MEET",
     name: "Chandak Meet",
     desc: "Meetings, agendas, points with automated carry-forward, decisions & action items.",
     icon: Video,
-    color: "text-purple-500 bg-purple-500/10 border-purple-500/30"
+    color: "text-accent-soft-text bg-accent-soft border-border-active"
   },
   {
     code: "ORG_BUDGET",
     name: "Organization Budget",
     desc: "Project budgets, towers, cost heads, workings, approvals, actuals and financial reports.",
     icon: Landmark,
-    color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/30"
+    color: "text-success-text bg-success-soft border-success-border"
   }
 ];
 
@@ -891,7 +891,7 @@ export default function UserMasterPage() {
           <AppCard className={`flex-1 flex flex-col justify-start overflow-hidden ${"border-border"
             }`}>
             {/* Unified Filter Box Header */}
-            <div className="bg-surface dark:bg-surface/5 p-3 rounded-t-xl border-b border-border dark:border-border flex flex-col gap-3">
+            <div className="bg-surface/5 p-3 rounded-t-xl border-b border-border flex flex-col gap-3">
               <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
                 <div className="space-y-0.5">
                   <h2 className="text-sm font-semibold text-foreground">
@@ -922,12 +922,12 @@ export default function UserMasterPage() {
               </div>
 
               {/* Dynamic Quick Text Search bar and Department Filter */}
-              <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 mt-1 border-t border-border dark:border-border">
+              <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 mt-1 border-t border-border">
                 <div className="relative w-full sm:w-1/4 max-w-[200px] shrink-0">
                   <select
                     value={departmentFilter}
                     onChange={(e) => setDepartmentFilter(e.target.value)}
-                    className="w-full h-9 text-xs pl-3 pr-8 rounded-lg border bg-surface border-border dark:border-border appearance-none focus:outline-none focus:ring-2 focus:ring-ring text-subtle dark:text-muted"
+                    className="w-full h-9 text-xs pl-3 pr-8 rounded-lg border bg-surface border-border appearance-none focus:outline-none focus:ring-2 focus:ring-ring text-subtle dark:text-muted"
                   >
                     <option value="ALL">All departments</option>
                     {departments.map(d => (
@@ -1042,7 +1042,7 @@ export default function UserMasterPage() {
 
                             <AppTableCell className="w-28 text-center">
                               <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold inline-block ${usr.is_active
-                                  ? ("bg-success-soft text-success-text dark:text-success-text")
+                                  ? ("bg-success-soft text-success-text")
                                   : ("bg-sunken text-muted")
                                 }`}>
                                 {usr.is_active ? "Active" : "Disabled"}
@@ -1055,12 +1055,12 @@ export default function UserMasterPage() {
                                   {usr.user_code}
                                 </span>
                               ) : (
-                                <span className="text-[11px] text-muted dark:text-muted italic">NA</span>
+                                <span className="text-[11px] text-muted italic">NA</span>
                               )}
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${usr.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" ? "bg-warning-soft text-warning-text dark:text-warning-text" : "bg-sunken text-subtle"
+                              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${usr.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" ? "bg-warning-soft text-warning-text" : "bg-sunken text-subtle"
                                 }`}>
                                 {usr.roleObj?.name || "Standard Profile"}
                               </span>
@@ -1082,7 +1082,7 @@ export default function UserMasterPage() {
                                   <AppButton aria-label="Edit user profile" variant="secondary"
                                     type="button"
                                     onClick={() => router.push("/users/" + usr.id)}
-                                    className={`p-1.5 rounded-lg transition-all ${"text-muted dark:text-muted hover:text-accent-soft-text hover:bg-accent-soft border border-transparent hover:border-border"
+                                    className={`p-1.5 rounded-lg transition-all ${"text-muted hover:text-accent-soft-text hover:bg-accent-soft border border-transparent hover:border-border"
                                       }`}
                                     title="Edit user profile"
                                   >
@@ -1093,7 +1093,7 @@ export default function UserMasterPage() {
                                   <AppButton aria-label="Remove user" variant="secondary"
                                     type="button"
                                     onClick={() => initiateDeleteCheck(usr)}
-                                    className={`p-1.5 rounded-lg transition-all ${"text-muted dark:text-muted hover:text-danger-text hover:bg-danger-soft border border-transparent hover:border-danger-border"
+                                    className={`p-1.5 rounded-lg transition-all ${"text-muted hover:text-danger-text hover:bg-danger-soft border border-transparent hover:border-danger-border"
                                       }`}
                                     title="Remove user"
                                   >

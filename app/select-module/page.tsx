@@ -300,7 +300,7 @@ export default function SelectModulePage() {
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-4 py-10 sm:px-6">
         <div className="mb-8 text-center">
-          <h1 className="mb-1.5 text-[24px] font-semibold tracking-[-0.01em] text-heading">Choose a module</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading mb-1.5">Choose a module</h1>
           <p className="text-[14px] text-subtle">You can switch modules any time from the sidebar.</p>
         </div>
 

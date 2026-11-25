@@ -106,7 +106,7 @@ export function ConversationList({
       <div className="p-3.5 border-b border-border space-y-2.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
+            <span className="h-2.5 w-2.5 rounded-full bg-success ring-2 ring-emerald-500/20" />
             <h2 className="text-sm font-bold text-foreground">Chandak Messenger</h2>
           </div>
 
@@ -231,7 +231,7 @@ export function ConversationList({
                     )}
                   </span>
                   {isDirect && (
-                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-surface" />
+                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-surface" />
                   )}
                 </div>
 
@@ -245,7 +245,7 @@ export function ConversationList({
                     >
                       {displayName}
                     </span>
-                    <span className="text-[10px] text-muted shrink-0 ml-1">
+                    <span className="text-[11px] text-muted shrink-0 ml-1">
                       {formatTimestamp(c.last_message_at)}
                     </span>
                   </div>
@@ -269,7 +269,7 @@ export function ConversationList({
                           {isLastFromMe && (
                             isLastSeen ? (
                               <span title="Seen" className="inline-flex items-center shrink-0">
-                                <CheckCheck className="h-3.5 w-3.5 text-sky-400 stroke-[2.5]" />
+                                <CheckCheck className="h-3.5 w-3.5 text-info-text stroke-[2.5]" />
                               </span>
                             ) : (
                               <span title="Sent" className="inline-flex items-center shrink-0">
@@ -284,7 +284,7 @@ export function ConversationList({
                         <div className="flex items-center gap-1.5 shrink-0 ml-1">
                           {c.is_pinned && <Pin className="h-3 w-3 text-accent fill-accent shrink-0" />}
                           {c.unread_count > 0 && (
-                            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold shadow-xs animate-in zoom-in-50 duration-150">
+                            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-danger-solid text-white text-[11px] font-bold shadow-xs animate-in zoom-in-50 duration-150">
                               {c.unread_count > 99 ? "99+" : c.unread_count}
                             </span>
                           )}
@@ -312,8 +312,8 @@ export function ConversationList({
       {/* Footer Status */}
       <div className="px-3.5 py-2 border-t border-border bg-surface text-[11px] text-muted flex items-center justify-between">
         <span>{conversations.length} conversation{conversations.length === 1 ? "" : "s"}</span>
-        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
+        <span className="flex items-center gap-1 text-success-text font-medium">
+          <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" /> Live
         </span>
       </div>
     </div>

@@ -114,7 +114,7 @@ export default function DraggableLiveNotesWidget({
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-full shadow-xl transition-all duration-150 cursor-grab active:cursor-grabbing font-medium text-[13px] border ${
             isOpen
               ? "bg-primary-hover text-primary-foreground border-primary ring-4 ring-primary/20"
-              : "bg-primary text-primary-foreground border-primary hover:scale-105 active:scale-95"
+              : "bg-primary text-primary-foreground border-primary active:scale-95"
           }`}
           title="Drag to reposition · Click to open Live Notes"
         >
@@ -125,15 +125,15 @@ export default function DraggableLiveNotesWidget({
           <div className="relative">
             <StickyNote className="h-4 w-4 shrink-0" />
             <span className="absolute -top-1 -right-1 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
             </span>
           </div>
 
           <span className="font-semibold tracking-wide drop-shadow-xs">Live Notes</span>
 
           {focusedPointCode && (
-            <span className="ml-0.5 rounded bg-black/25 px-1.5 py-0.2 text-[10.5px] font-mono font-bold text-primary-foreground">
+            <span className="ml-0.5 rounded bg-black/25 px-1.5 py-0.2 text-[11px] font-mono font-bold text-primary-foreground">
               {focusedPointCode}
             </span>
           )}
@@ -164,8 +164,8 @@ export default function DraggableLiveNotesWidget({
               <div>
                 <div className="flex items-center gap-1.5">
                   <h3 className="text-[13.5px] font-semibold text-heading">Live Running Notes</h3>
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10.5px] font-semibold bg-success-soft text-success-text border border-success-border">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[11px] font-semibold bg-success-soft text-success-text border border-success-border">
+                    <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse"></span>
                     Live
                   </span>
                 </div>

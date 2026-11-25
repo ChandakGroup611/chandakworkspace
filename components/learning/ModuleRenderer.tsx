@@ -87,7 +87,7 @@ export default function ModuleRenderer({ module }: ModuleRendererProps) {
                   {module.category}
                 </span>
               </div>
-              <h1 className="text-2xl md:text-3xl font-semibold text-foreground mt-1">
+              <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading mt-1">
                 {module.title}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">

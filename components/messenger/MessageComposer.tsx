@@ -451,7 +451,7 @@ export function MessageComposer({
     <div className="relative border-t border-border bg-surface flex flex-col shrink-0">
       {/* Editing Message Banner (WhatsApp Style) */}
       {editingMessage && (
-        <div className="flex items-center justify-between px-3 py-1.5 bg-blue-500/10 border-b border-border text-xs animate-in slide-in-from-bottom-1">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-info-soft border-b border-border text-xs animate-in slide-in-from-bottom-1">
           <div className="flex items-center gap-2 min-w-0 pr-2 border-l-2 border-primary pl-2">
             <Pencil className="h-3.5 w-3.5 text-primary shrink-0" />
             <span className="font-semibold text-primary truncate">
@@ -519,13 +519,13 @@ export function MessageComposer({
                 {isImg ? (
                   <ImageIcon className="h-4 w-4 text-accent shrink-0" />
                 ) : (
-                  <FileText className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <FileText className="h-4 w-4 text-success-text shrink-0" />
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-foreground text-[11px]" title={file.name}>
                     {file.name}
                   </p>
-                  <p className="text-[10px] text-muted">{(file.size / 1024).toFixed(0)} KB</p>
+                  <p className="text-[11px] text-muted">{(file.size / 1024).toFixed(0)} KB</p>
                 </div>
 
                 {/* Verification View & Download Triggers */}
@@ -564,7 +564,7 @@ export function MessageComposer({
       {/* Mention Auto-Complete Popover */}
       {mentionQuery !== null && matchingMentionUsers.length > 0 && (
         <div className="absolute bottom-full left-3 mb-1 w-64 bg-elevated border border-border rounded-lg shadow-xl overflow-hidden z-20 animate-in fade-in slide-in-from-bottom-2 duration-100">
-          <div className="px-2.5 py-1.5 border-b border-border bg-surface text-[10px] font-semibold text-muted uppercase tracking-wider">
+          <div className="px-2.5 py-1.5 border-b border-border bg-surface text-[11px] font-semibold text-muted uppercase tracking-wider">
             Mention Colleague
           </div>
           <div className="divide-y divide-border/40 max-h-48 overflow-y-auto">
@@ -574,7 +574,7 @@ export function MessageComposer({
               className="w-full px-3 py-1.5 text-left text-xs hover:bg-surface-hover flex items-center justify-between"
             >
               <span className="font-semibold text-accent">@all</span>
-              <span className="text-[10px] text-muted">Notify everyone</span>
+              <span className="text-[11px] text-muted">Notify everyone</span>
             </button>
             {matchingMentionUsers.map((u) => (
               <button
@@ -583,12 +583,12 @@ export function MessageComposer({
                 onClick={() => handleSelectMention(u)}
                 className="w-full px-3 py-1.5 text-left text-xs hover:bg-surface-hover flex items-center gap-2"
               >
-                <span className="h-5 w-5 rounded-full bg-accent-soft text-accent-soft-text text-[10px] font-bold flex items-center justify-center shrink-0">
+                <span className="h-5 w-5 rounded-full bg-accent-soft text-accent-soft-text text-[11px] font-bold flex items-center justify-center shrink-0">
                   {u.full_name[0]?.toUpperCase()}
                 </span>
                 <span className="truncate text-foreground font-medium">{u.full_name}</span>
                 {u.department_name && (
-                  <span className="text-[10px] text-muted truncate ml-auto">({u.department_name})</span>
+                  <span className="text-[11px] text-muted truncate ml-auto">({u.department_name})</span>
                 )}
               </button>
             ))}
@@ -604,7 +604,7 @@ export function MessageComposer({
               key={emoji}
               type="button"
               onClick={() => handleInsertEmoji(emoji)}
-              className="h-7 w-7 text-base rounded hover:bg-surface-hover flex items-center justify-center transition-transform hover:scale-125"
+              className="h-7 w-7 text-base rounded hover:bg-surface-hover flex items-center justify-center transition-transform"
             >
               {emoji}
             </button>
@@ -614,10 +614,10 @@ export function MessageComposer({
 
       {/* Recording State Overlay */}
       {isRecording ? (
-        <div className="flex items-center justify-between px-4 py-2.5 bg-rose-500/10 border-t border-rose-500/30">
+        <div className="flex items-center justify-between px-4 py-2.5 bg-danger-soft border-t border-danger-border">
           <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-rose-500 animate-ping shrink-0" />
-            <span className="text-xs font-semibold text-rose-500">Recording voice note...</span>
+            <span className="h-3 w-3 rounded-full bg-danger-solid animate-ping shrink-0" />
+            <span className="text-xs font-semibold text-danger-text">Recording voice note...</span>
             <span className="text-xs font-mono font-bold text-foreground ml-2">
               {formatTimer(recordingSeconds)}
             </span>
@@ -634,7 +634,7 @@ export function MessageComposer({
             <button
               type="button"
               onClick={stopAndSendVoiceRecording}
-              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded bg-danger-solid text-white hover:bg-danger-solid transition-colors shadow-sm"
             >
               <Send className="h-3 w-3" />
               <span>Send Audio</span>

@@ -530,7 +530,7 @@ export default function MeetingDetailTabs({
                           {pt.code}
                         </span>
                         {pt.carry_forward_count > 0 && (
-                          <span className="inline-flex items-center gap-1 rounded bg-warning-soft px-1.5 py-0.5 text-[10.5px] font-medium text-warning-text border border-warning-border">
+                          <span className="inline-flex items-center gap-1 rounded bg-warning-soft px-1.5 py-0.5 text-[11px] font-medium text-warning-text border border-warning-border">
                             <RotateCcw className="h-2.5 w-2.5" /> {pt.carry_forward_count}x carried
                           </span>
                         )}

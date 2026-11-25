@@ -33,9 +33,9 @@ export function AttachmentPreviewModal({ attachment, onClose }: AttachmentPrevie
             {isImage ? (
               <ImageIcon className="h-5 w-5 text-accent shrink-0" />
             ) : isPdf ? (
-              <FileText className="h-5 w-5 text-rose-500 shrink-0" />
+              <FileText className="h-5 w-5 text-danger-text shrink-0" />
             ) : (
-              <FileSpreadsheet className="h-5 w-5 text-emerald-500 shrink-0" />
+              <FileSpreadsheet className="h-5 w-5 text-success-text shrink-0" />
             )}
             <div className="min-w-0">
               <h3 className="text-sm font-semibold text-foreground truncate" title={attachment.name}>

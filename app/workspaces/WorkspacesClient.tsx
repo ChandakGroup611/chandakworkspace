@@ -792,7 +792,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             {depth > 0 && <span className={"text-muted"}>↳</span>}
             <div className={`font-bold ${"text-foreground"}`}>{w.code}</div>
           </div>
-          <div className={`text-[10px] text-muted truncate ${depth > 0 ? "ml-4" : ""}`}>{w.name}</div>
+          <div className={`text-[11px] text-muted truncate ${depth > 0 ? "ml-4" : ""}`}>{w.name}</div>
         </AppButton>
         {w.subWorkspaces && w.subWorkspaces.length > 0 && renderWorkspaceTree(w.subWorkspaces, depth + 1)}
       </React.Fragment>

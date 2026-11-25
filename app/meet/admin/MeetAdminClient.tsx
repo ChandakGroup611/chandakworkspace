@@ -1016,9 +1016,9 @@ export default function MeetAdminClient({
               <span className="text-2xl font-bold text-danger-text">{breachedCount}</span>
               <p className="text-xs text-danger-text font-medium mt-1">SLA Breached</p>
             </div>
-            <div className="p-4 rounded-xl border border-purple-500/30 bg-purple-500/10 text-center">
-              <span className="text-2xl font-bold text-purple-400">{escalatedCount}</span>
-              <p className="text-xs text-purple-300 font-medium mt-1">Escalated L2+</p>
+            <div className="p-4 rounded-xl border border-border-active bg-accent-soft text-center">
+              <span className="text-2xl font-bold text-accent-soft-text">{escalatedCount}</span>
+              <p className="text-xs text-accent-soft-text font-medium mt-1">Escalated L2+</p>
             </div>
             <div className="p-4 rounded-xl border border-border bg-elevated text-center">
               <span className="text-2xl font-bold text-foreground">{alertRules.length}</span>
@@ -1051,7 +1051,7 @@ export default function MeetAdminClient({
                       <button
                         onClick={() => handleAckEscalation(ins.id)}
                         disabled={isPending}
-                        className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs"
+                        className="px-3 py-1 rounded bg-info hover:bg-info text-white font-semibold text-xs"
                       >
                         Acknowledge
                       </button>

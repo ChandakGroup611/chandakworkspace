@@ -87,7 +87,7 @@ export default function NotificationProviderForm({ initialData }: { initialData:
           <label className="block text-xs font-semibold text-subtle mb-1">
             {provider === 'RESEND' ? 'API Key' : 'App Password'}
             {initialData?.hasPassword && (
-              <span className="text-[11px] font-normal text-emerald-600 dark:text-emerald-400 ml-2">Stored securely</span>
+              <span className="text-[11px] font-normal text-success-text ml-2">Stored securely</span>
             )}
           </label>
           <input 

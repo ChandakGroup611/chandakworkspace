@@ -100,7 +100,7 @@ export default function ApprovalInboxClient({ initialItems }: ApprovalInboxClien
               }`}
             >
               <span>{label}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              <span className={`px-1.5 py-0.2 rounded-full text-[11px] ${
                 selectedModule === mod ? "bg-background text-foreground" : "bg-muted text-muted-foreground"
               }`}>
                 {count}
@@ -160,7 +160,7 @@ export default function ApprovalInboxClient({ initialItems }: ApprovalInboxClien
                       {item.submittedBy}
                     </AppTableCell>
                     <AppTableCell>
-                      <AppBadge variant="warning" className="text-[10px]">
+                      <AppBadge variant="warning" className="text-[11px]">
                         {item.status}
                       </AppBadge>
                     </AppTableCell>

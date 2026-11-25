@@ -7,7 +7,7 @@ export default function RootLoading() {
       <ChandakLoader
         size="lg"
         title="Chandak Workspace"
-        subtitle="Initializing enterprise matrix…"
+        subtitle="Getting your workspace ready…"
       />
     </div>
   );

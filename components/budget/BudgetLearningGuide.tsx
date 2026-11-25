@@ -689,12 +689,12 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
                     <h3 className="font-semibold text-xs text-foreground leading-snug">
                       {phase.shortName}
                     </h3>
-                    <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                    <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
                       {phase.categoryBadge}
                     </p>
                   </div>
 
-                  <div className="pt-1.5 border-t border-border/60 flex items-center justify-between text-[10px]">
+                  <div className="pt-1.5 border-t border-border/60 flex items-center justify-between text-[11px]">
                     <span className="text-muted-foreground truncate">{phase.tabName}</span>
                     {isSelected && (
                       <span className="font-semibold text-primary flex items-center shrink-0">
@@ -835,8 +835,8 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
                         </div>
 
                         <div className="pt-1.5 flex items-center gap-1.5">
-                          <span className="text-[10px] uppercase font-semibold text-muted-foreground">Fields:</span>
-                          <span className="font-mono text-[10.5px] text-foreground bg-sunken px-1.5 py-0.5 rounded border border-border truncate max-w-full">
+                          <span className="text-[11px] uppercase font-semibold text-muted-foreground">Fields:</span>
+                          <span className="font-mono text-[11px] text-foreground bg-sunken px-1.5 py-0.5 rounded border border-border truncate max-w-full">
                             {step.fields}
                           </span>
                         </div>
@@ -972,9 +972,9 @@ export default function BudgetLearningGuide({ projectId = "1", version, onNaviga
                       <td className="py-3 px-3 font-mono text-[11px] text-muted-foreground">{f.type}</td>
                       <td className="py-3 px-3">
                         {f.isRequired ? (
-                          <span className="px-1.5 py-0.5 rounded bg-warning-soft text-warning-text border border-warning-border font-semibold text-[10px]">Required</span>
+                          <span className="px-1.5 py-0.5 rounded bg-warning-soft text-warning-text border border-warning-border font-semibold text-[11px]">Required</span>
                         ) : (
-                          <span className="text-muted-foreground text-[10px]">Optional</span>
+                          <span className="text-muted-foreground text-[11px]">Optional</span>
                         )}
                       </td>
                       <td className="py-3 px-3 text-muted-foreground">{f.description}</td>

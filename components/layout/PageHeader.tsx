@@ -39,7 +39,7 @@ export function PageHeader({ title, description, icon, badge, actions, breadcrum
         )}
         <div className="flex flex-wrap items-center gap-2.5">
           {icon && <span className="shrink-0 text-accent-soft-text">{icon}</span>}
-          <h1 className="text-[20px] font-semibold leading-tight tracking-[-0.01em] text-heading sm:text-[22px]">{title}</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading leading-tight">{title}</h1>
           {badge && <span className="shrink-0">{badge}</span>}
         </div>
         {description && <p className="max-w-3xl text-[13.5px] text-muted">{description}</p>}

@@ -47,9 +47,9 @@ export function NoAccessCard({ moduleCode = "WORKSPACE", reason }: NoAccessCardP
         </div>
 
         {submitted ? (
-          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 text-xs text-foreground space-y-2">
-            <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto" />
-            <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+          <div className="bg-success-soft border border-success-border rounded-lg p-4 text-xs text-foreground space-y-2">
+            <CheckCircle2 className="h-5 w-5 text-success-text mx-auto" />
+            <p className="font-semibold text-success-text">
               Access Request Submitted
             </p>
             <p className="text-muted-foreground">

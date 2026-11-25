@@ -786,17 +786,17 @@ function RequirementsPageContent() {
             className={cn(
               "group relative flex flex-col justify-between p-3 rounded-xl border text-left transition-all",
               kpiCard === "OVERDUE"
-                ? "bg-elevated border-purple-500/50 ring-1 ring-purple-500/50 shadow-xs"
-                : "bg-surface border-border hover:border-purple-500/30 hover:bg-surface-hover"
+                ? "bg-elevated border-border-active ring-1 ring-purple-500/50 shadow-xs"
+                : "bg-surface border-border hover:border-border-active hover:bg-surface-hover"
             )}
           >
             <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="text-[11.5px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Overdue</span>
-              <div className="rounded-lg p-1.5 bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <span className="text-[11.5px] font-semibold text-accent-soft-text uppercase tracking-wider">Overdue</span>
+              <div className="rounded-lg p-1.5 bg-accent-soft text-accent-soft-text">
                 <Clock className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-xl font-bold tracking-tight text-purple-600 dark:text-purple-400">{countOverdue}</div>
+            <div className="text-xl font-bold tracking-tight text-accent-soft-text">{countOverdue}</div>
           </button>
         </div>
 
@@ -1114,7 +1114,7 @@ function RequirementsPageContent() {
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-[12.5px] font-medium text-accent-soft-text">{r.id}</span>
                             {overdue && (
-                              <span className="inline-flex items-center gap-1 rounded bg-danger-soft px-1.5 py-0.5 text-[10.5px] font-bold text-danger-text">
+                              <span className="inline-flex items-center gap-1 rounded bg-danger-soft px-1.5 py-0.5 text-[11px] font-bold text-danger-text">
                                 <Clock className="h-3 w-3" />
                                 Overdue
                               </span>
@@ -1214,7 +1214,7 @@ function RequirementsPageContent() {
                               <div className="flex items-center gap-1.5">
                                 <span>{r.id}</span>
                                 {overdue && (
-                                  <span className="inline-flex items-center gap-0.5 rounded bg-danger-soft px-1 py-0.2 text-[10px] font-bold text-danger-text" title="Overdue">
+                                  <span className="inline-flex items-center gap-0.5 rounded bg-danger-soft px-1 py-0.2 text-[11px] font-bold text-danger-text" title="Overdue">
                                     <Clock className="h-3 w-3" />
                                   </span>
                                 )}

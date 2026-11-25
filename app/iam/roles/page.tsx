@@ -145,7 +145,7 @@ export default function IAMRoleBuilder() {
         {/* Left Sidebar: Roles List */}
         <div className="lg:col-span-1 border border-border bg-surface rounded-lg flex flex-col overflow-hidden shadow-sm">
           <div className="p-4 border-b border-border bg-surface dark:bg-surface/[0.02] flex items-center justify-between shrink-0">
-            <h3 className="font-semibold text-sm">Enterprise roles</h3>
+            <h3 className="font-semibold text-sm">Roles</h3>
             <AppButton aria-label="Add" size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => { setIsCreating(true); setSelectedRole(null); }}>
               <Plus className="w-4 h-4" />
             </AppButton>

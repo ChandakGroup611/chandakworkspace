@@ -92,7 +92,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
 
         <div>
           {effectiveReadOnly || !canEditTitle ? (
-            <h1 className="w-full whitespace-normal break-words text-[20px] font-semibold leading-snug text-heading">{task.title || task.subject}</h1>
+            <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading w-full whitespace-normal break-words leading-snug">{task.title || task.subject}</h1>
           ) : (
             <EditableTaskTitle task={task} asHeading={true} readOnly={effectiveReadOnly || !canEditTitle} />
           )}

@@ -250,7 +250,7 @@ function TicketDetailsContent({ ticketId }: { ticketId: string }) {
             </div>
           ) : (
             <div className="group flex items-start gap-2">
-              <h1 className="w-full whitespace-normal break-words text-[20px] font-semibold leading-snug text-heading">{ticketData.title}</h1>
+              <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading w-full whitespace-normal break-words leading-snug">{ticketData.title}</h1>
               {inlineEdit && (
                 <button
                   type="button"

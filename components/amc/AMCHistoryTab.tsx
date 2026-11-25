@@ -142,19 +142,19 @@ export function AMCHistoryTab({ amcId }: AMCHistoryTabProps) {
       case "INSERT":
         return {
           icon: PlusCircle,
-          color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+          color: "text-success-text bg-success-soft border-success-border",
           label: "CREATED"
         };
       case "UPDATE":
         return {
           icon: Edit,
-          color: "text-sky-500 bg-sky-500/10 border-sky-500/20",
+          color: "text-info-text bg-info-soft border-info-border",
           label: "UPDATED"
         };
       case "DELETE":
         return {
           icon: AlertCircle,
-          color: "text-rose-500 bg-rose-500/10 border-rose-500/20",
+          color: "text-danger-text bg-danger-soft border-danger-border",
           label: "DELETED"
         };
       default:
@@ -225,7 +225,7 @@ export function AMCHistoryTab({ amcId }: AMCHistoryTabProps) {
                          log.operation === 'DELETE' ? 'deleted this contract record' :
                          'updated contract details'}
                       </span>
-                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide ${badge.color}`}>
+                      <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold tracking-wide ${badge.color}`}>
                         {badge.label}
                       </span>
                     </div>

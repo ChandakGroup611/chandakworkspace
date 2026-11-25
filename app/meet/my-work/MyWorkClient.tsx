@@ -456,7 +456,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
                               {effectiveDue}
                             </span>
                             {task.revised_due_date && (
-                              <span className="text-[10.5px] text-muted line-through">
+                              <span className="text-[11px] text-muted line-through">
                                 Original: {task.due_date}
                               </span>
                             )}
@@ -760,16 +760,16 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
                     <Calendar className="h-3.5 w-3.5 text-primary" />
                     Due: {formatPrettyDate(newTaskDueDate)}
                   </span>
-                  <span className="text-[10.5px] font-medium px-2 py-0.5 rounded bg-surface border border-border text-muted">
+                  <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-surface border border-border text-muted">
                     {newTaskTat} working {newTaskTat === 1 ? "day" : "days"}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-[10.5px] text-muted">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted">
                   <span className="inline-flex items-center gap-1">
                     <Clock className="h-3 w-3 text-muted" /> Mon–Sat calendar
                   </span>
                   {newTaskSkippedDays > 0 && (
-                    <span className="inline-flex items-center gap-1 text-amber-500 font-medium bg-amber-500/10 px-1.5 py-0.5 rounded">
+                    <span className="inline-flex items-center gap-1 text-warning-text font-medium bg-warning-soft px-1.5 py-0.5 rounded">
                       ⚡ {newTaskSkippedDays} non-working {newTaskSkippedDays === 1 ? "day" : "days"} skipped (Sundays / statutory holidays)
                     </span>
                   )}
@@ -789,7 +789,7 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
                     <ShieldCheck className="h-3 w-3 text-primary" />
                     Requires Verification Sign-off
                   </span>
-                  <p className="text-[10.5px] text-muted">
+                  <p className="text-[11px] text-muted">
                     Sign-off needed from assigner / chair before task completion is finalized.
                   </p>
                 </div>

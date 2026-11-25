@@ -198,7 +198,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
             >
               <div className="flex items-center justify-between mb-2">
                 <span
-                  className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                  className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded ${
                     isActive
                       ? "bg-theme-btn-primary text-theme-btn-primary-text"
                       : "bg-elevated text-subtle"
@@ -392,7 +392,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                       <td className="py-3.5 px-4">
                         {p.carry_count > 0 ? (
                           <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
                               p.carry_count >= 3
                                 ? "bg-danger-soft text-danger-text border border-danger-border"
                                 : "bg-warning-soft text-warning-text"
@@ -446,12 +446,12 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                       <td className="py-3.5 px-4 font-bold text-warning-text">{p.carry_count} Sessions</td>
                       <td className="py-3.5 px-4">
                         {p.is_escalated ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-danger-soft text-danger-text border border-danger-border">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-danger-soft text-danger-text border border-danger-border">
                             <AlertCircle className="w-3 h-3" />
                             CRITICAL (3+ CARRIES)
                           </span>
                         ) : (
-                          <span className="text-[10px] text-warning-text font-medium">Standard Carry</span>
+                          <span className="text-[11px] text-warning-text font-medium">Standard Carry</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
@@ -551,7 +551,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                           <div className="w-16 h-2 bg-elevated rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full ${
-                                o.tat_compliance >= 80 ? "bg-emerald-500" : o.tat_compliance >= 60 ? "bg-amber-500" : "bg-rose-500"
+                                o.tat_compliance >= 80 ? "bg-success" : o.tat_compliance >= 60 ? "bg-warning" : "bg-danger-solid"
                               }`}
                               style={{ width: `${o.tat_compliance}%` }}
                             />
@@ -646,19 +646,19 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
               {/* MoM Metadata Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-elevated rounded-lg border border-border">
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-subtle block">Meeting Title</span>
+                  <span className="text-[11px] uppercase font-semibold text-subtle block">Meeting Title</span>
                   <span className="font-semibold">{selectedMoM.snapshot?.meeting_title || selectedMoM.session?.meeting?.title}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-subtle block">Date #</span>
+                  <span className="text-[11px] uppercase font-semibold text-subtle block">Date #</span>
                   <span>{selectedMoM.snapshot?.session_code || selectedMoM.session?.code}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-subtle block">Chair</span>
+                  <span className="text-[11px] uppercase font-semibold text-subtle block">Chair</span>
                   <span>{selectedMoM.snapshot?.chair || "Executive Chair"}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-subtle block">Minute Taker</span>
+                  <span className="text-[11px] uppercase font-semibold text-subtle block">Minute Taker</span>
                   <span>{selectedMoM.snapshot?.minute_taker || "Assigned"}</span>
                 </div>
               </div>
@@ -721,7 +721,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
                       <div key={idx} className="p-3 bg-elevated border border-border rounded-lg">
                         <span className="font-mono font-bold text-heading">{dec.code}</span>
                         <p className="mt-1 font-medium">{dec.text}</p>
-                        <span className="text-[10px] text-subtle block mt-1">Decided by: {dec.decided_by}</span>
+                        <span className="text-[11px] text-subtle block mt-1">Decided by: {dec.decided_by}</span>
                       </div>
                     ))}
                   </div>

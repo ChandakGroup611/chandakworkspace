@@ -5,7 +5,7 @@ import { fetchRoles, fetchPermissions } from "@/lib/actions/iam";
 
 export const metadata: Metadata = {
   title: "IAM governance cockpit | Chandak Workspace",
-  description: "Enterprise identity & access management governance dashboard",
+  description: "Identity and access overview",
 };
 
 export const dynamic = "force-dynamic";

@@ -38,7 +38,7 @@ export function DetailHeader({
         )}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {code && <span className="font-mono text-[12.5px] font-medium text-accent-soft-text">{code}</span>}
-          <h1 className="min-w-0 text-[22px] font-semibold leading-tight tracking-[-0.01em] text-heading">{title}</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading min-w-0 leading-tight">{title}</h1>
           {status}
         </div>
         {meta && <p className="mt-1 text-[13px] text-muted">{meta}</p>}

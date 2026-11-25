@@ -70,7 +70,7 @@ export default function LearningHubClient() {
       <div className="w-full text-center space-y-4 pt-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-accent-soft text-primary border border-border-active mb-1">
           <GraduationCap className="h-4 w-4" />
-          <span>Enterprise platform learning hub & knowledge center</span>
+          <span>Learning hub</span>
         </div>
         
         <h1 className="text-2xl md:text-4xl font-semibold tracking-tight text-foreground">

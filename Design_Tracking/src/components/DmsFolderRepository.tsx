@@ -305,7 +305,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           <div className="flex items-center gap-2">
             <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading flex items-center gap-2">
               <FolderTree className="h-5 w-5 text-primary" />
-              <span>Enterprise DMS folder repository</span>
+              <span>DMS folders</span>
             </h1>
             <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-primary">
               6-Layer RBAC

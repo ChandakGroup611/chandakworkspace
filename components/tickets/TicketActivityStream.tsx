@@ -361,14 +361,14 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
     if (et === "STATE_CHANGE" || et === "STATUS_CHANGE") {
       return { 
         icon: ShieldCheck, 
-        color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20", 
+        color: "text-success-text bg-success-soft border-success-border", 
         label: "STATUS CHANGE" 
       };
     }
     if (et === "PRIORITY_CHANGE" || activity.diffs.some(d => d.field.toLowerCase().includes("priority"))) {
       return { 
         icon: Flame, 
-        color: "text-rose-500 bg-rose-500/10 border-rose-500/20", 
+        color: "text-danger-text bg-danger-soft border-danger-border", 
         label: "PRIORITY" 
       };
     }
@@ -382,27 +382,27 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
     if (et === "DUE_DATE_CHANGE" || activity.diffs.some(d => d.field.toLowerCase().includes("due date"))) {
       return { 
         icon: Calendar, 
-        color: "text-purple-500 bg-purple-500/10 border-purple-500/20", 
+        color: "text-accent-soft-text bg-accent-soft border-border-active", 
         label: "DUE DATE" 
       };
     }
     if (et === "COMMENT") {
       return { 
         icon: MessageSquare, 
-        color: "text-sky-500 bg-sky-500/10 border-sky-500/20", 
+        color: "text-info-text bg-info-soft border-info-border", 
         label: "REMARK" 
       };
     }
     if (et === "CREATE") {
       return { 
         icon: PlusCircle, 
-        color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20", 
+        color: "text-success-text bg-success-soft border-success-border", 
         label: "CREATE" 
       };
     }
     return { 
       icon: Edit, 
-      color: "text-amber-500 bg-amber-500/10 border-amber-500/20", 
+      color: "text-warning-text bg-warning-soft border-warning-border", 
       label: "UPDATE" 
     };
   };
@@ -453,7 +453,7 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
                       <span className="text-xs text-foreground/90 font-medium">
                         {activity.action}
                       </span>
-                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide ${badge.color}`}>
+                      <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold tracking-wide ${badge.color}`}>
                         {badge.label}
                       </span>
                     </div>
@@ -517,7 +517,7 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
                     <div className="mt-2.5 flex items-start gap-2 rounded-md border border-border/80 bg-surface p-2.5 text-xs text-foreground/90 shadow-xs">
                       <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-theme-icon" />
                       <div className="flex-1">
-                        <span className="mb-0.5 block text-[10.5px] font-bold uppercase tracking-wider text-muted">Remark / Note</span>
+                        <span className="mb-0.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Remark / Note</span>
                         <span className="italic leading-relaxed">&ldquo;{remark}&rdquo;</span>
                       </div>
                     </div>

@@ -141,7 +141,7 @@ export function NewGroupModal({
           <div className="p-4 border-b border-border space-y-3 bg-surface/40">
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">
-                Group Title <span className="text-rose-500">*</span>
+                Group Title <span className="text-danger-text">*</span>
               </label>
               <input
                 type="text"

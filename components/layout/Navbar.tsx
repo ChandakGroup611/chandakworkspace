@@ -201,7 +201,7 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
           title="Chandak Mitra (Ctrl+/)"
           className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-hover group transition-colors"
         >
-          <ChandakMitraIcon className="h-6 w-6 transition-transform group-hover:scale-110 shrink-0" animated />
+          <ChandakMitraIcon className="h-6 w-6 transition-transform shrink-0" animated />
         </button>
 
         <div className="mx-2 hidden h-6 w-px bg-border lg:block" aria-hidden />

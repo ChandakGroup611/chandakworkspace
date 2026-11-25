@@ -101,11 +101,11 @@ export function WorkspaceFilterMultiSelect({
         <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
           <span>{label}</span>
           {selectedIds.length > 0 ? (
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-accent-soft text-primary">
+            <span className="px-1.5 py-0.2 rounded-full text-[11px] font-semibold bg-accent-soft text-primary">
               {selectedIds.length}
             </span>
           ) : (
-            <span className="text-[10px] text-muted font-normal">
+            <span className="text-[11px] text-muted font-normal">
               (multi-select)
             </span>
           )}
@@ -265,7 +265,7 @@ export function WorkspaceFilterMultiSelect({
                     </div>
 
                     {option.sublabel && (
-                      <span className="text-[10px] text-muted shrink-0 pl-1 font-mono">
+                      <span className="text-[11px] text-muted shrink-0 pl-1 font-mono">
                         {option.sublabel}
                       </span>
                     )}

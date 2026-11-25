@@ -44,11 +44,11 @@
     font-family: var(--syne); font-size: 14px; font-weight: 700; color: #fff;
   }
   .logo-text { font-family: var(--syne); font-size: 15px; font-weight: 600; color: var(--text1); }
-  .logo-sub { font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.05em; }
+  .logo-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.05em; }
 
   .nav { padding: 12px 10px; flex: 1; }
   .nav-section { margin-bottom: 20px; }
-  .nav-label { font-size: 9px; font-family: var(--mono); color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; padding: 0 8px; margin-bottom: 6px; }
+  .nav-label { font-size: 11px; font-family: var(--mono); color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; padding: 0 8px; margin-bottom: 6px; }
   .nav-item {
     display: flex; align-items: center; gap: 9px;
     padding: 7px 8px; border-radius: var(--r8);
@@ -59,7 +59,7 @@
   .nav-item.active { background: rgba(110,123,255,0.15); color: var(--accent); }
   .nav-item i { font-size: 15px; }
   .nav-badge {
-    margin-left: auto; font-size: 10px; font-family: var(--mono);
+    margin-left: auto; font-size: 11px; font-family: var(--mono);
     background: rgba(110,123,255,0.2); color: var(--accent);
     padding: 1px 6px; border-radius: 20px;
   }
@@ -82,7 +82,7 @@
     font-size: 11px; font-weight: 600; color: #fff; flex-shrink: 0;
   }
   .user-name { font-size: 12px; font-weight: 500; color: var(--text1); }
-  .user-role { font-size: 10px; color: var(--text3); }
+  .user-role { font-size: 11px; color: var(--text3); }
 
   /* MAIN */
   .main { background: var(--bg); display: flex; flex-direction: column; }
@@ -170,7 +170,7 @@
   .metric-card.amber::before { background: var(--amber); }
   .metric-card.red::before { background: var(--red); }
 
-  .metric-label { font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .metric-label { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
   .metric-value { font-family: var(--syne); font-size: 24px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
   @media (min-width: 640px) {
     .metric-value { font-size: 28px; }
@@ -222,7 +222,7 @@
   /* TICKET TABLE */
   .ticket-table { width: 100%; border-collapse: collapse; }
   .ticket-table th {
-    font-size: 10px; color: var(--text3); font-family: var(--mono);
+    font-size: 11px; color: var(--text3); font-family: var(--mono);
     text-transform: uppercase; letter-spacing: 0.08em;
     padding: 0 0 10px 0; text-align: left; font-weight: 400;
     border-bottom: 0.5px solid var(--border);
@@ -236,7 +236,7 @@
 
   .ticket-id { font-family: var(--mono); font-size: 11px; color: var(--text3); }
   .ticket-title { color: var(--text1); font-size: 12.5px; max-width: 200px; }
-  .ticket-title small { display: block; color: var(--text3); font-size: 10px; margin-top: 2px; }
+  .ticket-title small { display: block; color: var(--text3); font-size: 11px; margin-top: 2px; }
 
   .priority-dot {
     width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px;
@@ -247,7 +247,7 @@
   .p-low { background: var(--text3); }
 
   .status-badge {
-    font-size: 10px; font-family: var(--mono); padding: 3px 8px;
+    font-size: 11px; font-family: var(--mono); padding: 3px 8px;
     border-radius: 20px; white-space: nowrap; font-weight: 500;
   }
   .s-todo { background: rgba(139,145,168,0.15); color: var(--text2); }
@@ -257,7 +257,7 @@
   .s-blocked { background: rgba(255,95,126,0.15); color: var(--red); }
 
   .type-tag {
-    font-size: 10px; padding: 2px 7px; border-radius: var(--r4);
+    font-size: 11px; padding: 2px 7px; border-radius: var(--r4);
     font-family: var(--mono); border: 0.5px solid;
   }
   .t-bug { color: var(--red); border-color: rgba(255,95,126,0.3); background: rgba(255,95,126,0.07); }
@@ -268,7 +268,7 @@
   .mini-avatar {
     width: 22px; height: 22px; border-radius: 50%;
     display: inline-flex; align-items: center; justify-content: center;
-    font-size: 9px; font-weight: 600; color: #fff;
+    font-size: 11px; font-weight: 600; color: #fff;
     border: 1.5px solid var(--bg2);
   }
   .a1 { background: var(--accent); }
@@ -293,7 +293,7 @@
   }
   .sprint-col-name { font-size: 11px; font-weight: 500; color: var(--text2); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; }
   .sprint-count {
-    font-size: 10px; font-family: var(--mono);
+    font-size: 11px; font-family: var(--mono);
     background: rgba(0,0,0,0.07); color: var(--text3);
     padding: 1px 6px; border-radius: 10px;
   }
@@ -311,7 +311,7 @@
   .sprint-card:hover { border-color: var(--border2); }
   .sprint-card-title { font-size: 12px; color: var(--text1); margin-bottom: 7px; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
   .sprint-card-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-  .sprint-card-id { font-size: 10px; font-family: var(--mono); color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sprint-card-id { font-size: 11px; font-family: var(--mono); color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* TEAM PERF */
   .team-list { display: flex; flex-direction: column; gap: 12px; }
@@ -320,10 +320,10 @@
   }
   .tm-info { flex: 1; min-width: 0; }
   .tm-name { font-size: 12.5px; color: var(--text1); font-weight: 500; margin-bottom: 4px; }
-  .tm-role { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+  .tm-role { font-size: 11px; color: var(--text3); font-family: var(--mono); }
   .tm-stats { display: flex; align-items: center; gap: 10px; text-align: right; flex-shrink: 0; }
   .tm-stat-val { font-size: 14px; font-family: var(--syne); font-weight: 600; }
-  .tm-stat-label { font-size: 9px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; }
+  .tm-stat-label { font-size: 11px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; }
   .tm-bar { flex: 1; }
 
   /* ACTIVITY FEED */
@@ -345,7 +345,7 @@
   .activity-dot.blocked { background: rgba(255,95,126,0.15); color: var(--red); }
   .activity-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
   .activity-text strong { color: var(--text1); font-weight: 500; }
-  .activity-time { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+  .activity-time { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
 
   /* CHART AREA */
   .chart-wrap { position: relative; width: 100%; height: 200px; }
@@ -356,14 +356,14 @@
   .vel-bars { display: flex; gap: 3px; align-items: flex-end; height: 80px; width: 100%; }
   .vel-bar { flex: 1; border-radius: 3px 3px 0 0; min-height: 4px; transition: opacity 0.2s; }
   .vel-bar:hover { opacity: 0.8; }
-  .vel-label { font-size: 9px; font-family: var(--mono); color: var(--text3); margin-top: 5px; }
+  .vel-label { font-size: 11px; font-family: var(--mono); color: var(--text3); margin-top: 5px; }
 
   /* SPARKLINE */
   .sparkline-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 0.5px solid var(--border); }
   .sparkline-row:last-child { border: none; margin-bottom: 0; padding-bottom: 0; }
   .spark-info { flex: 1; }
   .spark-name { font-size: 12.5px; color: var(--text1); margin-bottom: 2px; }
-  .spark-meta { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+  .spark-meta { font-size: 11px; color: var(--text3); font-family: var(--mono); }
   .spark-val { font-family: var(--syne); font-size: 18px; font-weight: 600; }
   .spark-svg { width: 80px; height: 36px; flex-shrink: 0; }
 
@@ -382,13 +382,13 @@
   .deadline-icon { font-size: 18px; }
   .deadline-info { flex: 1; }
   .deadline-name { font-size: 12.5px; color: var(--text1); font-weight: 500; }
-  .deadline-proj { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+  .deadline-proj { font-size: 11px; color: var(--text3); font-family: var(--mono); }
   .deadline-when { font-size: 11px; font-family: var(--mono); color: var(--amber); font-weight: 500; }
   .deadline-when.urgent { color: var(--red); }
 
   /* SECTION LABEL */
   .section-label {
-    font-size: 9px; font-family: var(--mono); color: var(--text3);
+    font-size: 11px; font-family: var(--mono); color: var(--text3);
     letter-spacing: 0.12em; text-transform: uppercase;
     margin-bottom: 12px; padding-bottom: 6px;
     border-bottom: 0.5px solid var(--border);
@@ -424,7 +424,7 @@
     display: flex; align-items: center; gap: 12px;
   }
   .health-icon { font-size: 20px; }
-  .health-label { font-size: 10px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; }
+  .health-label { font-size: 11px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; }
   .health-value { font-family: var(--syne); font-size: 20px; font-weight: 700; margin-top: 2px; }
 
 /* Enhanced Gradients for Metric Cards */

@@ -84,7 +84,7 @@ export default function PerformanceCommandCenter() {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Enterprise performance command center</h1>
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">Team performance</h1>
         <div className="flex items-center gap-4">
           <AppButton 
             onClick={toggleKillSwitch}

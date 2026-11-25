@@ -18,7 +18,7 @@ export default async function MigrationPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">
           Data migration
         </h1>
         <p className="text-sm text-muted">Generate intelligent import templates and upload bulk data.</p>

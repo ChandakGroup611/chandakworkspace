@@ -137,7 +137,7 @@ export function CreateTaskFromMessageModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
-            <CheckSquare className="h-4 w-4 text-emerald-500" />
+            <CheckSquare className="h-4 w-4 text-success-text" />
             <span>Convert Message to Task</span>
           </div>
           <button
@@ -284,7 +284,7 @@ export function CreateTaskFromMessageModal({
             <button
               type="submit"
               disabled={submitting || !title.trim()}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-emerald-600 text-white font-medium text-xs hover:bg-emerald-700 transition-colors shadow-xs disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-success text-white font-medium text-xs hover:bg-success transition-colors shadow-xs disabled:opacity-60"
             >
               {submitting ? (
                 <>

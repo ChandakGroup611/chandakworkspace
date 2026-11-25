@@ -8,7 +8,7 @@ import IAMGovernanceCockpit from "@/components/iam/IAMGovernanceCockpit";
 
 export const metadata = {
   title: "Workspace RBAC Access Policies | Chandak Workspace",
-  description: "Enterprise Role-Based Access Control, Module Permissions, and IAM Governance.",
+  description: "Who can see and do what in each module.",
 };
 
 export const dynamic = "force-dynamic";

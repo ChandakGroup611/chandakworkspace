@@ -23,7 +23,7 @@ export function UserCell({
   if (!name) return <span className="text-muted">{emptyLabel}</span>;
   return (
     <span className={cn("inline-flex min-w-0 max-w-full items-center gap-2", className)} title={name}>
-      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-soft text-[10.5px] font-semibold text-accent-soft-text">
+      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-soft text-[11px] font-semibold text-accent-soft-text">
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photo} alt="" className="h-full w-full object-cover" />
@@ -49,7 +49,7 @@ export function UserStack({ users, max = 3 }: { users: { name: string; photo?: s
       {shown.map((u, i) => (
         <span
           key={`${u.name}-${i}`}
-          className="-ml-1.5 first:ml-0 inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border-2 border-surface bg-accent-soft text-[10px] font-semibold text-accent-soft-text"
+          className="-ml-1.5 first:ml-0 inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border-2 border-surface bg-accent-soft text-[11px] font-semibold text-accent-soft-text"
         >
           {u.photo ? (
             // eslint-disable-next-line @next/next/no-img-element

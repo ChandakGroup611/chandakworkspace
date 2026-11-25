@@ -88,15 +88,15 @@ export function GlobalCommandCenter() {
       case "VEHICLE":
         return <Car className="w-4 h-4 text-primary" />;
       case "MEETING":
-        return <Calendar className="w-4 h-4 text-purple-500" />;
+        return <Calendar className="w-4 h-4 text-accent-soft-text" />;
       case "BUDGET":
-        return <Landmark className="w-4 h-4 text-emerald-500" />;
+        return <Landmark className="w-4 h-4 text-success-text" />;
       case "TICKET":
-        return <LayoutDashboard className="w-4 h-4 text-sky-500" />;
+        return <LayoutDashboard className="w-4 h-4 text-info-text" />;
       case "TASK":
-        return <Target className="w-4 h-4 text-amber-500" />;
+        return <Target className="w-4 h-4 text-warning-text" />;
       case "REQUIREMENT":
-        return <Briefcase className="w-4 h-4 text-emerald-600" />;
+        return <Briefcase className="w-4 h-4 text-success-text" />;
       default:
         return <Search className="w-4 h-4 text-muted" />;
     }
@@ -131,7 +131,7 @@ export function GlobalCommandCenter() {
           />
           {loading && <Loader2 className="w-4 h-4 text-primary animate-spin mr-2" />}
           {currentModule && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent-soft text-accent-soft-text border border-border shrink-0">
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-accent-soft text-accent-soft-text border border-border shrink-0">
               {currentModule} Mode
             </span>
           )}
@@ -186,7 +186,7 @@ export function GlobalCommandCenter() {
         </div>
 
         <div className="p-2.5 border-t border-border bg-sunken text-[11px] text-center text-muted">
-          Press <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[10px] font-mono">Esc</kbd> to close · Navigate with arrow keys or click to open
+          Press <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[11px] font-mono">Esc</kbd> to close · Navigate with arrow keys or click to open
         </div>
       </div>
     </div>

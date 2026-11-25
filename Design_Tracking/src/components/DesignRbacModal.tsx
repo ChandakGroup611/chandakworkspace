@@ -223,7 +223,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
             <div>
               <span className="text-[11px] font-semibold text-info-text flex items-center gap-1.5">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Enterprise identity governance</span>
+                <span>Access and roles</span>
               </span>
               <h3 className="text-lg font-semibold text-foreground mt-0.5">
                 RBAC access policies: project-wise / role-based / CRUD options

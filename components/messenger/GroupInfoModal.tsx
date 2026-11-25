@@ -218,11 +218,11 @@ export function GroupInfoModal({
 
                     <div className="shrink-0 ml-2">
                       {p.role === "admin" ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-success-soft text-success-text">
                           <ShieldCheck className="h-3 w-3" /> Admin
                         </span>
                       ) : (
-                        <span className="text-[10px] text-muted">Member</span>
+                        <span className="text-[11px] text-muted">Member</span>
                       )}
                     </div>
                   </div>

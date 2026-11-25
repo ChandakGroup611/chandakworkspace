@@ -90,7 +90,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
                               : ev.event_type.replace(/_/g, ' ')}
                           </h4>
                           {fieldName && !isStatusChange && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-semibold bg-accent-soft text-accent-soft-text">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-accent-soft text-accent-soft-text">
                               {fieldName}
                             </span>
                           )}

@@ -194,7 +194,7 @@ export function WorkspaceMasterTable({
         return usersMap.get(id)?.full_name || m.name || id;
       }).join(", ")}`}>
         <div className="relative">
-          <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-accent-soft text-[10.5px] font-semibold text-accent-soft-text">
+          <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-accent-soft text-[11px] font-semibold text-accent-soft-text">
             {uObj?.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={uObj.avatar_url} alt="" className="h-full w-full object-cover" />
