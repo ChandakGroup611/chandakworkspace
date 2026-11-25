@@ -127,7 +127,7 @@ export async function BudgetRecord(c: Ctx & { version: Version }) {
       <section className="panel">
         <div className="panel-head"><h2>By department</h2><span className="sub">Crores · click a department to see its lines below</span></div>
         <div className="scroll"><table><thead><tr><th className="label">Department</th><th className="n">Initial (a)</th><th className="n">CTC (b)</th><th className="n">Incurred (c)</th><th className="n">Balance (b−c)</th><th className="n">Variance (a−b)</th><th className="n">Utilised</th></tr></thead><tbody>
-          {depts.map((d) => <tr key={d.department_id}><td><a href={`#lines`}>{d.department}</a></td><td className="n">{fmt(d.initial_cr)}</td><td className="n"><b>{fmt(d.ctc_cr)}</b></td><td className="n">{fmt(d.incurred_cr)}</td><td className="n"><Neg v={d.balance_cr} /></td><td className="n"><Neg v={d.variance_cr} /></td><td className="n">{d.util_pct == null ? "" : fmtPct(d.util_pct)}</td></tr>)}
+          {depts.map((d) => <tr key={d.department_id}><td><Link href={`/budget/${pid}/view${q}&dept=${encodeURIComponent(d.department)}#lines`}>{d.department}</Link></td><td className="n">{fmt(d.initial_cr)}</td><td className="n"><b>{fmt(d.ctc_cr)}</b></td><td className="n">{fmt(d.incurred_cr)}</td><td className="n"><Neg v={d.balance_cr} /></td><td className="n"><Neg v={d.variance_cr} /></td><td className="n">{d.util_pct == null ? "" : fmtPct(d.util_pct)}</td></tr>)}
           {depts.length === 0 && <tr><td colSpan={7} className="rl-empty">No lines yet. {r.canEdit ? <Link href={`/budget/${pid}/edit${q}`}>Add them in Edit budget</Link> : null}</td></tr>}
           {t && depts.length > 0 && <tr className="total"><td>Total</td><td className="n">{fmt(t.initial_cr)}</td><td className="n">{fmt(t.ctc_cr)}</td><td className="n">{fmt(t.incurred_cr)}</td><td className="n"><Neg v={t.balance_cr} /></td><td className="n"><Neg v={t.variance_cr} /></td><td className="n">{t.util_pct == null ? "" : fmtPct(t.util_pct)}</td></tr>}
         </tbody></table></div>
@@ -136,6 +136,8 @@ export async function BudgetRecord(c: Ctx & { version: Version }) {
       <section className="panel" id="lines">
         <div className="panel-head"><h2>Budget lines · {lines.length}</h2><span className="sub">Click a line for its full details</span></div>
         <RecordList
+          key={search.dept ?? ""}
+          initialFilters={search.dept && deptNames.includes(search.dept) ? { dept: search.dept } : undefined}
           columns={[{ label: "Department" }, { label: "Category", className: "label" }, { label: "Tower" }, { label: "Initial", className: "n" }, { label: "CTC", className: "n" },
             { label: "Incurred", className: "n" }, { label: "Balance", className: "n" }, { label: "Variance", className: "n" }, { label: "Utilised", className: "n" }]}
           rows={rows}

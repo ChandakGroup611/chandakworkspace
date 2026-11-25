@@ -1290,7 +1290,7 @@ export async function Incurred(c: Ctx) {
         <div className="panel-head">
           <div>
             <h2>Vendor Bills Ledger · {project.name}</h2>
-            <span className="sub">{bills.length} bills recorded · {fmt(toCr(totalBasicPaise))} Cr basic value</span>
+            <span className="sub">{bills.length} {bills.length === 1 ? "bill" : "bills"} recorded · {fmt(toCr(totalBasicPaise))} Cr basic value</span>
           </div>
           <div className="row" style={{ alignItems: "center", gap: 8 }}>
             {allowed.length > 0 && (
@@ -1298,7 +1298,7 @@ export async function Incurred(c: Ctx) {
                 projectId={project.id}
                 heads={headOptions}
                 towers={towers}
-                date={(v?.as_on ?? new Date().toISOString()).slice(0, 10)}
+                date={[new Date().toISOString().slice(0, 10), v?.as_on ?? "9999-12-31"].sort()[0]}
                 vendors={vendors.map((v) => ({ id: v.id, name: v.name }))}
               />
             )}
@@ -1389,7 +1389,7 @@ export async function Incurred(c: Ctx) {
                 projectId={project.id}
                 heads={headOptions}
                 towers={towers}
-                month={(v?.as_on ?? new Date().toISOString()).slice(0, 7)}
+                month={[new Date().toISOString().slice(0, 10), v?.as_on ?? "9999-12-31"].sort()[0].slice(0, 7)}
               />
             )}
           </div>
@@ -1409,7 +1409,7 @@ export async function Incurred(c: Ctx) {
             { key: "source", label: "Source", options: [["Bill", "From a bill"], ["Excel", "Imported"], ["Typed", "Typed"]] },
           ]}
           empty="No cost entries yet. Use Record Entry above, record a bill, or import a cost incurred sheet."
-          footer={<tr className="total"><td colSpan={4}>Total ({shown.length} entries)</td><td className="n">{fmtRupees(total)}</td><td colSpan={4 + listed.length}></td></tr>}
+          footer={<tr className="total"><td colSpan={4}>Total ({shown.length} entries)</td><td className="n">{fmtRupees(total)}</td><td colSpan={3 + listed.length + (shown.some((e) => D.can(me, "cost.enter", project.id, head.get(e.cost_head_id)?.department_id)) ? 1 : 0)}></td></tr>}
           rows={shown.map((e) => {
             const h = head.get(e.cost_head_id)!;
             const dname = dept.get(h.department_id)?.name ?? "";

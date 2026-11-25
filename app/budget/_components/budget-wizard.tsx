@@ -108,11 +108,15 @@ export function BudgetWizard(props: WizardProps) {
     const base = s.lines.filter((l) => g.base.includes(l.key)).reduce((t, l) => t + (f === "ctc" ? ctcOf(l) : n(l.initial)), 0);
     return (base * n(g.rate) * n(g.share)) / 10000;
   };
+  const gstIncOf = (g: W.WizardGst) => {
+    const base = s.lines.filter((l) => g.base.includes(l.key)).reduce((t, l) => t + incOf(l), 0);
+    return (base * n(g.rate) * n(g.share)) / 10000;
+  };
   const deptTotals = (id: number) => {
     const ls = s.lines.filter((l) => l.departmentId === id), gs = s.gst.filter((g) => g.departmentId === id);
     const initial = ls.reduce((t, l) => t + n(l.initial), 0) + gs.reduce((t, g) => t + gstOf(g, "initial"), 0);
     const ctc = ls.reduce((t, l) => t + ctcOf(l), 0) + gs.reduce((t, g) => t + gstOf(g, "ctc"), 0);
-    const inc = ls.reduce((t, l) => t + incOf(l), 0);
+    const inc = ls.reduce((t, l) => t + incOf(l), 0) + gs.reduce((t, g) => t + gstIncOf(g), 0);
     return { initial, ctc, inc, count: ls.length + gs.length };
   };
   const all = props.departments.map((d) => ({ d, ...deptTotals(d.id) }));

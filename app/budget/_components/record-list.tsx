@@ -213,7 +213,9 @@ export function TablePeek({ children }: { children: React.ReactNode }) {
     });
     const buttons = found.cell ? ([...found.cell.querySelectorAll("button")] as HTMLElement[]).map((el) => ({ label: el.innerText.trim(), el })).filter((b) => b.label) : [];
     const a = tr.querySelector("a[href]") as HTMLAnchorElement | null;
-    setPeek({ title: pairs.find(([, v]) => v)?.[1] ?? "Details", pairs, buttons, link: a ? { label: `Open ${a.innerText.trim()}`, href: a.getAttribute("href")! } : null });
+    // The bold cell is the record's own name (a tower, a cost head); fall back to the first filled cell.
+    const named = (tr.querySelector("td:not(.actions) strong") as HTMLElement | null)?.innerText.trim();
+    setPeek({ title: named || pairs.find(([, v]) => v)?.[1] || "Details", pairs, buttons, link: a ? { label: `Open ${a.innerText.trim()}`, href: a.getAttribute("href")! } : null });
   };
   return (
     <div ref={ref} onClick={onClick} className="table-peek">

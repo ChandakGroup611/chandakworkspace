@@ -210,7 +210,7 @@ export function DepartmentAccordionEntry({
         <div className="master-kpi-tile">
           <span className="kpi-label">Budget Utilised</span>
           <span className="kpi-val">
-            {total.util_pct != null ? `${fmtPct(total.util_pct)}%` : "0%"}
+            {total.util_pct != null ? fmtPct(total.util_pct) : "0%"}
           </span>
           <div className="mt-1">
             <Bar v={total.util_pct} />

@@ -98,6 +98,7 @@ export async function saveBudgetWizard(projectId: number, p: WizardPayload): Pro
   const problems = check(p);
   if (problems.length) return fail(problems.slice(0, 10).join(" · ") + (problems.length > 10 ? ` · and ${problems.length - 10} more` : ""));
   const sb = await client();
+  const me = (await (await createClient()).auth.getUser()).data.user?.id ?? null;
   const step = (what: string, e: { message: string }) => fail(`${what}: ${e.message}. What was saved before this step is kept; fix it and save again.`);
 
   // 1. Version: the open draft, or a new draft copied from the latest approved version (same as Start R…)
@@ -106,6 +107,8 @@ export async function saveBudgetWizard(projectId: number, p: WizardPayload): Pro
   if (!draft) {
     const { data: id, error } = await sb.rpc("budget_create_version", { p_project: projectId, p_as_on: p.asOn, p_reason: p.reason.trim() || "Budget typed on screen" });
     if (error) return step("Opening the version", error);
+    // Through the service role auth.uid() is null, so the column default leaves "Prepared by" blank; record the person.
+    if (me) await sb.from("budget_versions").update({ prepared_by: me }).eq("id", id).is("prepared_by", null);
     const r = await sb.from("budget_versions").select("id, number, status, areas").eq("id", id).single();
     if (r.error) return step("Opening the version", r.error);
     draft = r.data;
@@ -134,6 +137,15 @@ export async function saveBudgetWizard(projectId: number, p: WizardPayload): Pro
   // 3. Cost heads (plain, then GST, whose base refers to the plain ones)
   const { data: heads, error: eh } = await sb.from("budget_cost_heads").select("id, department_id, category, sub_category, sort").eq("project_id", projectId);
   if (eh) return step("Reading cost heads", eh);
+  const [{ data: deptRows }, { data: tplRows }] = p.gst.some((g) => !g.summary)
+    ? await Promise.all([
+        sb.from("budget_departments").select("id, summary_category"),
+        sb.from("budget_summary_template").select("category, subcategory, subcategory_sort").ilike("subcategory", "GST%").order("subcategory_sort"),
+      ])
+    : [{ data: null }, { data: null }];
+  const deptSummaryCat = new Map((deptRows ?? []).map((d) => [Number(d.id), String(d.summary_category)]));
+  const gstSummaryByCat = new Map<string, string>();
+  for (const t of tplRows ?? []) if (!gstSummaryByCat.has(t.category)) gstSummaryByCat.set(t.category, t.subcategory);
   const k3 = (d: number, c: string, s: string | null) => `${d}|${c.trim().toLowerCase()}|${(s ?? "").trim().toLowerCase()}`;
   const byName = new Map((heads ?? []).map((h) => [k3(h.department_id, h.category, h.sub_category), Number(h.id)]));
   let sort = Math.max(0, ...(heads ?? []).map((h) => h.sort ?? 0));
@@ -154,8 +166,9 @@ export async function saveBudgetWizard(projectId: number, p: WizardPayload): Pro
   }
   for (const g of p.gst) {
     const base = [...new Set(g.base.map((k) => headOfKey.get(k)).filter((x): x is number => x != null))];
+    const summarySub = g.summary || gstSummaryByCat.get(deptSummaryCat.get(g.departmentId) ?? "") || null;
     const row = { category: g.category.trim(), sub_category: g.subCategory.trim() || null, is_tax: true, tax_rate_pct: Number(clean(g.rate)), tax_share_pct: Number(clean(g.share)), tax_base: base,
-      ...(g.summary ? { summary_subcategory: g.summary } : {}) };
+      ...(summarySub ? { summary_subcategory: summarySub } : {}) };
     let id = g.headId ?? byName.get(k3(g.departmentId, g.category, g.subCategory)) ?? null;
     if (id) {
       const { error } = await sb.from("budget_cost_heads").update(row).eq("id", id);
@@ -186,6 +199,18 @@ export async function saveBudgetWizard(projectId: number, p: WizardPayload): Pro
       ctc_rate: rate ? Number(clean(l.rate)) : null, ctc_basis: rate ? l.basis : null, balance_of_paise: null, balance_scope: null,
     });
     if (e) return step(`Saving the figures of ${l.category}`, e);
+  }
+  // A new R1 seeds one blank whole-project line per cost head. When the form keeps a head only as tower shares,
+  // drop that seeded line if it is still empty, so the budget does not show a stray 0.00 "Whole project" row.
+  {
+    const wholeKept = new Set(p.lines.filter((l) => !tw(l.tower)).map((l) => headOfKey.get(l.key)));
+    const splitOnly = new Set(p.lines.filter((l) => tw(l.tower)).map((l) => headOfKey.get(l.key)!).filter((h) => !wholeKept.has(h)));
+    for (const head of splitOnly) {
+      const id = lineOf.get(`${head}|`);
+      if (!id) continue;
+      const { error } = await sb.from("budget_lines").delete().eq("id", id).eq("initial_paise", 0).eq("ctc_paise", 0).is("incurred_override_paise", null);
+      if (error) return step("Tidying the blank whole-project lines", error);
+    }
   }
   for (const g of p.gst) {
     const e = await upsert(headOfKey.get(g.key)!, null, {
@@ -218,7 +243,7 @@ export async function saveBudgetWizard(projectId: number, p: WizardPayload): Pro
     const diff = (clean(l.incurred!) === "" ? 0 : crPaise(l.incurred!)) - existing;
     if (diff === 0) continue;
     const { error: e2 } = await sb.from("budget_incurred_entries").insert({ project_id: projectId, cost_head_id: head, subproject_id: tower, month, amount_paise: diff,
-      reference: existing === 0 ? "Opening balance typed on Create budget" : "Adjustment typed on Create budget" });
+      reference: existing === 0 ? "Opening balance typed on Create budget" : "Adjustment typed on Create budget", ...(me ? { entered_by: me } : {}) });
     if (e2) return step(`Saving cost incurred of ${l.category}`, e2);
   }
 

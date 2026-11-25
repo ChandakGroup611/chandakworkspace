@@ -1214,7 +1214,7 @@ export function RecordBillModal({
   const [billNo, setBillNo] = useState(bill?.bill_no ?? "");
   const [billDate, setBillDate] = useState(bill?.bill_date ?? date);
   const [workOrder, setWorkOrder] = useState(bill?.work_order ?? "");
-  const [gstAmount, setGstAmount] = useState(bill ? String(bill.gst_paise / 100) : "0");
+  const [gstAmount, setGstAmount] = useState(bill ? String(bill.gst_paise / 100) : "");
   const [note, setNote] = useState(bill?.note ?? "");
 
   const initialSplits: SplitRow[] = bill?.splits?.length

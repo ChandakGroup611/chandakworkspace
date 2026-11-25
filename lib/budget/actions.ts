@@ -210,33 +210,40 @@ export async function removeLine(lineId: number): Promise<Result> {
 }
 
 export async function openVersion(projectId: number, asOn: string, reason: string): Promise<Result<{ number: number }>> {
-  const { sb } = await getEffectiveClient();
+  const { sb, user, isSuper } = await getEffectiveClient();
   const { data, error } = await sb.rpc("budget_create_version", { p_project: projectId, p_as_on: asOn, p_reason: reason.trim() || null });
   if (error) return fail(error);
+  // Through the service role auth.uid() is null, so the column default leaves "Prepared by" blank; record the person.
+  if (isSuper && user) await sb.from("budget_versions").update({ prepared_by: user.id }).eq("id", data).is("prepared_by", null);
   const { data: v } = await sb.from("budget_versions").select("number").eq("id", data).single();
   refresh();
   return { ok: true, number: v!.number };
 }
 
 export async function approveVersion(versionId: number): Promise<Result> {
-  const { sb } = await getEffectiveClient();
+  const { sb, user, isSuper } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_approve_version", { p_version: versionId });
   if (error) return fail(error);
+  if (isSuper && user) await sb.from("budget_versions").update({ approved_by: user.id }).eq("id", versionId).is("approved_by", null);
   refresh();
   return { ok: true };
 }
 
 // ---------- sign-off ----------
 export async function submitVersion(versionId: number, comment: string): Promise<Result> {
-  const { sb } = await getEffectiveClient();
+  const { sb, user, isSuper } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_submit_version", { p_version: versionId, p_comment: comment });
   if (error) return fail(error);
+  // Through the service role the sign-off history would show nobody as the submitter.
+  if (isSuper && user) await sb.from("budget_signoffs").update({ user_id: user.id }).eq("version_id", versionId).eq("action", "submitted").is("user_id", null);
   refresh();
   return { ok: true };
 }
 
 export async function signVersion(versionId: number, action: "signed" | "returned", comment: string): Promise<Result<{ outcome: string }>> {
-  const { sb } = await getEffectiveClient();
+  // A signature is personal: it must run as the signer, never through the service role. There auth.uid() is null, so the
+  // signature was stored with no signer, the level never counted as signed and the version stayed in review for good.
+  const sb = await createClient();
   const { data, error } = await sb.rpc("budget_sign_version", { p_version: versionId, p_action: action, p_comment: comment });
   if (error) return fail(error);
   refresh();
@@ -343,10 +350,12 @@ export async function importCostRows(projectId: number, file: string, rows: Cost
 export async function addEntry(projectId: number, headId: number, towerId: number | null, month: string, amount: string, reference: string, custom: Record<string, unknown> = {}): Promise<Result> {
   const text = amount.replace(/,/g, "").trim();
   if (!/^-?\d*\.?\d+$/.test(text) || !/^\d{4}-\d{2}$/.test(month)) return fail("Enter the month and an amount in rupees");
-  const { sb } = await getEffectiveClient();
+  const { sb, user, isSuper } = await getEffectiveClient();
   const { data, error } = await sb.from("budget_incurred_entries").insert({
     project_id: projectId, cost_head_id: headId, subproject_id: towerId, month: month + "-01",
     amount_paise: BudgetImporter.paiseFromInr(text), reference: reference.trim() || null,
+    // The column defaults to auth.uid(), which is null through the service role.
+    ...(isSuper && user ? { entered_by: user.id } : {}),
   }).select("id").single();
   if (error) return fail(error.message.includes("row-level security") ? "You cannot record cost for this department" : error.message);
   // Custom fields of the entry: all saved with it, or the entry is taken back so nothing is half saved.
@@ -374,15 +383,23 @@ export async function addBill(projectId: number, bill: BillInput, splits: BillSp
   const used = splits.filter((s) => s.amount.replace(/,/g, "").trim());
   if (!used.length) return fail("Split the bill over at least one cost head");
   if (used.some((s) => !RUPEES.test(s.amount.replace(/,/g, "").trim()))) return fail("Enter each split's amount in rupees");
-  const { sb } = await getEffectiveClient();
-  const { error } = await sb.rpc("budget_add_bill", {
+  const { sb, user, isSuper } = await getEffectiveClient();
+  const { data: billId, error } = await sb.rpc("budget_add_bill", {
     p_project: projectId,
     p_bill: { vendor: bill.vendor, bill_no: bill.billNo, bill_date: bill.date, work_order: bill.workOrder, note: bill.note, gst_paise: gst ? BudgetImporter.paiseFromInr(gst) : 0 },
     p_splits: used.map((s) => ({ head: s.head, tower: s.tower, amount_paise: BudgetImporter.paiseFromInr(s.amount.replace(/,/g, "").trim()) })),
   });
   if (error) return fail(error.message.includes("row-level security") ? "You cannot record cost for one of these departments" : error.message);
+  await stampBillAuthor(sb, Number(billId), isSuper ? user?.id : null);
   refresh();
   return { ok: true };
+}
+
+/** Through the service role auth.uid() is null, so a bill and its splits get no "Entered by"; record the person. */
+async function stampBillAuthor(sb: Awaited<ReturnType<typeof getEffectiveClient>>["sb"], billId: number, userId: string | null | undefined) {
+  if (!userId || !billId) return;
+  await sb.from("budget_bills").update({ entered_by: userId }).eq("id", billId).is("entered_by", null);
+  await sb.from("budget_incurred_entries").update({ entered_by: userId }).eq("bill_id", billId).is("entered_by", null);
 }
 
 /** Changes a bill's details and replaces its splits. */
@@ -393,13 +410,14 @@ export async function updateBill(billId: number, bill: BillInput, splits: BillSp
   const used = splits.filter((s) => s.amount.replace(/,/g, "").trim());
   if (!used.length) return fail("Split the bill over at least one cost head");
   if (used.some((s) => !RUPEES.test(s.amount.replace(/,/g, "").trim()))) return fail("Enter each split's amount in rupees");
-  const { sb } = await getEffectiveClient();
+  const { sb, user, isSuper } = await getEffectiveClient();
   const { error } = await sb.rpc("budget_update_bill", {
     p_bill_id: billId,
     p_bill: { vendor: bill.vendor, bill_no: bill.billNo, bill_date: bill.date, work_order: bill.workOrder, note: bill.note, gst_paise: gst ? BudgetImporter.paiseFromInr(gst) : 0 },
     p_splits: used.map((s) => ({ head: s.head, tower: s.tower, amount_paise: BudgetImporter.paiseFromInr(s.amount.replace(/,/g, "").trim()) })),
   });
   if (error) return fail(error.message.includes("row-level security") ? "You cannot record cost for one of these departments" : error.message);
+  await stampBillAuthor(sb, billId, isSuper ? user?.id : null);
   refresh();
   return { ok: true };
 }
