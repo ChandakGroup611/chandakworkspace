@@ -17,7 +17,7 @@ import { fetchMyFleetAccessAction } from "@/lib/actions/vehicleRbac";
 import FleetDeskHost from "@/components/vehicle/FleetDeskHost";
 
 export const metadata = {
-  title: "Vehicle module | Chandak Workspace",
+  title: "Fleet · Chandak Workspace",
   description: "Enterprise fleet management, vehicle allocation, drivers, trip sheets & maintenance."
 };
 

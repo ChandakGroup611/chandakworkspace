@@ -672,7 +672,7 @@ export default function FleetRbacGovernance() {
               Fleet & Vehicle Desk governance
             </span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">
             Vehicle RBAC access policies
           </h1>
         </div>

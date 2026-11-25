@@ -1,4 +1,5 @@
 "use client";
+import "./fleet-refresh.css";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "react-toastify";
@@ -490,7 +491,7 @@ function TransactionFormLayout({
               <Icon className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading flex items-center gap-2.5 flex-wrap">
                 <span>{title}</span>
                 {badge && (
                   <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-accent-soft text-theme-btn-primary border border-theme-btn-primary/20">
@@ -698,7 +699,7 @@ function WorkingDocumentLayout({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
+                <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading truncate">
                   {title}
                 </h1>
                 {badge && (
@@ -1727,7 +1728,7 @@ export default function FleetDeskHost({
 
     return (
       <div 
-        className="inline-flex items-stretch rounded-sm border-2 border-border shadow-xs overflow-hidden select-none"
+        className="fleet-plate inline-flex items-stretch rounded-sm border-2 border-border shadow-xs overflow-hidden select-none"
         /* ui-audit-ignore-next-line HSRP border */ style={{ borderColor: "#0f172a" }}
       >
         {/* ui-audit-ignore-next-line HSRP IND blue strip */}
@@ -9679,7 +9680,7 @@ export default function FleetDeskHost({
           badgeColor: "bg-success-soft text-success-text border-success/30",
           icon: FileCheck,
           iconBg: "bg-success-soft text-success-text border-success/30",
-          title: "Enterprise Fleet Document Vault",
+          title: "Document vault",
           description: "Centralized archive of verified statutory certificates, registration cards, insurance policies & service attachments",
           actionBtn: canEditVehicle ? (
             <AppButton
@@ -10014,7 +10015,7 @@ export default function FleetDeskHost({
           badgeColor: "bg-success-soft text-success-text border-success/30",
           icon: LayoutDashboard,
           iconBg: "bg-success-soft text-success-text border-success/30",
-          title: "Enterprise Fleet Management Desk",
+          title: "Fleet",
           description: "Central fleet master, real-time driver allocation, trip dispatch & maintenance records",
           actionBtn: canCreateVehicle ? (
             <AppButton
@@ -10192,7 +10193,7 @@ export default function FleetDeskHost({
   }
 
   return (
-    <div className="w-full flex-1 flex flex-col space-y-6 min-w-0 animate-in fade-in duration-300">
+    <div className="fleet-desk w-full flex-1 flex flex-col space-y-6 min-w-0">
       
       {/* Toast Notifications */}
       {successBanner && (
@@ -10226,7 +10227,7 @@ export default function FleetDeskHost({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
             <div>
               <div className="flex items-center gap-3">
-                <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shadow-2xs ${moduleMeta?.iconBg || "bg-success-soft text-success-text border-success/30"}`}>
+                <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-accent-soft text-accent-soft-text">
                   {(() => {
                     const HeaderIcon = moduleMeta?.icon || LayoutDashboard;
                     return <HeaderIcon className="h-5 w-5" />;
@@ -10234,12 +10235,12 @@ export default function FleetDeskHost({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${moduleMeta?.badgeColor || ""}`}>
+                    <span className="text-[12.5px] font-medium text-muted">
                       {moduleMeta?.badge || "Fleet Operations"}
                     </span>
                   </div>
-                  <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">
-                    {moduleMeta?.title || "Enterprise Fleet Management Desk"}
+                  <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading mt-0.5">
+                    {moduleMeta?.title || "Fleet"}
                   </h1>
                 </div>
               </div>
@@ -10303,14 +10304,14 @@ export default function FleetDeskHost({
                   <AppCard
                     key={idx}
                     onClick={handleKpiClick}
-                    className="border-border shadow-xs hover:border-theme-btn-primary/50 hover:shadow-md transition-all cursor-pointer group"
+                    className="border-border shadow-xs hover:border-border-active transition-colors cursor-pointer group"
                   >
                     <AppCardContent className="p-4 flex items-center justify-between">
                       <div>
                         <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">{kpi?.title}</p>
-                        <h3 className="text-2xl font-bold mt-1 text-foreground group-hover:text-theme-btn-primary transition-colors">{kpi?.value}</h3>
+                        <h3 className="text-[26px] font-semibold mt-1 text-heading tabular-nums">{kpi?.value}</h3>
                       </div>
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${kpi?.iconBg || "bg-sunken bg-surface text-muted text-muted border-border"} ${kpi?.iconColor || ""} group- transition-transform`}>
+                      <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-sunken text-subtle">
                         <IconComp className="h-5 w-5" />
                       </div>
                     </AppCardContent>
@@ -10374,7 +10375,7 @@ export default function FleetDeskHost({
                   <Car className="h-6 w-6" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+                  <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading flex items-center gap-2.5">
                     <span>Register fleet vehicle</span>
                     <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-accent-soft text-theme-btn-primary border border-theme-btn-primary/20">
                       Vehicle master form
@@ -10561,7 +10562,7 @@ export default function FleetDeskHost({
                           <VehicleBrandLogo brand={newVehicleMake} size={20} />
                         </div>
                       )}
-                      <span className="h-4 w-4 rounded-full bg-gradient-to-tr from-warning via-theme-btn-primary to-theme-btn-primary opacity-90 border border-border shadow-2xs" title="Authentic parivahan laser hologram" />
+                      <span className="h-4 w-4 rounded-full bg-primary border border-border shadow-2xs" title="Authentic parivahan laser hologram" />
                     </div>
                   </div>
                 </div>
@@ -14607,7 +14608,7 @@ export default function FleetDeskHost({
                       onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open("OVERVIEW"); } }}
                       className="group flex cursor-pointer flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-xs transition-shadow hover:border-border-active hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <div className="relative h-40 border-b border-border bg-gradient-to-b from-surface to-sunken">
+                      <div className="relative h-40 border-b border-border bg-surface">
                         <VehicleRender vehicle={veh} className="h-full w-full" />
                         <span className={`absolute right-2.5 top-2.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${statusTone}`}>{statusLabel}</span>
                         {veh.fuel_type && (
@@ -26376,7 +26377,7 @@ export default function FleetDeskHost({
                 /* TAB 2: FREE SERVICES & AMC VOUCHERS */
                 <div className="space-y-4">
                   {/* Summary Banner */}
-                  <div className="p-4 rounded-xl bg-gradient-to-r from-info/10 via-primary/10 to-surface border border-info/30 flex items-center justify-between flex-wrap gap-3">
+                  <div className="p-4 rounded-xl bg-info-soft border border-info-border flex items-center justify-between flex-wrap gap-3">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-xl bg-info-soft text-info-text flex items-center justify-center border border-info/30">
                         <Gift className="h-5 w-5" />
@@ -28273,7 +28274,7 @@ export default function FleetDeskHost({
           }
         >
           {/* 1. HERO IDENTITY & ASSET TELEMETRY HUD */}
-          <div className="p-4 sm:p-5 rounded-2xl border border-border bg-gradient-to-r from-surface via-surface to-surface dark:from-surface dark:via-surface dark:to-surface shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5 min-w-0 flex-1">
               <div className="shrink-0 pt-0.5">
                 {renderHsrpPlate(viewingVehicle.registration_number)}

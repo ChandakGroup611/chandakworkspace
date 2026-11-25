@@ -1,0 +1,35 @@
+/*
+ * Fleet UI refresh (Nov 2026): visual only, scoped to the Fleet desk.
+ * Same look as the rest of Chandak Workspace: one card radius, regular figures
+ * (tabular) instead of monospace for dates and amounts, calm shadows, no hover jumps.
+ * Number plates (.fleet-plate) keep their own look.
+ */
+
+/* One card corner size (was a mix of 8, 12 and 16 px) */
+.fleet-desk .rounded-2xl,
+.fleet-desk .rounded-xl {
+  border-radius: var(--radius-card, 10px);
+}
+
+/* Dates, codes and amounts: the normal UI font with even-width digits */
+.fleet-desk .font-mono:not(.fleet-plate *):not(code):not(pre) {
+  font-family: var(--font-sans, Inter, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* Calm surfaces: no hover lifts or heavy hover shadows on cards and rows */
+.fleet-desk [class*="hover\:-translate-y"]:hover,
+.fleet-desk [class*="hover\:scale-"]:hover {
+  transform: none;
+}
+.fleet-desk [class*="hover\:shadow-md"]:hover,
+.fleet-desk [class*="hover\:shadow-lg"]:hover,
+.fleet-desk [class*="hover\:shadow-xl"]:hover {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Page-load fades off: content appears at once */
+.fleet-desk .animate-in {
+  animation-duration: 120ms;
+}
