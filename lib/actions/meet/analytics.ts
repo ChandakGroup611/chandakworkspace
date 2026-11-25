@@ -341,6 +341,56 @@ export async function getMeetReports(reportKey: string, filters?: any) {
         });
       }
 
+      case "R7": { // Invites & attendance: who was invited, their reply (and reason), when they joined
+        const since = new Date(Date.now() - 180 * 86400000).toISOString();
+        const { data: deletedM } = await supabaseAdmin.from("meet_meetings").select("id").eq("is_deleted", true).limit(1000);
+        const deleted = new Set(((deletedM || []) as any[]).map((d) => d.id));
+        const { data: sess } = await supabaseAdmin
+          .from("meet_sessions")
+          .select("id, code, scheduled_start, actual_start, status, meeting_id, meeting:meet_meetings(id, title, code)")
+          .eq("is_deleted", false)
+          .neq("status", "cancelled")
+          .gte("scheduled_start", since)
+          .order("scheduled_start", { ascending: false })
+          .limit(300);
+        const sessions = ((sess || []) as any[]).filter((x) => !deleted.has(x.meeting_id) && isVisible(x.meeting_id));
+        const ids = sessions.map((x) => x.id);
+        if (!ids.length) return [];
+        const [attRes, invRes] = await Promise.all([
+          supabaseAdmin
+            .from("meet_session_attendees")
+            .select("session_id, user_id, guest_name, role, invite_status, attendance, check_in_at, late_minutes, marked_by, user:user_master!meet_session_attendees_user_id_fkey(full_name)")
+            .in("session_id", ids)
+            .not("role", "in", '("requested","denied")'),
+          supabaseAdmin.from("meet_invitations").select("session_id, user_id, response, note, responded_at").in("session_id", ids),
+        ]);
+        const inv = new Map<string, any>();
+        for (const i of (invRes.data || []) as any[]) inv.set(`${i.session_id}:${i.user_id}`, i);
+        const byId = new Map(sessions.map((x) => [x.id, x]));
+        const held = (st: string) => !["scheduled", "in_progress", "cancelled"].includes(st);
+        return ((attRes.data || []) as any[]).map((a) => {
+          const se: any = byId.get(a.session_id);
+          const m = Array.isArray(se?.meeting) ? se.meeting[0] : se?.meeting;
+          const i = a.user_id ? inv.get(`${a.session_id}:${a.user_id}`) : null;
+          const reply = a.invite_status || "invited";
+          return {
+            session_code: se?.code || "",
+            session_id: a.session_id,
+            meeting: m?.title || "Meeting",
+            date: se?.scheduled_start || null,
+            person: (Array.isArray(a.user) ? a.user[0] : a.user)?.full_name || a.guest_name || "Guest",
+            role: a.role,
+            reply,
+            reason: i?.note || null,
+            replied_at: i?.responded_at || null,
+            joined_at: a.check_in_at || null,
+            attendance: held(se?.status) || se?.status === "in_progress" ? a.attendance : "not held yet",
+            late_minutes: Number(a.late_minutes) || 0,
+            marked_by_hand: !!a.marked_by,
+          };
+        }).sort((x, y) => String(y.date).localeCompare(String(x.date)) || x.person.localeCompare(y.person));
+      }
+
       case "R6": // Owner performance
       default: {
         const { data: tasks } = await supabaseAdmin

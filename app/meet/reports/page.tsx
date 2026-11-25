@@ -12,7 +12,7 @@ export const metadata = {
 };
 
 export default async function MeetReportsPage() {
-  const [r1MoMs, r2Meetings, r3PendingPoints, r4CarryForward, r5TatCompliance, r6OwnerPerformance] =
+  const [r1MoMs, r2Meetings, r3PendingPoints, r4CarryForward, r5TatCompliance, r6OwnerPerformance, r7Invites] =
     await Promise.all([
       getMoMVersions(),
       getMeetReports("R2"),
@@ -20,6 +20,7 @@ export default async function MeetReportsPage() {
       getMeetReports("R4"),
       getMeetReports("R5"),
       getMeetReports("R6"),
+      getMeetReports("R7"),
     ]);
 
   return (
@@ -38,6 +39,7 @@ export default async function MeetReportsPage() {
           r4CarryForward,
           r5TatCompliance,
           r6OwnerPerformance,
+          r7Invites,
         }}
       />
     </div>

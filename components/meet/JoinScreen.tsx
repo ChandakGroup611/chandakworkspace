@@ -84,7 +84,8 @@ export default function JoinScreen({ ctx, initials }: { ctx: JoinContext; initia
     }
   };
 
-  const workspaceHref = ctx.isHost ? `/meet/live/${ctx.sessionId}` : `/meet/sessions/${ctx.sessionId}`;
+  // Everyone goes into the meeting room; it shows the running controls only to whoever runs the meeting
+  const workspaceHref = `/meet/live/${ctx.sessionId}`;
 
   const join = async (viaTeams: boolean) => {
     setBusy(true);

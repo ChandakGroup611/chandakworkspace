@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireMeet } from "@/lib/permissions/meet";
 import { sendMeetEmail } from "@/lib/utils/meet-email";
+import { notifyMeetInApp } from "@/lib/utils/meet-inapp";
 
 /**
  * Replies to a meeting invite: Accept, Maybe, or Can't attend (a reason is required).
@@ -70,7 +71,7 @@ export async function replyToInvite(input: { sessionId: string; reply: RsvpReply
 
   const { data: s } = await supabaseAdmin
     .from("meet_sessions")
-    .select("id, code, status, scheduled_start, meeting_id, meeting:meet_meetings(id, title)")
+    .select("id, code, status, scheduled_start, meeting_id, minute_taker_id, meeting:meet_meetings(id, title, organizer_id, chair_id)")
     .eq("id", input.sessionId)
     .maybeSingle();
   if (!s) return { success: false, error: "Meeting not found." };
@@ -113,6 +114,20 @@ export async function replyToInvite(input: { sessionId: string; reply: RsvpReply
     user_id: userId,
     channel: "web",
   });
+
+  // Tell whoever runs the meeting (bell only), so they know before it starts who is coming
+  {
+    const m: any = one((s as any).meeting);
+    const { data: who } = await supabaseAdmin.from("user_master").select("full_name").eq("id", userId).maybeSingle();
+    const label = input.reply === "accepted" ? "accepted" : input.reply === "tentative" ? "might attend" : "can't attend";
+    await notifyMeetInApp(
+      [m?.organizer_id, m?.chair_id, (s as any).minute_taker_id],
+      `${who?.full_name || "Someone"} ${label}: ${m?.title || "meeting"}`,
+      `${when(s.scheduled_start)}${input.reply === "declined" && reason ? `. Reason: ${reason}` : ""}`,
+      `/meet/meetings/${s.meeting_id}`,
+      userId
+    ).catch(() => null);
+  }
 
   if (input.reply === "declined") {
     const { data: me } = await supabaseAdmin.from("user_master").select("full_name").eq("id", userId).maybeSingle();

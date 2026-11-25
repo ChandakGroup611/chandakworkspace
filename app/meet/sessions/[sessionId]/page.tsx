@@ -43,7 +43,7 @@ export default async function SessionWorkspacePage({
   return (
     <div className="space-y-6">
       <JoinRequestsPanel sessionId={sessionId} />
-      {brief && (brief.points.length > 0 || brief.tasks.length > 0 || brief.lastDecisions.length > 0) && <MyBriefPanel brief={brief} />}
+      {brief && <MyBriefPanel brief={brief} />}
       <OutlookStatusLine sessionId={sessionId} status={(session as any).status} editHref={(session as any).meeting_id ? `/meet/meetings/${(session as any).meeting_id}/edit` : undefined} />
       <SessionWorkspaceClient
         session={session}

@@ -199,14 +199,37 @@ export async function markJoined(sessionId: string): Promise<{ success: boolean 
   const auth = await requireMeet("MEET_VIEW");
   const { data: att } = await supabaseAdmin
     .from("meet_session_attendees")
-    .select("id, check_in_at, role")
+    .select("id, check_in_at, role, invite_status")
     .eq("session_id", sessionId)
     .eq("user_id", auth.userId)
     .maybeSingle();
   if (!att || att.role === "requested" || att.role === "denied") return { success: false };
+  // Joining counts as accepting the invite; the earlier reply stays in the history
+  if (att.invite_status !== "accepted") {
+    await supabaseAdmin.from("meet_session_attendees").update({ invite_status: "accepted" }).eq("id", att.id);
+    await supabaseAdmin.from("meet_activity_log").insert({
+      entity_type: "session",
+      entity_id: sessionId,
+      action: "invite_accepted_on_join",
+      field: "invite_status",
+      old_value: att.invite_status || "invited",
+      new_value: "accepted",
+      user_id: auth.userId,
+      channel: "web",
+    });
+  }
   // Present / Late from the time they joined (see lib/utils/meet-attendance.ts)
   if (!att.check_in_at) await autoCheckIn(sessionId, auth.userId, "video_join");
   return { success: true };
+}
+
+/** Whether the signed-in person runs this meeting (organiser, chair, minute taker or Meet admin). */
+export async function getMyMeetingRole(sessionId: string): Promise<{ isHost: boolean }> {
+  const auth = await requireMeet("MEET_VIEW", { sessionId });
+  const s = await loadSession(sessionId);
+  if (!s) return { isHost: false };
+  const { isHost } = await roleFor(auth.userId, s, auth.isSuperAdmin || auth.isMeetAdmin);
+  return { isHost };
 }
 
 export interface JoinRequest {

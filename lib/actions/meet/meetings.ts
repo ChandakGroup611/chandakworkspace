@@ -9,6 +9,7 @@ import { requireMeet } from "@/lib/permissions/meet";
 import { readMeetProjects, readMeetingProjectMap, setMeetingProject } from "@/lib/utils/meet-projects";
 import { generateICS } from "@/lib/utils/ics";
 import { bookRoomForSession } from "@/lib/actions/meet/rooms";
+import { notifyMeetInApp } from "@/lib/utils/meet-inapp";
 import type { MeetingSeries, MeetingMember } from "@/types/meet";
 
 import { generateTeamsMeetingLink, sanitizeTeamsUrl } from "@/lib/integrations/microsoft-teams";
@@ -363,6 +364,15 @@ export async function createMeeting(input: CreateMeetingInput) {
           }))
         );
       }
+
+      // Bell notification for everyone invited (no email unless an admin set up the template)
+      await notifyMeetInApp(
+        membersToInsert.map((m) => m.user_id),
+        `Meeting invite: ${meeting.title}`,
+        `${new Date(scheduledStart).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}. You're on the invite list. Please accept, or say you can't attend.`,
+        `/meet/join/${session.id}`,
+        userId
+      ).catch(() => null);
 
       // 5. Agenda: what was typed on the Schedule page, else the template's, else the standard one
       const typedAgenda = (input.agenda_items || [])

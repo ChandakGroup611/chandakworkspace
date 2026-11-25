@@ -31,6 +31,10 @@ import RunningNotesCard from "@/components/meet/RunningNotesCard";
 import { sanitizeTeamsUrl } from "@/lib/integrations/microsoft-teams";
 import DraggableLiveNotesWidget from "@/components/meet/DraggableLiveNotesWidget";
 import SessionRoomCard from "@/components/meet/SessionRoomCard";
+import MyBriefPanel from "@/components/meet/MyBriefPanel";
+import { ReplyChip } from "@/components/meet/RsvpPanel";
+import type { MyBrief } from "@/lib/actions/meet/my-brief";
+import type { RsvpPerson } from "@/lib/actions/meet/rsvp";
 import { AppButton } from "@/components/ui/AppButton";
 import { updatePointStatus, updateSessionPointNotes } from "@/lib/actions/meet/points";
 import { updateSessionAttendance, startSession, updateSessionVideoLink } from "@/lib/actions/meet/sessions";
@@ -54,6 +58,12 @@ interface LiveMeetingClientProps {
     users: any[];
     categories: any[];
   };
+  /** Organiser, chair, minute taker or Meet admin: sees the controls that run the meeting */
+  canRun?: boolean;
+  /** Invite replies (accepted / can't attend + reason) per person */
+  replies?: RsvpPerson[];
+  /** The signed-in person's own brief for this meeting */
+  brief?: MyBrief | null;
 }
 
 export default function LiveMeetingClient({
@@ -62,7 +72,11 @@ export default function LiveMeetingClient({
   agenda: initialAgenda,
   attendees: initialAttendees,
   masters,
+  canRun = false,
+  replies = [],
+  brief = null,
 }: LiveMeetingClientProps) {
+  const replyOf = (userId?: string | null) => (userId ? replies.find((r) => r.user_id === userId) : undefined);
   const [points, setPoints] = useState<MeetingPoint[]>(initialPoints);
   const [agenda, setAgenda] = useState<AgendaItem[]>(initialAgenda);
   const [attendees, setAttendees] = useState<SessionAttendee[]>(initialAttendees);
@@ -314,7 +328,7 @@ export default function LiveMeetingClient({
     }
   };
 
-  const [tab, setTab] = useState<"points" | "notes" | "decisions" | "people">("points");
+  const [tab, setTab] = useState<"points" | "notes" | "decisions" | "people" | "brief">(canRun ? "points" : "brief");
 
   // Whole-meeting clock (from when it was started)
   const [now, setNow] = useState(() => Date.now());
@@ -407,6 +421,7 @@ export default function LiveMeetingClient({
           {late > 0 && <span className="shrink-0 rounded-full bg-danger-soft px-2.5 py-0.5 text-[12px] font-semibold text-danger-text">late {late} d</span>}
           {pt.status === "closed" && <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-[12px] font-semibold text-success-text">Done</span>}
         </div>
+        {canRun ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => handleStatusChange(pt.id, "closed")} className={statusBtn(pt.status === "closed", "success")}>
             <Check className="mr-1 h-3.5 w-3.5" aria-hidden /> Done
@@ -424,6 +439,9 @@ export default function LiveMeetingClient({
             <Plus className="h-3.5 w-3.5" aria-hidden /> Add task
           </button>
         </div>
+        ) : (
+          <p className="mt-2 text-[12.5px] text-muted">Status: {String(pt.status).replace(/_/g, " ")}</p>
+        )}
       </li>
     );
   };
@@ -441,9 +459,11 @@ export default function LiveMeetingClient({
                   <button
                     type="button"
                     onClick={() => {
+                      if (!canRun) return;
                       setActiveAgendaIdx(idx);
                       setElapsedSeconds(0);
                     }}
+                    disabled={!canRun}
                     aria-current={active ? "step" : undefined}
                     className={`flex w-full items-start gap-2 rounded-lg p-2.5 text-left text-[13px] ${
                       active ? "bg-accent-soft font-semibold text-accent-soft-text" : done ? "text-muted line-through decoration-muted/50" : "text-foreground hover:bg-surface-hover"
@@ -459,7 +479,7 @@ export default function LiveMeetingClient({
               );
             })}
           </ol>
-          <AppButton
+          {canRun && <AppButton
             variant="outline"
             size="sm"
             onClick={handleNextAgenda}
@@ -468,11 +488,11 @@ export default function LiveMeetingClient({
             className="mt-2 w-full"
           >
             Next item
-          </AppButton>
+          </AppButton>}
 
           <h2 className="mb-2 mt-6 flex items-center justify-between text-[12px] font-semibold uppercase tracking-wide text-muted">
             <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" aria-hidden /> People ({attendees.length})</span>
-            <span className="font-normal normal-case tracking-normal">marked when they join · tap to change</span>
+            <span className="font-normal normal-case tracking-normal">{canRun ? "marked when they join · tap to change" : "marked when they join"}</span>
           </h2>
           <ul className="space-y-1">
             {attendees.map((a) => {
@@ -482,14 +502,27 @@ export default function LiveMeetingClient({
                 <li key={a.id}>
                   <button
                     type="button"
-                    onClick={() => handleToggleAttendance(a.id, a.attendance)}
-                    className="flex w-full items-center gap-2.5 rounded-lg p-2 text-left hover:bg-surface-hover"
+                    onClick={() => canRun && handleToggleAttendance(a.id, a.attendance)}
+                    disabled={!canRun}
+                    className={`flex w-full items-center gap-2.5 rounded-lg p-2 text-left ${canRun ? "hover:bg-surface-hover" : "cursor-default"}`}
                   >
                     <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-bold text-accent-soft-text">
                       {name.split(/\s+/).map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
                       {online && <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-success" aria-label="on this page" />}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-[13.5px] text-foreground">{name}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13.5px] text-foreground">{name}</span>
+                      {(() => {
+                        const r = replyOf(a.user_id);
+                        if (!r) return null;
+                        return (
+                          <span className="mt-0.5 flex flex-wrap items-center gap-1">
+                            <ReplyChip reply={r.reply} />
+                            {r.reply === "declined" && r.reason && <span className="truncate text-[11px] text-muted" title={r.reason}>{r.reason}</span>}
+                          </span>
+                        );
+                      })()}
+                    </span>
                     {(() => {
                       const att = attendanceLabel(a, session);
                       return (
@@ -514,6 +547,9 @@ export default function LiveMeetingClient({
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-[12px] font-semibold text-success-text">
             <span className="h-2 w-2 animate-pulse rounded-full bg-success" aria-hidden /> In the meeting
+            <span className={`rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${canRun ? "bg-accent-soft text-accent-soft-text" : "bg-sunken text-subtle"}`}>
+              {canRun ? "You run this meeting" : "You're attending"}
+            </span>
           </p>
           <h1 className="truncate text-[17px] font-bold text-heading">{session.meeting?.title}</h1>
           <p className="text-[12.5px] text-subtle">
@@ -553,7 +589,7 @@ export default function LiveMeetingClient({
               >
                 <Video className="h-4 w-4" aria-hidden /> Open Teams <ExternalLink className="h-3 w-3 opacity-80" aria-hidden />
               </a>
-              <button
+              {canRun && <button
                 type="button"
                 onClick={() => {
                   setVideoLinkInput(videoLink);
@@ -563,21 +599,23 @@ export default function LiveMeetingClient({
                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-surface-hover hover:text-foreground"
               >
                 <Settings className="h-4 w-4" aria-hidden />
-              </button>
+              </button>}
             </>
-          ) : (
+          ) : canRun && (
             <button type="button" onClick={generateLink} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-[13px] font-semibold text-foreground hover:bg-surface-hover">
               <Video className="h-4 w-4 text-primary" aria-hidden /> Create Teams link
             </button>
           )}
-          {!isRunning && session.status !== "in_progress" && (
+          {canRun && !isRunning && session.status !== "in_progress" && (
             <AppButton variant="secondary" size="sm" leftIcon={<Play className="h-3 w-3" />} onClick={handleStartSession}>
               Start
             </AppButton>
           )}
-          <AppButton variant="primary" size="sm" onClick={() => setEndSessionOpen(true)} className="bg-danger text-white hover:bg-danger/90">
-            End meeting
-          </AppButton>
+          {canRun && (
+            <AppButton variant="primary" size="sm" onClick={() => setEndSessionOpen(true)} className="bg-danger text-white hover:bg-danger/90">
+              End meeting
+            </AppButton>
+          )}
         </div>
       </header>
 
@@ -596,6 +634,7 @@ export default function LiveMeetingClient({
             </div>
             <nav role="tablist" aria-label="Meeting sections" className="flex gap-1 overflow-x-auto">
               {([
+                { id: "brief", label: "My brief" },
                 { id: "points", label: `Points (${points.length})` },
                 { id: "notes", label: "Notes" },
                 { id: "decisions", label: `Decisions (${decisions.length})` },
@@ -662,9 +701,20 @@ export default function LiveMeetingClient({
 
             {tab === "people" && <div className="max-w-xl lg:hidden">{sidePanel}</div>}
 
+            {tab === "brief" && (
+              <div className="max-w-3xl">
+                {!canRun && (
+                  <p className="mb-3 rounded-lg bg-sunken p-3 text-[13px] text-subtle">
+                    You're attending. The organiser runs the agenda and marks points; you can add points in the box above and see everything here as it happens.
+                  </p>
+                )}
+                {brief ? <MyBriefPanel brief={brief} /> : <p className="text-[13.5px] text-muted">Your brief couldn't be loaded.</p>}
+              </div>
+            )}
+
             {tab === "decisions" && (
               <div className="max-w-2xl space-y-3">
-                <form onSubmit={handleRecordQuickDecision} className="flex gap-2">
+                {canRun && <form onSubmit={handleRecordQuickDecision} className="flex gap-2">
                   <input
                     type="text"
                     value={quickDecisionText}
@@ -680,7 +730,7 @@ export default function LiveMeetingClient({
                   >
                     Record
                   </button>
-                </form>
+                </form>}
                 {decisions.length === 0 ? (
                   <p className="text-[13.5px] text-muted">No decisions recorded in this meeting yet.</p>
                 ) : (

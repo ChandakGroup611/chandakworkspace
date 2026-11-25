@@ -440,7 +440,12 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
         <ul className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
           {d.attendance.map((a, i) => (
             <li key={`${a.name}-${i}`} className="flex flex-wrap justify-between gap-2 text-[13.5px]">
-              <span className="text-foreground">{a.name}</span>
+              <span className="text-foreground">
+                {a.name}
+                <span className="ml-1.5 text-[12px] text-muted">
+                  {a.reply === "accepted" ? "· accepted invite" : a.reply === "declined" ? "· said can't attend" : a.reply === "tentative" ? "· replied maybe" : "· no reply"}
+                </span>
+              </span>
               <span className={a.status === "present" || a.status === "late" ? "text-success-text" : "text-muted"}>
                 {ATT[a.status] || a.status}
                 {a.joinedAt ? ` · joined ${a.joinedAt}` : ""}

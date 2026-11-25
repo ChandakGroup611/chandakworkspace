@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import {
+  MailCheck,
   BarChart3,
   FileText,
   Calendar,
@@ -31,10 +32,21 @@ interface ReportsClientProps {
     r4CarryForward: any[];
     r5TatCompliance: any[];
     r6OwnerPerformance: any[];
+    r7Invites: any[];
   };
 }
 
-type ReportTab = "r1" | "r2" | "r3" | "r4" | "r5" | "r6";
+type ReportTab = "r1" | "r2" | "r3" | "r4" | "r5" | "r6" | "r7";
+
+const REPLY_LABEL: Record<string, string> = { accepted: "Accepted", tentative: "Maybe", declined: "Can't attend", invited: "No reply" };
+const REPLY_CLS: Record<string, string> = {
+  accepted: "bg-success-soft text-success-text",
+  tentative: "bg-warning-soft text-warning-text",
+  declined: "bg-danger-soft text-danger-text",
+  invited: "bg-sunken text-subtle",
+};
+const ATT_LABEL: Record<string, string> = { present: "Present", late: "Late", absent: "Absent", excused: "Excused", left_early: "Left early" };
+const dt = (x: string | null) => (x ? new Date(x).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "—");
 
 export default function ReportsClient({ initialReportData }: ReportsClientProps) {
   const [activeTab, setActiveTab] = useState<ReportTab>("r1");
@@ -48,6 +60,7 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
     { id: "r4" as ReportTab, code: "R4", label: "Carry-Forward Analysis", icon: AlertTriangle, count: initialReportData.r4CarryForward.length },
     { id: "r5" as ReportTab, code: "R5", label: "TAT Compliance", icon: BarChart3, count: initialReportData.r5TatCompliance.length },
     { id: "r6" as ReportTab, code: "R6", label: "Owner Performance", icon: UserCheck, count: initialReportData.r6OwnerPerformance.length },
+    { id: "r7" as ReportTab, code: "R7", label: "Invites & Attendance", icon: MailCheck, count: initialReportData.r7Invites.length },
   ];
 
   // CSV Export utility
@@ -134,6 +147,21 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
           o.open,
           `${o.tat_compliance}%`,
           o.avg_delay,
+        ]);
+        break;
+      case "r7":
+        headers = ["Meeting", "Date", "Person", "Reply", "Reason", "Replied at", "Joined at", "Attendance", "Late (min)", "Marked by hand"];
+        rows = initialReportData.r7Invites.map((r) => [
+          `"${String(r.meeting).replace(/"/g, '""')}"`,
+          r.date ? new Date(r.date).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "",
+          `"${String(r.person).replace(/"/g, '""')}"`,
+          REPLY_LABEL[r.reply] || r.reply,
+          `"${String(r.reason || "").replace(/"/g, '""')}"`,
+          r.replied_at ? new Date(r.replied_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "",
+          r.joined_at ? new Date(r.joined_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "",
+          r.attendance,
+          r.late_minutes,
+          r.marked_by_hand ? "Yes" : "No",
         ]);
         break;
     }
@@ -539,6 +567,48 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
           </div>
         )}
       </div>
+
+      {activeTab === "r7" && (
+        <div className="theme-card-structural mt-4 overflow-x-auto p-0">
+          <p className="border-b border-border px-4 py-3 text-[13px] text-subtle">
+            Everyone invited to each meeting date in the last 6 months: their reply to the invite (with the reason if they can't attend), when they joined, and whether they were present or late.
+          </p>
+          <table className="w-full min-w-[1000px] text-left text-[13px]">
+            <thead className="bg-sunken text-[12px] font-semibold text-subtle">
+              <tr>
+                <th className="px-4 py-2.5">Meeting</th>
+                <th className="px-4 py-2.5">Date</th>
+                <th className="px-4 py-2.5">Person</th>
+                <th className="px-4 py-2.5">Reply</th>
+                <th className="px-4 py-2.5">Reason</th>
+                <th className="px-4 py-2.5">Replied</th>
+                <th className="px-4 py-2.5">Joined</th>
+                <th className="px-4 py-2.5">Attendance</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {initialReportData.r7Invites
+                .filter((r) => (search ? `${r.meeting} ${r.person} ${r.session_code}`.toLowerCase().includes(search.toLowerCase()) : true))
+                .map((r, i) => (
+                  <tr key={i} className="hover:bg-surface-hover">
+                    <td className="px-4 py-3"><a href={`/meet/sessions/${r.session_id}`} className="font-medium text-foreground hover:text-primary hover:underline">{r.meeting}</a></td>
+                    <td className="whitespace-nowrap px-4 py-3 text-subtle">{dt(r.date)}</td>
+                    <td className="px-4 py-3 text-foreground">{r.person}</td>
+                    <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${REPLY_CLS[r.reply] || REPLY_CLS.invited}`}>{REPLY_LABEL[r.reply] || r.reply}</span></td>
+                    <td className="max-w-[220px] px-4 py-3 text-subtle">{r.reason || "—"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-subtle">{dt(r.replied_at)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-subtle">{dt(r.joined_at)}</td>
+                    <td className="px-4 py-3 text-foreground">
+                      {ATT_LABEL[r.attendance] || r.attendance}
+                      {r.attendance === "late" && r.late_minutes ? ` · ${r.late_minutes} min` : ""}
+                      {r.marked_by_hand && <span className="block text-[11.5px] text-muted">marked by hand</span>}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* MoM Preview & Print Modal */}
       {selectedMoM && (
