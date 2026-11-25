@@ -45,12 +45,15 @@ export function VoiceFieldBar({ entityLabel, onApply }: VoiceFieldBarProps) {
         const v = data?.values || {};
         if (v["Subject"] || v["Task title"] || v["Title"]) parsed.subject = v["Subject"] || v["Task title"] || v["Title"];
         if (v["Description"] || v["Remark"] || v["Details"]) parsed.description = v["Description"] || v["Remark"] || v["Details"];
+        if (v["Duration (Days)"] || v["Duration"]) parsed.duration = String(v["Duration (Days)"] || v["Duration"]).replace(/\D/g, "") || parsed.duration;
         if (v["Status"]) parsed.status = v["Status"];
         if (v["Priority"]) parsed.priority = v["Priority"];
         if (v["Start Date"] || v["Start date"]) parsed.startDate = v["Start Date"] || v["Start date"];
         if (v["Due Date"] || v["End Date"] || v["Due date"]) parsed.dueDate = v["Due Date"] || v["End Date"] || v["Due date"];
         if (v["Department"]) parsed.department = v["Department"];
         if (v["Primary Assignee"] || v["Primary assignee"] || v["Assignee"]) parsed.assignee = v["Primary Assignee"] || v["Primary assignee"] || v["Assignee"];
+        if (v["Executors"] || v["Executives"]) parsed.executors = v["Executors"] || v["Executives"];
+        if (v["Watchers"]) parsed.watchers = v["Watchers"];
         if (v["Business Reason"]) parsed.businessReason = v["Business Reason"];
       }
     } catch {}

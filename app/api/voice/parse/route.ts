@@ -114,12 +114,15 @@ export async function POST(req: NextRequest) {
     const fallback: Record<string, string> = {};
     if (parsed.subject) fallback["Subject"] = parsed.subject;
     if (parsed.description) fallback["Description"] = parsed.description;
+    if (parsed.duration) fallback["Duration (Days)"] = parsed.duration;
     if (parsed.status) fallback["Status"] = parsed.status;
     if (parsed.priority) fallback["Priority"] = parsed.priority;
     if (parsed.startDate) fallback["Start Date"] = parsed.startDate;
     if (parsed.dueDate) fallback["Due Date"] = parsed.dueDate;
     if (parsed.department) fallback["Department"] = parsed.department;
     if (parsed.assignee) fallback["Primary Assignee"] = parsed.assignee;
+    if (parsed.executors) fallback["Executors"] = parsed.executors;
+    if (parsed.watchers) fallback["Watchers"] = parsed.watchers;
     if (parsed.businessReason) fallback["Business Reason"] = parsed.businessReason;
 
     return NextResponse.json({ values: fallback, source: "fallback" });

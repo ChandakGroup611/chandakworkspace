@@ -13,7 +13,7 @@ import { SidePeekDrawer } from "@/components/ui/SidePeekDrawer";
 import WorkloadAnalyzer from "@/components/dashboard/WorkloadAnalyzer";
 import TemplateManager from "@/components/tasks/TemplateManager";
 import { VoiceFieldBar } from "@/components/voice/VoiceFieldBar";
-import { matchOptionByLabel, parseVoiceFields, type ParsedVoiceFields } from "@/lib/voice/field-parser";
+import { matchMultipleOptionsByLabel, matchOptionByLabel, parseVoiceFields, type ParsedVoiceFields } from "@/lib/voice/field-parser";
 
 export default function TaskCreationWizard({ workspaceId, initialParentTaskId, initialTaskName, initialDescription, initialAttachments, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, initialTaskName?: string, initialDescription?: string, initialAttachments?: any[], onClose: () => void, onSuccess: (data: any) => void }) {
   const { isLight: isLightMode } = useTheme();
@@ -206,16 +206,20 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             const v = JSON.parse(aiRaw);
             if (v["Subject"] || v["Task title"] || v["Title"]) fields.subject = v["Subject"] || v["Task title"] || v["Title"];
             if (v["Description"]) fields.description = v["Description"];
+            if (v["Duration (Days)"] || v["Duration"]) fields.duration = String(v["Duration (Days)"] || v["Duration"]).replace(/\D/g, "") || fields.duration;
             if (v["Status"]) fields.status = v["Status"];
             if (v["Priority"]) fields.priority = v["Priority"];
             if (v["Start Date"] || v["Start date"]) fields.startDate = v["Start Date"] || v["Start date"];
             if (v["Due Date"] || v["End Date"] || v["Due date"]) fields.dueDate = v["Due Date"] || v["End Date"] || v["Due date"];
             if (v["Department"]) fields.department = v["Department"];
             if (v["Primary Assignee"] || v["Primary assignee"] || v["Assignee"]) fields.assignee = v["Primary Assignee"] || v["Primary assignee"] || v["Assignee"];
+            if (v["Executors"] || v["Executives"]) fields.executors = v["Executors"] || v["Executives"];
+            if (v["Watchers"]) fields.watchers = v["Watchers"];
           }
           const filled: string[] = [];
-          if (fields.subject) { setTitle(fields.subject); filled.push("Subject"); }
+          if (fields.subject) { setTitle(fields.subject); filled.push("Task title"); }
           if (fields.description) { setDescription(fields.description); filled.push("Description"); }
+          if (fields.duration) { setDueDays(fields.duration); filled.push(`Duration: ${fields.duration}d`); }
           if (fields.startDate) { setStartDate(fields.startDate); filled.push("Start Date"); }
           if (fields.dueDate) { setEndDate(fields.dueDate); filled.push("Due Date"); }
           if (fields.status && statusList) {
@@ -355,35 +359,69 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
     }
   };
 
-  const handleVoiceApply = (fields: ParsedVoiceFields) => {
+  const applyParsedVoiceFields = (
+    fields: ParsedVoiceFields,
+    opts?: { statusList?: any[]; priorityList?: any[]; deptList?: any[]; stakeholderList?: any[] }
+  ) => {
+    const sList = opts?.statusList ?? statuses;
+    const pList = opts?.priorityList ?? priorities;
+    const dList = opts?.deptList ?? departments;
+    const shList = opts?.stakeholderList ?? stakeholders;
+
     const filled: string[] = [];
-    if (fields.subject) { setTitle(fields.subject); filled.push("Subject"); }
+    if (fields.subject) { setTitle(fields.subject); filled.push("Task title"); }
     if (fields.description) { setDescription(fields.description); filled.push("Description"); }
+    if (fields.duration) { setDueDays(fields.duration); filled.push(`Duration: ${fields.duration}d`); }
     if (fields.startDate) { setStartDate(fields.startDate); filled.push("Start Date"); }
     if (fields.dueDate) { setEndDate(fields.dueDate); filled.push("Due Date"); }
     if (fields.status) {
-      const m = matchOptionByLabel(fields.status, statuses, ["name", "status_name"]);
+      const m = matchOptionByLabel(fields.status, sList, ["name", "status_name"]);
       if (m) { setStatusId(m.id); filled.push(`Status: ${m.name || m.status_name}`); }
     }
     if (fields.priority) {
-      const m = matchOptionByLabel(fields.priority, priorities, ["name", "priority_name"]);
+      const m = matchOptionByLabel(fields.priority, pList, ["name", "priority_name"]);
       if (m) { setPriorityId(m.id); filled.push(`Priority: ${m.name || m.priority_name}`); }
     }
     if (fields.department) {
-      const m = matchOptionByLabel(fields.department, departments, ["name"]);
+      const m = matchOptionByLabel(fields.department, dList, ["name"]);
       if (m) { setDepartmentId(m.id); filled.push(`Department: ${m.name}`); }
     }
+    const nextExecutors = new Set(executors);
     if (fields.assignee) {
-      const m = matchOptionByLabel(fields.assignee, stakeholders, ["full_name", "email"]);
+      const m = matchOptionByLabel(fields.assignee, shList, ["full_name", "email"]);
       if (m) {
         setPrimaryAssignee(m.id);
-        if (!executors.includes(m.id)) setExecutors([...executors, m.id]);
-        setWatchers(prev => prev.filter(id => id !== m.id));
-        filled.push(`Assignee: ${m.full_name}`);
+        nextExecutors.add(m.id);
+        filled.push(`Primary: ${m.full_name}`);
       }
     }
+    if (fields.executors) {
+      const matches = matchMultipleOptionsByLabel(fields.executors, shList, ["full_name", "email"]);
+      if (matches.length > 0) {
+        matches.forEach((m) => nextExecutors.add(m.id));
+        filled.push(`Executors: ${matches.map((m) => m.full_name).join(", ")}`);
+      }
+    }
+    if (fields.assignee || fields.executors) {
+      const execArr = Array.from(nextExecutors);
+      setExecutors(execArr);
+      setWatchers((prev) => prev.filter((id) => !nextExecutors.has(id)));
+    }
+    if (fields.watchers) {
+      const matches = matchMultipleOptionsByLabel(fields.watchers, shList, ["full_name", "email"]);
+      const eligible = matches.filter((m) => !nextExecutors.has(m.id));
+      if (eligible.length > 0) {
+        setWatchers((prev) => Array.from(new Set([...prev, ...eligible.map((m) => m.id)])));
+        filled.push(`Watchers: ${eligible.map((m) => m.full_name).join(", ")}`);
+      }
+    }
+    return filled;
+  };
+
+  const handleVoiceApply = (fields: ParsedVoiceFields) => {
+    const filled = applyParsedVoiceFields(fields);
     if (filled.length > 0) toast.success(`Voice filled: ${filled.join(", ")}`);
-    else toast.info("Could not match fields. Say e.g. 'subject is ..., status should be New, priority is High'");
+    else toast.info("Could not match fields. Say e.g. 'Task title is ..., Duration is 5, Status is New, Priority is High'");
     return filled;
   };
 

@@ -80,7 +80,7 @@ export function parseGenericFieldPairs(transcript: string): { field: string; val
   let m: RegExpExecArray | null;
   while ((m = triggerRe.exec(text)) !== null) {
     const rawField = m[1]
-      .replace(/^(?:my|the|a|an|create\s+a|new|task|subtask|ticket|requirement|vehicle|meeting|budget|amc|master|setting)\s+/i, "")
+      .replace(/^(?:my|the|a|an|create\s+(?:a|an)?|new)\s+/i, "")
       .trim();
     if (!rawField) continue;
     matches.push({ field: rawField, start: m.index, valueStart: m.index + m[0].length });
