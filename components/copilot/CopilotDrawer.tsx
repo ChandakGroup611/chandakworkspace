@@ -14,7 +14,11 @@ import {
   Bot, 
   User, 
   CornerDownLeft,
-  ChevronRight
+  ChevronRight,
+  Mic,
+  MicOff,
+  Copy,
+  Check
 } from "lucide-react";
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 import { AppButton } from "@/components/ui/AppButton";
@@ -89,6 +93,37 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
   const [inputValue, setInputValue] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  const toggleVoiceInput = () => {
+    if (listening) {
+      try { recognitionRef.current?.stop(); } catch {}
+      setListening(false);
+      return;
+    }
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRec) return;
+    const rec = new SpeechRec();
+    rec.lang = "en-IN";
+    rec.continuous = false;
+    rec.interimResults = true;
+    let finalText = "";
+    rec.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const chunk = event.results[i][0]?.transcript || "";
+        if (event.results[i].isFinal) finalText += chunk + " ";
+        else interim += chunk;
+      }
+      setInputValue((finalText + interim).trim());
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+    recognitionRef.current = rec;
+    setListening(true);
+    rec.start();
+  };
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -450,14 +485,26 @@ export function CopilotDrawer({ open, onClose }: CopilotDrawerProps) {
               <span className="text-[11px] text-muted">
                 <kbd className="font-mono text-[11px]">↵</kbd> Send &bull; <kbd className="font-mono text-[11px]">Shift+↵</kbd> Newline
               </span>
-              <button
-                type="submit"
-                disabled={!inputValue.trim() || streaming}
-                className="flex items-center gap-1.5 rounded bg-theme-btn-primary px-2.5 py-1 text-[12px] font-medium text-theme-btn-primary-text hover:opacity-90 disabled:opacity-40 transition-opacity"
-              >
-                <span>Send</span>
-                <Send className="h-3 w-3" />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={toggleVoiceInput}
+                  disabled={streaming}
+                  title={listening ? "Stop voice input" : "Speak command"}
+                  className={`flex items-center gap-1 rounded px-2 py-1 text-[12px] font-medium border transition-colors ${listening ? "border-rose-500 bg-rose-500/10 text-rose-600" : "border-border text-muted hover:text-foreground"}`}
+                >
+                  {listening ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
+                  <span>{listening ? "Listening…" : "Speak"}</span>
+                </button>
+                <button
+                  type="submit"
+                  disabled={!inputValue.trim() || streaming}
+                  className="flex items-center gap-1.5 rounded bg-theme-btn-primary px-2.5 py-1 text-[12px] font-medium text-theme-btn-primary-text hover:opacity-90 disabled:opacity-40 transition-opacity"
+                >
+                  <span>Send</span>
+                  <Send className="h-3 w-3" />
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -498,14 +545,41 @@ function ActionPreviewCard({
     return () => clearInterval(interval);
   }, [preview.expiresAt, preview.status]);
 
+  const [copiedReceipt, setCopiedReceipt] = useState(false);
+
   if (preview.status === "EXECUTED") {
+    const receiptText = [
+      "CHANDAK MITRA — ACTION RECEIPT",
+      `Proposal: ${preview.proposalId}`,
+      `Action: ${preview.previewTitle}`,
+      `Target: ${preview.targetEntityId}`,
+      `Status: EXECUTED`,
+      `Details: ${preview.executionMessage || "Confirmed and recorded."}`,
+      `Timestamp: ${new Date().toLocaleString("en-IN")}`,
+    ].join("\n");
     return (
-      <div className="rounded-md border border-success-border bg-success-soft p-3 text-[12.5px] text-foreground">
-        <div className="flex items-center gap-2 text-success-text font-medium">
-          <CheckCircle2 className="h-4 w-4" />
-          <span>Action Executed Successfully</span>
+      <div className="rounded-md border border-success-border bg-success-soft p-3 text-[12.5px] text-foreground space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-success-text font-medium">
+            <CheckCircle2 className="h-4 w-4" />
+            <span>Action Executed — Receipt</span>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(receiptText);
+                setCopiedReceipt(true);
+                setTimeout(() => setCopiedReceipt(false), 2000);
+              } catch {}
+            }}
+            className="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 text-[11px] text-muted hover:text-foreground"
+          >
+            {copiedReceipt ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            {copiedReceipt ? "Copied" : "Copy Receipt"}
+          </button>
         </div>
-        <p className="mt-1 text-[12px] text-muted">
+        <p className="text-[12px] text-muted">
           {preview.executionMessage || "Operation confirmed and recorded in system audit trail."}
         </p>
       </div>

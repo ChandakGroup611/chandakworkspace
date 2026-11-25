@@ -7,6 +7,9 @@ import { TicketScopeSelector } from "./TicketScopeSelector";
 import { TicketFormInfra } from "./TicketFormInfra";
 import { TicketFormERP } from "./TicketFormERP";
 import { TicketFormOthers } from "./TicketFormOthers";
+import { VoiceFieldBar } from "@/components/voice/VoiceFieldBar";
+import { VoiceReceiptCard, type VoiceReceiptData } from "@/components/voice/VoiceReceiptCard";
+import type { ParsedVoiceFields } from "@/lib/voice/field-parser";
 import { X, ChevronLeft, Loader2 } from "lucide-react";
 import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
 import { AppButton } from "@/components/ui/AppButton";
@@ -23,7 +26,23 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
   const [step, setStep] = useState<"SCOPE" | "FORM">("SCOPE");
   const [scope, setScope] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [voiceDraft, setVoiceDraft] = useState<Record<string, any>>({});
+  const [voiceFormKey, setVoiceFormKey] = useState(0);
+  const [receiptData, setReceiptData] = useState<VoiceReceiptData | null>(null);
   const { isLight: isLightMode } = useTheme();
+
+  const handleVoiceApply = (fields: ParsedVoiceFields) => {
+    const patch: Record<string, any> = {};
+    const filled: string[] = [];
+    if (fields.subject) { patch.subject = fields.subject; filled.push("Subject"); }
+    if (fields.description) { patch.remark = fields.description; patch.requirement_description = fields.description; filled.push("Description"); }
+    if (fields.businessReason) { patch.business_reason = fields.businessReason; filled.push("Business Reason"); }
+    setVoiceDraft((prev) => ({ ...prev, ...patch }));
+    setVoiceFormKey((k) => k + 1);
+    if (filled.length > 0) toast.success(`Voice filled: ${filled.join(", ")}`);
+    else toast.info("Could not match form fields. Try saying 'subject is ..., description is ...'");
+    return filled;
+  };
 
   const handleScopeSelect = (selectedScope: any) => {
     setScope(selectedScope);
@@ -154,7 +173,15 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
               console.error("Failed to initialize attachment:", attErr);
             }
           }
-          onSuccess(result.code);
+          setReceiptData({
+            receiptNo: `RCP-${result.code}`,
+            module: "Requirement",
+            recordCode: result.code,
+            subject: payload.title,
+            status: "New",
+            createdAt: new Date().toLocaleString("en-IN"),
+            href: `/requirements`,
+          });
           return;
         }
       }
@@ -186,7 +213,15 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
           }
         }
 
-        onSuccess(result.ticket.code);
+        setReceiptData({
+          receiptNo: `RCP-${result.ticket.code}`,
+          module: "Ticket",
+          recordCode: result.ticket.code,
+          subject: payload.title,
+          status: "Open",
+          createdAt: new Date().toLocaleString("en-IN"),
+          href: `/tickets`,
+        });
       }
     } catch (err: any) {
       console.error("Critical submission error details:", err.message || err);
@@ -226,18 +261,21 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
       size="xl"
     >
 
-        {step === "SCOPE" ? (
+        {receiptData ? (
+          <VoiceReceiptCard receipt={receiptData} onClose={() => onSuccess(receiptData.recordCode || "")} />
+        ) : step === "SCOPE" ? (
           <TicketScopeSelector onSelect={handleScopeSelect} onDiscard={onClose} />
         ) : (
-          <div className="relative">
+          <div className="relative space-y-4">
             {isSubmitting && (
               <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 rounded-xl">
                 <ChandakLoader size="sm" title="Submitting…" subtitle="Creating support ticket" />
               </div>
             )}
-            {scope?.code === "INFRA" && <TicketFormInfra scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}
-            {scope?.code === "ERP" && <TicketFormERP scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}
-            {scope?.code === "OTHERS" && <TicketFormOthers scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}
+            <VoiceFieldBar entityLabel="Ticket / Requirement" onApply={handleVoiceApply} />
+            {scope?.code === "INFRA" && <TicketFormInfra key={`infra-${voiceFormKey}`} initialData={voiceDraft} scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}
+            {scope?.code === "ERP" && <TicketFormERP key={`erp-${voiceFormKey}`} initialData={voiceDraft} scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}
+            {scope?.code === "OTHERS" && <TicketFormOthers key={`others-${voiceFormKey}`} initialData={voiceDraft} scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}
           </div>
         )}
     </EnterpriseWizardShell>

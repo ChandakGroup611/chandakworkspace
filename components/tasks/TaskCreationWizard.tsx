@@ -12,6 +12,8 @@ import { fetchPriorities, fetchTasksByWorkspace, fetchStatusesByScope } from "@/
 import { SidePeekDrawer } from "@/components/ui/SidePeekDrawer";
 import WorkloadAnalyzer from "@/components/dashboard/WorkloadAnalyzer";
 import TemplateManager from "@/components/tasks/TemplateManager";
+import { VoiceFieldBar } from "@/components/voice/VoiceFieldBar";
+import { matchOptionByLabel, type ParsedVoiceFields } from "@/lib/voice/field-parser";
 
 export default function TaskCreationWizard({ workspaceId, initialParentTaskId, initialTaskName, initialDescription, initialAttachments, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, initialTaskName?: string, initialDescription?: string, initialAttachments?: any[], onClose: () => void, onSuccess: (data: any) => void }) {
   const { isLight: isLightMode } = useTheme();
@@ -306,6 +308,38 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
     }
   };
 
+  const handleVoiceApply = (fields: ParsedVoiceFields) => {
+    const filled: string[] = [];
+    if (fields.subject) { setTitle(fields.subject); filled.push("Subject"); }
+    if (fields.description) { setDescription(fields.description); filled.push("Description"); }
+    if (fields.startDate) { setStartDate(fields.startDate); filled.push("Start Date"); }
+    if (fields.dueDate) { setEndDate(fields.dueDate); filled.push("Due Date"); }
+    if (fields.status) {
+      const m = matchOptionByLabel(fields.status, statuses, ["name", "status_name"]);
+      if (m) { setStatusId(m.id); filled.push(`Status: ${m.name || m.status_name}`); }
+    }
+    if (fields.priority) {
+      const m = matchOptionByLabel(fields.priority, priorities, ["name", "priority_name"]);
+      if (m) { setPriorityId(m.id); filled.push(`Priority: ${m.name || m.priority_name}`); }
+    }
+    if (fields.department) {
+      const m = matchOptionByLabel(fields.department, departments, ["name"]);
+      if (m) { setDepartmentId(m.id); filled.push(`Department: ${m.name}`); }
+    }
+    if (fields.assignee) {
+      const m = matchOptionByLabel(fields.assignee, stakeholders, ["full_name", "email"]);
+      if (m) {
+        setPrimaryAssignee(m.id);
+        if (!executors.includes(m.id)) setExecutors([...executors, m.id]);
+        setWatchers(prev => prev.filter(id => id !== m.id));
+        filled.push(`Assignee: ${m.full_name}`);
+      }
+    }
+    if (filled.length > 0) toast.success(`Voice filled: ${filled.join(", ")}`);
+    else toast.info("Could not match fields. Say e.g. 'subject is ..., status should be New, priority is High'");
+    return filled;
+  };
+
   return (
     <SidePeekDrawer
       isOpen={true}
@@ -315,6 +349,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
     >
       <div className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <VoiceFieldBar entityLabel={initialParentTaskId ? "Subtask" : "Task"} onApply={handleVoiceApply} />
           
           {/* Section 1: Basic Information */}
           <div className="space-y-4">

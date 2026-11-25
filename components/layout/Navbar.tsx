@@ -30,6 +30,7 @@ import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
 import { ChandakMessengerTrigger } from "@/components/messenger/ChandakMessengerTrigger";
 import { CopilotDrawer } from "@/components/copilot/CopilotDrawer";
 import { ChandakMitraIcon } from "@/components/copilot/ChandakMitraIcon";
+import { GlobalVoiceAssistant } from "@/components/voice/GlobalVoiceAssistant";
 
 type QuickAction = { id: string; label: string; href: string; icon: React.ElementType };
 const QUICK_ACTIONS: QuickAction[] = [
@@ -194,6 +195,7 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
         </Link>
         <RealtimeNotificationsDrawer />
         <ChandakMessengerTrigger />
+        <GlobalVoiceAssistant />
         <button
           type="button"
           onClick={() => setCopilotOpen(true)}
