@@ -380,13 +380,13 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
           {/* TITLE */}
           <div className="flex items-center gap-3 shrink-0">
             <h1 className="topbar-title text-base sm:text-lg font-semibold text-foreground tracking-tight whitespace-nowrap">
-              {activeView === "portfolio" ? "My Portfolio" : "Enterprise Command Center"}
+              {activeView === "portfolio" ? "My portfolio" : "Command center"}
             </h1>
           </div>
 
           {/* MAIN DASHBOARD VIEW SWITCHER + NEW ITEM + LIVE BADGE (All in one unified flex group) */}
           <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
-            <div className="flex items-center gap-1 p-1 bg-surface/90 dark:bg-surface/50 rounded-lg border border-border shadow-xs shrink-0">
+            <div className="flex items-center gap-1 p-1 bg-sunken rounded-lg shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -396,12 +396,12 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 className={cn(
                   "flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0",
                   activeView === "overview"
-                    ? "bg-primary text-primary-foreground shadow-xs"
+                    ? "bg-surface text-foreground shadow-xs ring-1 ring-border"
                     : "text-muted hover:text-foreground hover:bg-surface"
                 )}
               >
                 <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
-                <span className="whitespace-nowrap">Enterprise overview</span>
+                <span className="whitespace-nowrap">Overview</span>
               </button>
 
               <button
@@ -413,7 +413,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 className={cn(
                   "flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0",
                   activeView === "portfolio"
-                    ? "bg-primary text-primary-foreground shadow-xs"
+                    ? "bg-surface text-foreground shadow-xs ring-1 ring-border"
                     : "text-muted hover:text-foreground hover:bg-surface"
                 )}
               >
@@ -421,7 +421,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 <span className="whitespace-nowrap">My portfolio</span>
                 <span className={cn(
                   "px-1.5 py-0.5 rounded-full text-[11px] font-semibold shrink-0",
-                  activeView === "portfolio" ? "bg-sunken text-white" : "bg-accent-soft text-accent-soft-text"
+                  "bg-accent-soft text-accent-soft-text"
                 )}>
                   Live
                 </span>
@@ -544,8 +544,8 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   className={cn(
                     "flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0",
                     hierarchyScope === "all" && selectedDepartmentName === "ALL"
-                      ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                      : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
+                      ? "bg-accent-soft text-accent-soft-text font-semibold ring-1 ring-inset ring-primary/25"
+                      : "bg-surface text-subtle hover:text-foreground hover:bg-surface-hover border border-border"
                   )}
                 >
                   <Globe className="w-3.5 h-3.5" />
@@ -564,8 +564,8 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
                     hierarchyScope === "my_reports"
-                      ? "bg-primary text-white font-semibold shadow-sm"
-                      : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
+                      ? "bg-accent-soft text-accent-soft-text font-semibold ring-1 ring-inset ring-primary/25"
+                      : "bg-surface text-subtle hover:text-foreground hover:bg-surface-hover border border-border"
                   )}
                 >
                   <Users className="w-3.5 h-3.5" />
@@ -585,7 +585,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                     className={cn(
                       "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap",
                       hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
-                        ? "bg-info text-white font-semibold shadow-sm"
+                        ? "bg-accent-soft text-accent-soft-text font-semibold ring-1 ring-inset ring-primary/25"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -628,8 +628,8 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
                   hierarchyScope === "assigned_me"
-                    ? "bg-success text-white font-semibold shadow-sm"
-                    : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
+                    ? "bg-accent-soft text-accent-soft-text font-semibold ring-1 ring-inset ring-primary/25"
+                    : "bg-surface text-subtle hover:text-foreground hover:bg-surface-hover border border-border"
                 )}
               >
                 <UserCheck className="w-3.5 h-3.5" />

@@ -1,14 +1,6 @@
 import React from "react";
-import ChandakLoader from "@/components/ui/ChandakLoader";
+import { ListPageSkeleton } from "@/components/ui/AppSkeleton";
 
-export default function ComplianceLoading() {
-  return (
-    <div className="flex h-[80vh] w-full items-center justify-center">
-      <ChandakLoader
-        size="lg"
-        title="Compliance & data vault"
-        subtitle="Verifying statutory retention rules & soft-deleted archives…"
-      />
-    </div>
-  );
+export default function Loading() {
+  return <ListPageSkeleton label="Loading trash" />;
 }

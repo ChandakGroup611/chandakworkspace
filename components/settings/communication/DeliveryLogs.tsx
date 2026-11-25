@@ -55,7 +55,7 @@ export default function DeliveryLogs() {
   };
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-500">
+    <div className="space-y-4 animate-in fade-in duration-150">
       <AppCard className="flex justify-between items-center p-4">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Transmission logs</h2>

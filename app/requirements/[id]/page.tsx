@@ -1259,7 +1259,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 {tab.count !== undefined && tab.count > 0 && (
                   <span className={cn(
                     "rounded-full px-2 py-0.5 text-[11px] font-semibold tabular transition-colors",
-                    isActive ? "bg-primary text-primary-foreground shadow-2xs" : "bg-elevated text-subtle"
+                    isActive ? "bg-accent-soft text-accent-soft-text" : "bg-elevated text-subtle"
                   )}>
                     {tab.count}
                   </span>
@@ -1329,7 +1329,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             )}
 
             {requirement.scope === 'INFRA' && snap.infraSpecifications && snap.infraSpecifications.length > 0 && (
-            <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4 animate-in fade-in duration-500">
+            <AppCard className="overflow-hidden border border-border bg-surface p-0 mb-4 animate-in fade-in duration-150">
               <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <Server className="w-4 h-4 text-theme-btn-primary" />

@@ -169,7 +169,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
             <span className="text-[11px] font-semibold text-muted-foreground hidden md:inline group-hover:text-foreground transition-colors">
               {isCollapsed ? "Click to Expand" : "Click to Minimize"}
             </span>
-            <div className="h-7 w-7 rounded-lg flex items-center justify-center bg-surface-hover text-foreground group-hover:bg-primary group-hover:text-white transition-all shadow-xs">
+            <div className="h-7 w-7 rounded-lg flex items-center justify-center bg-surface-hover text-foreground group-hover:bg-sunken transition-colors">
               {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
             </div>
           </div>
@@ -215,13 +215,13 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
   };
 
   return (
-    <div id="dashboard-export-area" className="w-full relative animate-in fade-in duration-700 bg-background/50 p-1 sm:p-2 rounded-lg">
+    <div id="dashboard-export-area" className="w-full relative">
       {/* KPI Sections Toolbar & Controls (Unwanted duplicate Workspace Overview title removed) */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-1 mb-4">
         {/* Top Section KPI Quick Navigation & Accordion Pill Strip */}
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none flex-nowrap shrink-0 py-0.5">
           <span className="text-[11px] font-semibold text-muted-foreground mr-1 shrink-0">
-            KPI Sections:
+            Sections:
           </span>
 
         {SECTIONS.map(s => {
@@ -245,17 +245,17 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
                 }, 50);
               }}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 border select-none",
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0 border select-none",
                 !isCollapsed 
-                  ? "bg-accent-soft text-accent-soft-text border-border-active shadow-xs" 
-                  : "bg-surface text-muted-foreground hover:text-foreground border-border hover:bg-surface/60"
+                  ? "bg-accent-soft text-accent-soft-text border-transparent" 
+                  : "bg-surface text-muted-foreground hover:text-foreground border-border hover:bg-surface-hover"
               )}
             >
               <IconComp className="w-3.5 h-3.5" />
               <span>{s.title.split('&')[0].trim()}</span>
               <span className={cn(
                 "px-1.5 py-0.2 rounded-full text-[11px] font-semibold border",
-                !isCollapsed ? "bg-primary text-white border-transparent" : "bg-surface-hover text-muted-foreground border-border/40"
+                !isCollapsed ? "bg-surface text-accent-soft-text border-border-active" : "bg-surface-hover text-muted-foreground border-border/40"
               )}>
                 {sectionWidgets.length}
               </span>

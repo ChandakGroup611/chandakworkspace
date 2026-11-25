@@ -68,9 +68,9 @@ export default function CommunicationCenterHub() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+    <div className="w-full max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-150">
       <header className="border-b border-border pb-4">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ">
           Communication center
         </h1>
         </header>

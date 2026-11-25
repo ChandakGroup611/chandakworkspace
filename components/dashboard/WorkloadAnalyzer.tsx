@@ -79,8 +79,8 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
                 <div 
                   className={`h-full rounded-full transition-all duration-1000 ${
                     metrics.capacity_percentage > 80 
-                      ? 'bg-gradient-to-r from-danger to-danger' 
-                      : 'bg-gradient-to-r from-accent to-primary'
+                      ? 'bg-danger' 
+                      : 'bg-primary'
                   }`} 
                   style={{ width: `${metrics.capacity_percentage}%` }} 
                 />

@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 export default function ProvidersPage() {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8 pb-12">
-      <header className="border-b border-border pb-4 animate-in fade-in duration-500">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <header className="border-b border-border pb-4 animate-in fade-in duration-150">
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ">
           Provider management
         </h1>
         </header>

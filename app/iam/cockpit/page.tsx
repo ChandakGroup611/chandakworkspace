@@ -17,7 +17,7 @@ export default async function IAMCockpitPage() {
   ]);
 
   return (
-    <div className="w-full space-y-6 animate-in fade-in-50 duration-500">
+    <div className="w-full space-y-6 animate-in fade-in-50 duration-150">
       <IAMGovernanceCockpit
         roles={roles}
         permissions={permissions}

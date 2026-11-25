@@ -50,7 +50,7 @@ import { getTaskDetails, updateNodeStatus, deleteTask, createTask } from "@/lib/
 import { useRouter, useSearchParams } from "next/navigation";
 import { WorkspaceMasterTable } from "@/components/workspaces/WorkspaceMasterTable";
 import { PageContainer } from "@/components/layout/PageContainer";
-import ChandakLoader from "@/components/ui/ChandakLoader";
+import { ListPageSkeleton } from "@/components/ui/AppSkeleton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/feedback/States";
@@ -1300,16 +1300,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   };
 
   if (!mounted || permsLoading || loading) {
-    return (
-      <div className={`h-screen flex flex-col items-center justify-center transition-colors duration-300 ${"bg-surface text-foreground"
-        }`}>
-        <ChandakLoader
-          size="lg"
-          title="Loading workspaces…"
-          subtitle="Fetching workspaces and tasks"
-        />
-      </div>
-    );
+    return <ListPageSkeleton label="Loading workspaces and tasks" />;
   }
 
   if (!hasPermission("WORKSPACES_VIEW")) {

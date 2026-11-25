@@ -373,7 +373,7 @@ export default function UserFormPage() {
   }
 
   return (
-    <div className="w-full pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="w-full pb-12 animate-in fade-in slide-in-from-bottom-4 duration-150">
       <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 sticky -top-4 md:-top-6 z-50 bg-surface border-b border-border shadow-sm px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <AppButton aria-label="Back"
@@ -385,7 +385,7 @@ export default function UserFormPage() {
             <ArrowLeft className="h-5 w-5" />
           </AppButton>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ">
               {isEditingMode ? "Update Identity Record" : "Register New Account"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">

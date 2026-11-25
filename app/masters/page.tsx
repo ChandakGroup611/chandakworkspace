@@ -762,7 +762,7 @@ function MastersPageContent() {
                           }`}
                         >
                           {isActive && (
-                            <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-theme-btn-primary to-theme-btn-secondary" />
+                            <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
                           )}
                           <div className={`p-2.5 rounded-lg mt-0.5 transition-colors ${
                             isActive 
@@ -846,9 +846,9 @@ function MastersPageContent() {
                 <>
                   {records.length === 0 ? (
                     <div className="py-20 px-6 text-center flex flex-col items-center justify-center relative overflow-hidden rounded-lg theme-card-structural border border-border-active bg-surface/30 group">
-                      <div className="absolute inset-0 bg-gradient-to-br from-theme-btn-primary/5 via-transparent to-theme-accent-raw/5 opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="absolute inset-0 hidden" />
                       <div className="relative z-10 space-y-6 flex flex-col items-center">
-                        <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-theme-btn-primary/20 to-theme-btn-primary/5 border border-border-active flex items-center justify-center group- transition-shadow duration-500">
+                        <div className="h-16 w-16 rounded-lg bg-accent-soft text-accent-soft-text border border-border flex items-center justify-center">
                           <span className="text-2xl font-semibold text-accent-soft-text">!</span>
                         </div>
                         <div className="space-y-2 max-w-md">

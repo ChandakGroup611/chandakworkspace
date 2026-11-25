@@ -34,3 +34,38 @@ export function AppCardSkeleton() {
     </div>
   );
 }
+
+/**
+ * Page-shaped placeholder for list pages while data loads: title, a row of stat boxes,
+ * a filter bar and table rows. Keeps the page's shape on screen instead of a spinner.
+ */
+export function ListPageSkeleton({ stats = 4, rows = 8, label = "Loading" }: { stats?: number; rows?: number; label?: string }) {
+  return (
+    <div className="w-full space-y-5 p-1" role="status" aria-live="polite" aria-label={label}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="space-y-2">
+          <AppSkeleton className="h-3 w-32" />
+          <AppSkeleton className="h-6 w-56" />
+        </div>
+        <AppSkeleton className="h-9 w-28 rounded-[var(--radius-button)]" />
+      </div>
+      {stats > 0 && (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {Array.from({ length: stats }).map((_, i) => (
+            <div key={i} className="theme-card-structural space-y-2 p-4">
+              <AppSkeleton className="h-3 w-20" />
+              <AppSkeleton className="h-7 w-14" />
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <AppSkeleton className="h-9 w-64" />
+        <AppSkeleton className="h-9 w-28" />
+        <AppSkeleton className="h-9 w-28" />
+      </div>
+      <AppTableSkeleton rows={rows} cols={6} />
+      <span className="sr-only">{label}…</span>
+    </div>
+  );
+}

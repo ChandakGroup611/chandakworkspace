@@ -164,10 +164,10 @@ export function UserComparisonMatrix({
   }
 
   return (
-    <div className="space-y-6 my-6 animate-in fade-in duration-500">
+    <div className="space-y-6 my-6 animate-in fade-in duration-150">
       
       {/* COMPARISON HEADER BANNER */}
-      <div className="p-4 rounded-lg bg-gradient-to-r from-theme-btn-primary/15 via-theme-btn-primary/5 to-transparent border border-border-active flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="p-4 rounded-lg bg-accent-soft border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-lg bg-primary text-primary-foreground shadow-md">
             <TrendingUp className="h-5 w-5" />

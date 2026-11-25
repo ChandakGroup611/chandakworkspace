@@ -490,7 +490,7 @@ export function AMCImplementationTab({
         <div className="space-y-1.5">
           <div className="w-full bg-elevated rounded-full h-2.5 overflow-hidden border border-border">
             <div 
-              className="bg-gradient-to-r from-theme-btn-primary via-success to-success h-full transition-all duration-500 rounded-full"
+              className="bg-success h-full transition-all duration-300 rounded-full"
               style={{ width: `${progressPercent}%` }}
             />
           </div>

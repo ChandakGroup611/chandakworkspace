@@ -288,7 +288,7 @@ export function MyPortfolioSection() {
   const activeUserCount = selectedUserIds.length > 0 ? selectedUserIds.length : usersList.length;
 
   return (
-    <div className="w-full space-y-6 animate-in fade-in duration-500">
+    <div className="w-full space-y-6 animate-in fade-in duration-150">
       
       {/* SECTION MASTER HEADER & FILTER BAR */}
       <div className="p-5 rounded-lg border border-border shadow-sm theme-card-structural space-y-4">
@@ -322,7 +322,7 @@ export function MyPortfolioSection() {
               className={cn(
                 "font-semibold transition-all shadow-sm",
                 compareMode 
-                  ? "bg-gradient-to-r from-theme-btn-primary to-primary ring-2 ring-ring" 
+                  ? "bg-primary ring-2 ring-ring" 
                   : "border-border hover:border-primary"
               )}
             >

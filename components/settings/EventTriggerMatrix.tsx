@@ -47,7 +47,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   const canManage = hasPermission("SETTINGS_NOTIFICATIONS_MANAGE");
 
   return (
-    <div className="theme-card-structural border-border p-6 rounded-lg animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
+    <div className="theme-card-structural border-border p-6 rounded-lg animate-in fade-in slide-in-from-bottom-6 duration-150 delay-150">
       <h2 className="text-xl font-semibold text-foreground mb-2">Event trigger controls</h2>
       <div className="space-y-8">
         {modules.map(mod => {

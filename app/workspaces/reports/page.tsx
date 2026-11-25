@@ -19,9 +19,9 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="w-full space-y-3 animate-in fade-in-50 duration-500">
+    <div className="w-full space-y-3 animate-in fade-in-50 duration-150">
       <header className="pb-1">
-        <h1 className="text-xl font-bold">Reports & analytics</h1>
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ">Reports & analytics</h1>
         
       </header>
 

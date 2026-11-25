@@ -32,12 +32,12 @@ export default function CompliancePage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-400 w-full">
+    <div className="space-y-6 animate-in fade-in-50 duration-150 w-full">
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Trash data</h1>
+            <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ">Trash data</h1>
           </div>
           <p className="text-xs text-muted">
             Securely manage, recover, or permanently purge soft-deleted records across the platform.

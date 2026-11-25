@@ -114,7 +114,7 @@ export default function SessionManagement() {
               ) : filteredSessions.length === 0 ? (
                 <AppTableRow>
                   <AppTableCell colSpan={6} className="h-64">
-                    <div className="flex flex-col items-center justify-center text-center space-y-3 animate-in fade-in zoom-in-95 duration-500">
+                    <div className="flex flex-col items-center justify-center text-center space-y-3 animate-in fade-in zoom-in-95 duration-150">
                       <div className="w-14 h-14 rounded-lg bg-surface/80 border border-border/40 flex items-center justify-center shadow-sm">
                         <ShieldX className="w-7 h-7 text-muted" />
                       </div>

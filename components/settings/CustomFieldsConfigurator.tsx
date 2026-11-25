@@ -165,7 +165,7 @@ export default function CustomFieldsConfigurator() {
           </AppCard>
 
           {/* New field definition append form */}
-          <AppCard className="p-5 space-y-4 border-border-active bg-gradient-to-b from-info-soft via-transparent to-transparent">
+          <AppCard className="p-5 space-y-4 border-border-active bg-transparent">
             <span className="text-xs font-semibold text-foreground block pb-2 border-b border-border">
               Append schema definition
             </span>

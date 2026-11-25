@@ -145,7 +145,7 @@ export default function NotificationRuleBuilder() {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-success-text" /></div>;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-150">
       <div className="flex justify-between items-center bg-surface border border-border p-4 rounded-lg shadow-sm">
         <div>
           <h2 className="text-lg font-semibold text-heading">Rule engine</h2>

@@ -52,7 +52,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
   const dept = ticket.departmentObj;
 
   return (
-    <div className={`h-full flex flex-col animate-in fade-in duration-500 transition-colors duration-300 ${
+    <div className={`h-full flex flex-col animate-in fade-in duration-150 transition-colors duration-300 ${
       "bg-surface"
     }`}>
       {/* Header Banner */}

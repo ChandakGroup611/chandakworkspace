@@ -289,7 +289,7 @@ export default function UserProfileEditor() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Avatar & Summary */}
         <div className="lg:col-span-4 space-y-6">
-          <AppCard className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
+          <AppCard className="overflow-hidden border-0 shadow-lg bg-surface">
             {/* Abstract Background Banner */}
             <div className="h-32 w-full theme-card-structural text-foreground from-accent/20 via-accent/10 to-transparent relative overflow-hidden">
               <div className="absolute inset-0 bg-grid-white/[0.02]" />

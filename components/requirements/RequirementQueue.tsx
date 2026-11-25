@@ -17,7 +17,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
     <div className={`flex flex-col h-full p-6 bg-surface text-foreground`}>
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className={`text-2xl font-bold text-foreground`}>Requirement queue</h1>
+          <h1 className={`text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading `}>Requirement queue</h1>
           
         </div>
         <div className="flex flex-wrap gap-2">

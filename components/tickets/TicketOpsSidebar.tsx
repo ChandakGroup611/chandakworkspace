@@ -38,7 +38,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
   const isStable = slaPercentage > 30;
 
   return (
-    <div className={`w-80 flex flex-col h-full border-l overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500 transition-colors duration-300 ${ "theme-card-structural " }`}>
+    <div className={`w-80 flex flex-col h-full border-l overflow-hidden animate-in fade-in slide-in-from-right-4 duration-150 transition-colors duration-300 ${ "theme-card-structural " }`}>
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
         
         {/* SLA Engine Block */}

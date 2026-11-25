@@ -36,7 +36,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
   const tasks = workspaceId ? await fetchTasksByWorkspace(workspaceId, true) : await fetchAllTasks();
   
   return (
-    <div className="w-full h-full animate-in fade-in-50 duration-500">
+    <div className="w-full h-full animate-in fade-in-50 duration-150">
       <main>
         <TaskListViewClient initialTasks={tasks} userScope={userScope} currentUserId={user?.id || userScope?.userId || null} />
       </main>

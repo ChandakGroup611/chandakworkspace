@@ -794,17 +794,17 @@ export default function UserMasterPage() {
 
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-400 w-full font-sans">
+    <div className="space-y-6 animate-in fade-in-50 duration-150 w-full font-sans">
       {/* Platform Page Header */}
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b ${"border-border"
         }`}>
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className={`text-xl font-semibold tracking-tight ${"text-foreground"}`}>Enterprise personnel registry</h1>
+            <h1 className={`text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ${""}`}>People</h1>
             <AppBadge variant="info">Identity directory</AppBadge>
           </div>
           <p className={`text-xs ${"text-muted"}`}>
-            Governed system personnel records supporting strict department routing, role assignments, and instant audit trails.
+            Everyone with a Chandak Workspace account: department, designation, manager, role and status.
           </p>
         </div>
 
@@ -888,33 +888,34 @@ export default function UserMasterPage() {
       <div className="w-full flex flex-col gap-6">
         {/* Main Spanning List View */}
         <div className="w-full flex flex-col space-y-4">
-          <AppCard className={`flex-1 flex flex-col justify-start overflow-hidden shadow-lg ${"border-border"
+          <AppCard className={`flex-1 flex flex-col justify-start overflow-hidden ${"border-border"
             }`}>
             {/* Unified Filter Box Header */}
-            <div className="bg-surface dark:bg-surface/5 p-3 rounded-t-xl border-b border-border dark:border-border flex flex-col gap-3 shadow-sm">
+            <div className="bg-surface dark:bg-surface/5 p-3 rounded-t-xl border-b border-border dark:border-border flex flex-col gap-3">
               <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
                 <div className="space-y-0.5">
                   <h2 className="text-sm font-semibold text-foreground">
-                    Personnel registry
+                    Directory
                   </h2>
                   <span className="text-[11px] text-muted">
-                    {filteredUsers.length} Users found
+                    {filteredUsers.length} {filteredUsers.length === 1 ? "person" : "people"}
                   </span>
                 </div>
 
                 {/* Status Switcher Tabs */}
-                <div className="flex items-center gap-1 p-1 rounded-lg bg-surface border border-border dark:border-border">
+                <div role="group" aria-label="Account status" className="flex items-center gap-1 p-1 rounded-lg bg-sunken">
                   {(["ALL", "ACTIVE", "DISABLED"] as const).map(flt => (
-                    <AppButton variant="secondary"
+                    <AppButton variant="ghost"
                       key={flt}
                       type="button"
+                      aria-pressed={statusFilter === flt}
                       onClick={() => setStatusFilter(flt)}
-                      className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${statusFilter === flt
-                          ? "bg-primary text-white shadow-sm"
-                          : "text-subtle hover:text-foreground dark:text-muted hover:bg-surface dark:hover:bg-surface/5"
+                      className={`text-[12.5px] px-3 h-8 rounded-md transition-colors ${statusFilter === flt
+                          ? "bg-surface text-foreground font-semibold shadow-xs ring-1 ring-border hover:bg-surface"
+                          : "text-subtle font-medium hover:text-foreground"
                         }`}
                     >
-                      {flt}
+                      {flt === "ALL" ? "All" : flt === "ACTIVE" ? "Active" : "Disabled"}
                     </AppButton>
                   ))}
                 </div>
@@ -970,7 +971,7 @@ export default function UserMasterPage() {
                   <AppTable>
                     <AppTableHeader>
                       <tr>
-                        <AppTableHead className="w-14 text-center px-2">Avatar</AppTableHead>
+                        <AppTableHead className="w-14 text-center px-2"><span className="sr-only">Photo</span></AppTableHead>
                         <AppTableHead>Full name</AppTableHead>
                         <AppTableHead>Corporate email</AppTableHead>
                         <AppTableHead>Department</AppTableHead>
@@ -989,8 +990,8 @@ export default function UserMasterPage() {
                           <AppTableRow
                             key={usr.id}
                             onClick={() => handleInspectUser(usr)}
-                            className={`cursor-pointer group transition-all duration-200 ${isSelected
-                                ? ("bg-accent-soft shadow-inner")
+                            className={`cursor-pointer group transition-colors ${isSelected
+                                ? ("bg-accent-soft")
                                 : ("hover:bg-sunken")
                               }`}
                           >
@@ -1016,26 +1017,25 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`truncate max-w-[200px] text-muted text-xs`}>
+                              <span className="truncate max-w-[220px] text-subtle text-[13px] block">
                                 {usr.email}
                               </span>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`flex items-center gap-1 shrink-0 text-subtle font-medium text-xs`}>
-                                <Layers className="h-3 w-3 opacity-70" />
+                              <span className="flex items-center gap-1 shrink-0 text-subtle text-[13px]">
                                 <span className="truncate max-w-[150px]">{usr.departmentObj?.name || "Global Scope"}</span>
                               </span>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold tracking-wide whitespace-nowrap bg-accent-soft text-accent-soft-text`}>
+                              <span className="text-[13px] text-subtle whitespace-nowrap">
                                 {usr.designationObj?.name || "General Assignee"}
                               </span>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-[11px] font-semibold text-foreground`}>
+                              <span className="text-[13px] text-foreground whitespace-nowrap">
                                 {usr.managerObj?.full_name || "Self / Root"}
                               </span>
                             </AppTableCell>

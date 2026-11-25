@@ -725,7 +725,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
       {/* Header Toolbar */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-heading">Requirement Reports</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ">Requirement Reports</h1>
           <p className="text-xs text-muted">Analysis, status tracking, and SLA auditing across workspace requirements</p>
         </div>
 

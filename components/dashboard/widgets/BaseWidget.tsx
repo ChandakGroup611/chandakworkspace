@@ -39,7 +39,7 @@ export function BaseWidget({
       className={cn(
         "flex flex-col rounded-lg theme-card-structural border border-border",
         "text-foreground transition-all duration-300 shadow-xs",
-        isCollapsed ? "!h-auto !min-h-0 overflow-hidden" : "h-full overflow-hidden hover:shadow-md hover:border-border-active",
+        isCollapsed ? "!h-auto !min-h-0 overflow-hidden" : "h-full overflow-hidden hover:shadow-xs hover:border-border-active",
         "group",
         className
       )}

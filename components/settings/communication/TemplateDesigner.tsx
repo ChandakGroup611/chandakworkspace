@@ -614,7 +614,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
   const isVeh = moduleFilter === "Vehicle (FleetDesk)" || initialModule === "Vehicle (FleetDesk)";
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-150">
       
       {/* Dynamic Header */}
       <div className="flex justify-between items-center bg-background border border-border p-4 rounded-lg shadow-xs">

@@ -128,7 +128,7 @@ export default function AccessMatrixClient({ moduleRoles, users }: AccessMatrixC
       {/* Top Header & Tab Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-theme-btn-primary" />
             Module Access Matrix
           </h1>

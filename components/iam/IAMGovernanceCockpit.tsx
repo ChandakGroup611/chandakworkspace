@@ -422,7 +422,7 @@ export default function IAMGovernanceCockpit({
             <ShieldCheck className="h-5 w-5 text-foreground" />
           </div>
           <div>
-            <h1 className={cn("text-xl font-semibold tracking-tight", "text-foreground")}>
+            <h1 className={cn("text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ", "")}>
               IAM governance cockpit
             </h1>
           </div>
@@ -793,7 +793,7 @@ export default function IAMGovernanceCockpit({
             )}
 
             {/* Matrix Footer */}
-            <div className={cn("p-8 border-t bg-gradient-to-r from-transparent to-transparent", "border-border via-sunken")}>
+            <div className={cn("p-8 border-t bg-transparent", "border-border via-sunken")}>
               <div className="flex items-start gap-4 max-w-3xl">
                 <div className={cn("p-3 rounded-lg shadow-inner", "bg-accent-soft border border-border")}>
                   <ShieldCheck className="h-5 w-5 text-accent-soft-text" />

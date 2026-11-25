@@ -1,14 +1,6 @@
 import React from "react";
-import ChandakLoader from "@/components/ui/ChandakLoader";
+import { ListPageSkeleton } from "@/components/ui/AppSkeleton";
 
-export default function AmcLoading() {
-  return (
-    <div className="flex h-[80vh] w-full items-center justify-center">
-      <ChandakLoader
-        size="lg"
-        title="Chandak AMC & contracts"
-        subtitle="Initializing maintenance agreements, vendor logs & assets…"
-      />
-    </div>
-  );
+export default function Loading() {
+  return <ListPageSkeleton label="Loading AMC and subscriptions" />;
 }

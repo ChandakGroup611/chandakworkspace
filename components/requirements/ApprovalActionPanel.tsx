@@ -59,7 +59,7 @@ export default function ApprovalActionPanel({
   ];
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-150">
       <AppCard className={`w-full overflow-hidden theme-card-structural`}>
         <div className={`px-4 py-3 border-b flex items-center justify-between bg-elevated border-border`}>
           <div className="flex items-center gap-3">

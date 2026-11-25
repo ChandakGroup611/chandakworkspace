@@ -50,7 +50,6 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-success-border hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--success) 25%, transparent)" } as React.CSSProperties}>
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-success" />
             <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-success-text">
               <FolderOpen className="h-14 w-14" />
             </div>
@@ -82,7 +81,6 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-info-border hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--info) 25%, transparent)" } as React.CSSProperties}>
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-info" />
             <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-info-text">
               <Layers className="h-14 w-14" />
             </div>
@@ -114,7 +112,6 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-info-border hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--info) 25%, transparent)" } as React.CSSProperties}>
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-info" />
             <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-info-text">
               <Target className="h-14 w-14" />
             </div>
@@ -146,7 +143,6 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-border-active hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--chart-3) 25%, transparent)" } as React.CSSProperties}>
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-primary" />
             <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-accent-soft-text">
               <GitMerge className="h-14 w-14" />
             </div>
@@ -178,7 +174,6 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-border-active hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--chart-1) 25%, transparent)" } as React.CSSProperties}>
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-primary" />
             <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-accent-soft-text">
               <FileText className="h-14 w-14" />
             </div>
@@ -210,7 +205,6 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
           className="block group cursor-pointer"
         >
           <div className="min-h-[120px] h-full overflow-hidden relative rounded-lg bg-surface/60 border border-border hover:border-border-active hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "color-mix(in srgb, var(--chart-1) 25%, transparent)" } as React.CSSProperties}>
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-primary" />
             <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-accent-soft-text">
               <LayoutDashboard className="h-14 w-14" />
             </div>

@@ -124,7 +124,7 @@ export function TicketFormOthers({ scope, onCancel, onDiscard, onSubmit, initial
   }
 
   return (
-    <div className="animate-in slide-in-from-bottom-4 duration-500">
+    <div className="animate-in slide-in-from-bottom-4 duration-150">
         <RecordModeProvider mode={recordMode}>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <RecordFieldset className="space-y-4">

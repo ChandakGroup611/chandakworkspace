@@ -90,19 +90,10 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
               "theme-card-structural"
             }`}
           >
-            {/* 3D Gradient Overlay matching theme & status color */}
-            <div className={`absolute inset-0 bg-gradient-to-br opacity-60 transition-opacity duration-300 group-hover:opacity-100 ${
-              isLight ? card.gradientLight : card.gradientDark
-            }`} />
-
-            {/* Glowing Accent Top Border */}
-            <div className={`absolute top-0 left-0 w-full h-1 ${
-              card.color === "accent" ? "bg-primary" : `bg-${card.color}`
-            }`} />
 
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
-                <span className="text-[11px] font-semibold text-muted-foreground mix-blend-luminosity opacity-80">
+                <span className="text-[12px] font-medium text-muted-foreground">
                   {card.label}
                 </span>
                 <div className={`p-2 rounded-lg bg-surface/50 shadow-sm ring-1 ring-inset ring-border ${card.textColor}`}>

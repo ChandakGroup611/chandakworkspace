@@ -1,14 +1,6 @@
 import React from "react";
-import ChandakLoader from "@/components/ui/ChandakLoader";
+import { ListPageSkeleton } from "@/components/ui/AppSkeleton";
 
-export default function MastersLoading() {
-  return (
-    <div className="flex h-[80vh] w-full items-center justify-center">
-      <ChandakLoader
-        size="lg"
-        title="Chandak master configuration"
-        subtitle="Loading companies, departments, vendors & entity catalogs…"
-      />
-    </div>
-  );
+export default function Loading() {
+  return <ListPageSkeleton label="Loading masters" />;
 }

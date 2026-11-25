@@ -69,7 +69,7 @@ export default async function TransferTasksPage() {
   return (
     <div className="p-6">
       <div className="mb-6 flex flex-col space-y-2">
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Transfer tasks</h1>
+        <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ">Transfer tasks</h1>
         <p className="text-sm text-muted">
           Bulk move tasks between workspaces and reassign owners or watchers if needed.
         </p>

@@ -144,7 +144,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit, initialD
   }
 
   return (
-    <div className="animate-in slide-in-from-right-4 duration-500">
+    <div className="animate-in slide-in-from-right-4 duration-150">
         <RecordModeProvider mode={recordMode}>
         <form 
           onSubmit={handleSubmit}

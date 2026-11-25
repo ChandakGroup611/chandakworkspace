@@ -134,7 +134,7 @@ export function TicketFormERP({ scope, onCancel, onDiscard, onSubmit, initialDat
   }
 
   return (
-    <div className="animate-in slide-in-from-bottom-4 duration-500">
+    <div className="animate-in slide-in-from-bottom-4 duration-150">
         <RecordModeProvider mode={recordMode}>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <RecordFieldset className="space-y-4">

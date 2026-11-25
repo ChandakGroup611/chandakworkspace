@@ -20,7 +20,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
   }, [activities]);
 
   return (
-    <AppCard className="flex flex-col h-full border-danger-border bg-gradient-to-b from-danger-soft to-transparent">
+    <AppCard className="flex flex-col h-full border-danger-border bg-danger-soft">
       <AppCardHeader className="flex flex-row items-center justify-between pb-2 border-danger-border">
         <div className="flex items-center gap-2">
           <ShieldAlert className="h-4 w-4 text-danger-text animate-pulse" />

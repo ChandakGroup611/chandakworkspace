@@ -459,7 +459,7 @@ export function AMCExecutiveDashboard({
 
       {/* Risk Alert Ribbons (If any critical or high-risk contracts exist) */}
       {(kpiData.criticalRiskCount > 0 || kpiData.highRiskCount > 0) && (
-        <div className="p-4 rounded-lg bg-gradient-to-r from-danger-soft via-warning-soft to-transparent border border-danger-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+        <div className="p-4 rounded-lg bg-danger-soft border border-danger-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-danger-soft text-danger-text shrink-0">
               <AlertTriangle className="h-5 w-5" />

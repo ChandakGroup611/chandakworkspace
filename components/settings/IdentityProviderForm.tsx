@@ -98,7 +98,7 @@ export default function IdentityProviderForm() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-150">
       
       {/* Overview Card */}
       <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">

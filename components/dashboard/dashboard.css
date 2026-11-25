@@ -522,3 +522,40 @@
   --text3: var(--text-secondary, #94a3b8);
 }
 
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * UI refresh (Nov 2026): visual only, no layout or behaviour changes.
+ * Calm surfaces, one shadow, colour only for status; no hover jumps or glows.
+ * ─────────────────────────────────────────────────────────────────────────── */
+.dash-theme .metric-card.blue,
+.dash-theme .metric-card.green,
+.dash-theme .metric-card.amber,
+.dash-theme .metric-card.red {
+  background: var(--bg2);
+  border-color: var(--border);
+}
+.dash-theme .topbar-title {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--text1);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.dash-theme .a2, .dash-theme .a3, .dash-theme .a4, .dash-theme .a5 {
+  background: var(--color-sunken, var(--bg3));
+  color: var(--text1);
+}
+.dash-theme .p-critical { box-shadow: none; }
+.dash-theme .content > * { animation: none; }
+.dash-theme .activity-dot.created { animation: none; }
+.kpi-tile-interactive:hover,
+.dark .kpi-tile-interactive:hover {
+  transform: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  border-color: var(--color-border-active, var(--border2));
+}
+.kpi-tile-interactive:hover .kpi-watermark-icon { transform: none; opacity: inherit; }
+.dash-theme .sprint-card:hover { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); transform: none; }
+.dash-theme .nav-item.active { background: var(--color-accent-soft, rgba(0,0,0,0.05)); color: var(--color-accent-soft-text, var(--accent)); }
+.dash-theme .nav-badge { background: var(--color-sunken, rgba(0,0,0,0.06)); color: var(--text2); }
+.dash-theme .topbar { border-bottom-width: 1px; }

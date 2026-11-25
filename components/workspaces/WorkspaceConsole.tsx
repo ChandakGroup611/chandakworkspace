@@ -53,7 +53,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
     <div className="flex flex-col h-full bg-background text-muted">
       <header className="p-6 border-b flex justify-between items-center theme-card-structural">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{workspace.workspace_name}</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ">{workspace.workspace_name}</h1>
           
         </div>
         <div className="flex gap-4">

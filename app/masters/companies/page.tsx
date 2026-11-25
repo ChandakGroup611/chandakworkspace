@@ -224,7 +224,7 @@ export default function CompanyMasterPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Building2 className={`h-6 w-6 text-accent-soft-text`} />
-            <h1 className={`text-2xl font-semibold tracking-tight ${"text-foreground"}`}>Company master</h1>
+            <h1 className={`text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ${""}`}>Company master</h1>
             <AppBadge variant="info">Global enterprise</AppBadge>
           </div>
           <p className="text-xs text-muted">Manage client engagements, sister organisations, and enterprise structures.</p>
