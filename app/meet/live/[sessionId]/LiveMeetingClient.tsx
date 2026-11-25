@@ -34,7 +34,7 @@ import SessionRoomCard from "@/components/meet/SessionRoomCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { updatePointStatus, updateSessionPointNotes } from "@/lib/actions/meet/points";
 import { updateSessionAttendance, startSession, updateSessionVideoLink } from "@/lib/actions/meet/sessions";
-import { recordDecision } from "@/lib/actions/meet/decisions";
+import { recordDecision, getDecisions } from "@/lib/actions/meet/decisions";
 import { toast } from "react-toastify";
 import { createClient } from "@/utils/supabase/client";
 import type {
@@ -74,6 +74,12 @@ export default function LiveMeetingClient({
   const [endSessionOpen, setEndSessionOpen] = useState(false);
   const [quickDecisionText, setQuickDecisionText] = useState("");
   const [decisions, setDecisions] = useState<any[]>([]);
+  // Decisions already recorded for this meeting (also ones added from the Decisions page)
+  useEffect(() => {
+    getDecisions({ sessionId: session.id, status: "all" })
+      .then((rows) => setDecisions((prev) => [...prev, ...rows.filter((r: any) => !prev.some((p) => p.id === r.id))]))
+      .catch(() => null);
+  }, [session.id]);
   const [focusedPointId, setFocusedPointId] = useState<string | null>(initialPoints[0]?.id || null);
   const [onlinePresence, setOnlinePresence] = useState<{ user_id: string; full_name?: string }[]>([]);
   const focusedPoint = points.find((p) => p.id === focusedPointId) || points[0] || null;

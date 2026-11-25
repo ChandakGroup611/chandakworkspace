@@ -61,7 +61,7 @@ export default async function MeetAdminPage({ searchParams }: { searchParams: Pr
     <div className="space-y-6">
       <MeetHeader
         title="Settings"
-        description="Pick a section under Settings in the menu on the left."
+        description={section ? "Chandak Meet settings. Other sections are under Settings in the menu on the left." : "Pick a section under Settings in the menu on the left."}
         breadcrumbs={[{ label: "Settings" }]}
       />
 

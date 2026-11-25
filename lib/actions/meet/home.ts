@@ -2,7 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireMeet } from "@/lib/permissions/meet";
-import { getMyMeetScope } from "@/lib/utils/meet-scope";
+import { getMyMeetScope, getDeletedMeetingIds } from "@/lib/utils/meet-scope";
 import { SESSION_ROW_SELECT, loadSessionCounts, mapSessionRow, myScopeFilter, type MeetSessionRow } from "@/lib/utils/meet-session-map";
 
 /**
@@ -83,6 +83,8 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
     const nextMonday = addDays(monday, 7);
 
     const sessionSelect = SESSION_ROW_SELECT;
+    const deletedIds = await getDeletedMeetingIds();
+    const notDeleted = deletedIds.length ? `(${deletedIds.join(",")})` : null;
 
     const [windowRes, nextRes, weekRes, myTasksRes, myPointsRes, doneTasksRes, momRes] = await Promise.all([
       scope
@@ -90,6 +92,7 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
             .from("meet_sessions")
             .select(sessionSelect)
             .eq("is_deleted", false)
+            .not("meeting_id", "in", notDeleted || "(00000000-0000-0000-0000-000000000000)")
             .neq("status", "cancelled")
             .gte("scheduled_start", `${today}T00:00:00+05:30`)
             .lt("scheduled_start", `${dayAfter}T00:00:00+05:30`)
@@ -102,6 +105,7 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
             .from("meet_sessions")
             .select(sessionSelect)
             .eq("is_deleted", false)
+            .not("meeting_id", "in", notDeleted || "(00000000-0000-0000-0000-000000000000)")
             .in("status", ["scheduled", "in_progress"])
             .gte("scheduled_start", new Date(Date.now() - 3 * 3600000).toISOString())
             .or(scope)
@@ -113,6 +117,7 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
             .from("meet_sessions")
             .select("id", { count: "exact", head: true })
             .eq("is_deleted", false)
+            .not("meeting_id", "in", notDeleted || "(00000000-0000-0000-0000-000000000000)")
             .neq("status", "cancelled")
             .gte("scheduled_start", `${monday}T00:00:00+05:30`)
             .lt("scheduled_start", `${nextMonday}T00:00:00+05:30`)
@@ -146,6 +151,7 @@ export async function getMeetHomeData(): Promise<MeetHomeData> {
             .from("meet_sessions")
             .select(sessionSelect)
             .eq("is_deleted", false)
+            .not("meeting_id", "in", notDeleted || "(00000000-0000-0000-0000-000000000000)")
             .in("status", ["completed", "mom_draft", "mom_pending_approval"])
             .gte("scheduled_start", new Date(Date.now() - 30 * 86400000).toISOString())
             .or(scope)

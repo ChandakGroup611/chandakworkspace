@@ -189,7 +189,7 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
         toast.error(res.error || "Couldn't send the minutes.");
         return;
       }
-      toast.success(`Minutes approved and sent to ${res.sentCount} people.`);
+      toast.success(`Minutes approved and sent to ${res.sentCount} ${res.sentCount === 1 ? "person" : "people"}.`);
       router.refresh();
     });
 
@@ -306,7 +306,7 @@ export default function MinutesReviewClient({ review }: { review: MinutesReview 
             )}
           </div>
         )}
-        {d.closedRemarks && <p className="border-l-[3px] border-border pl-3 text-[13.5px] text-subtle">Closing remarks: {d.closedRemarks}</p>}
+        {d.closedRemarks && d.closedRemarks.trim() !== String(overview || "").trim() && <p className="border-l-[3px] border-border pl-3 text-[13.5px] text-subtle">Closing remarks: {d.closedRemarks}</p>}
       </section>
 
       {/* Review tools (only while it's a draft) */}

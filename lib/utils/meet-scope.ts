@@ -68,3 +68,9 @@ export async function getMyMeetScope(
 
   return { meetingIds, sessionIds };
 }
+
+/** Ids of deleted meetings, so their dates never show in lists, home or counts. */
+export async function getDeletedMeetingIds(): Promise<string[]> {
+  const { data } = await supabaseAdmin.from("meet_meetings").select("id").eq("is_deleted", true).limit(1000);
+  return ((data || []) as any[]).map((d) => d.id);
+}

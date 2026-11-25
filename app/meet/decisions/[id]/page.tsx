@@ -20,6 +20,12 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   revoked: { label: "Withdrawn", cls: "bg-sunken text-muted" },
 };
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const x: any = await getDecisionDetail(id).catch(() => null);
+  return { title: x?.d ? `${x.d.code} · Decision · Chandak Meet` : "Decision · Chandak Meet" };
+}
+
 export default async function DecisionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [x, masters, meta, impl] = await Promise.all([getDecisionDetail(id), getMeetingMasters(), readDecisionMeta(id).catch(() => null), getDecisionImplementation(id).catch(() => [])]);

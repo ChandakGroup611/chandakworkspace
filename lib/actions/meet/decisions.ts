@@ -11,9 +11,10 @@ export async function getDecisions(filters?: {
   search?: string;
   status?: string;
   meetingId?: string;
+  sessionId?: string;
 }): Promise<MeetingDecision[]> {
   try {
-    const auth = await requireMeet("MEET_VIEW", { meetingId: filters?.meetingId });
+    const auth = await requireMeet("MEET_VIEW", filters?.sessionId ? { sessionId: filters.sessionId } : { meetingId: filters?.meetingId });
     if (!auth.allowed) return [];
 
     let query = supabaseAdmin
@@ -33,6 +34,9 @@ export async function getDecisions(filters?: {
     }
     if (filters?.search) {
       query = query.ilike("text", `%${filters.search}%`);
+    }
+    if (filters?.sessionId) {
+      query = query.eq("session_id", filters.sessionId);
     }
 
     const { data, error } = await query;

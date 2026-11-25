@@ -2,7 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireMeet } from "@/lib/permissions/meet";
-import { getMyMeetScope, getHiddenConfidentialMeetingIds } from "@/lib/utils/meet-scope";
+import { getMyMeetScope, getHiddenConfidentialMeetingIds, getDeletedMeetingIds } from "@/lib/utils/meet-scope";
 import { SESSION_ROW_SELECT, loadSessionCounts, mapSessionRow, myScopeFilter, type MeetSessionRow } from "@/lib/utils/meet-session-map";
 
 /**
@@ -71,6 +71,9 @@ export async function getMyMeetingRows(
       if (!meetingFilterIds.length) return none;
     }
 
+    // Dates of deleted meetings never show in the lists
+    const deletedIds = await getDeletedMeetingIds();
+
     const UPCOMING = `status.eq.in_progress,and(status.eq.scheduled,scheduled_end.gte.${now}),and(status.eq.scheduled,scheduled_end.is.null,scheduled_start.gte.${hourAgo})`;
     const PAST = `status.not.in.(scheduled,in_progress),and(status.eq.scheduled,scheduled_end.lt.${now}),and(status.eq.scheduled,scheduled_end.is.null,scheduled_start.lt.${hourAgo})`;
 
@@ -79,6 +82,7 @@ export async function getMyMeetingRows(
       if (scope) q = q.or(scope);
       if (meetingFilterIds) q = q.in("meeting_id", meetingFilterIds);
       if (hidden.size) q = q.not("meeting_id", "in", `(${Array.from(hidden).join(",")})`);
+      if (deletedIds.length) q = q.not("meeting_id", "in", `(${deletedIds.join(",")})`);
       if (f.from && /^\d{4}-\d{2}-\d{2}$/.test(f.from)) q = q.gte("scheduled_start", `${f.from}T00:00:00+05:30`);
       if (f.to && /^\d{4}-\d{2}-\d{2}$/.test(f.to)) q = q.lte("scheduled_start", `${f.to}T23:59:59+05:30`);
       if (which === "upcoming") q = q.or(UPCOMING);
