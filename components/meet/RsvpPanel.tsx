@@ -4,7 +4,7 @@ import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { Check, HelpCircle, X } from "lucide-react";
-import { replyToInvite, type RsvpPerson, type RsvpReply } from "@/lib/actions/meet/rsvp";
+import { replyToInvite, chaseNoReplies, type RsvpPerson, type RsvpReply } from "@/lib/actions/meet/rsvp";
 import PersonPicker, { type PickPerson } from "@/components/meet/PersonPicker";
 
 /**
@@ -31,6 +31,7 @@ export default function RsvpPanel({
   mine,
   canReply,
   users,
+  canChase = false,
 }: {
   sessionId: string;
   dateLabel: string;
@@ -38,6 +39,8 @@ export default function RsvpPanel({
   mine: { reply: string; reason: string | null } | null;
   canReply: boolean;
   users: PickPerson[];
+  /** Organiser / chair / minute taker: show "Remind people who haven't replied" */
+  canChase?: boolean;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -54,6 +57,13 @@ export default function RsvpPanel({
       router.refresh();
     });
 
+  const chase = () =>
+    start(async () => {
+      const r = await chaseNoReplies(sessionId);
+      if (!r.success) { toast.error(r.error || "Couldn't send reminders."); return; }
+      toast.success(r.reminded ? `Reminder sent to ${r.reminded} ${r.reminded === 1 ? "person" : "people"}` : "Everyone has replied");
+    });
+
   const counts = people.reduce<Record<string, number>>((a, p) => ((a[p.reply] = (a[p.reply] || 0) + 1), a), {});
   const btn = "inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-[13.5px] font-semibold transition-colors disabled:opacity-50";
 
@@ -61,6 +71,11 @@ export default function RsvpPanel({
     <section className="theme-card-structural space-y-4 p-4" aria-labelledby="rsvp-h">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="rsvp-h" className="text-[15px] font-semibold text-heading">Who's coming · {dateLabel}</h2>
+        {canChase && (counts.invited || 0) > 0 && (
+          <button type="button" disabled={pending} onClick={chase} className="inline-flex h-8 items-center rounded-md border border-border bg-surface px-3 text-[12.5px] font-semibold text-foreground hover:bg-surface-hover disabled:opacity-50">
+            Remind {counts.invited} who haven't replied
+          </button>
+        )}
         <p className="text-[13px] text-muted">
           {counts.accepted || 0} attending · {counts.tentative || 0} maybe · {counts.declined || 0} can't · {counts.invited || 0} no reply
         </p>

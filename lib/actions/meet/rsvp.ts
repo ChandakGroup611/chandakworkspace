@@ -171,3 +171,41 @@ export async function getInvitesWaitingForMe(): Promise<{ session_id: string; me
     .slice(0, 10)
     .map(({ s, m }) => ({ session_id: s.id, meeting_id: m.id, title: m.title, start: s.scheduled_start, organiser: one(m.organizer)?.full_name || null }));
 }
+
+/**
+ * Organiser's "Remind people who haven't replied": a bell notification to each of them, plus the
+ * "RSVP reminder" email if an admin has written that template. Logged on the meeting's history.
+ */
+export async function chaseNoReplies(sessionId: string): Promise<{ success: boolean; reminded?: number; error?: string }> {
+  const auth = await requireMeet("MEET_VIEW", { sessionId });
+  const { isMeetingHost, NOT_HOST } = await import("@/lib/utils/meet-host");
+  if (!(await isMeetingHost(sessionId, auth.userId, auth.isSuperAdmin || auth.isMeetAdmin))) return { success: false, error: NOT_HOST };
+  const { data: s } = await supabaseAdmin
+    .from("meet_sessions")
+    .select("id, code, status, scheduled_start, meeting_id, meeting:meet_meetings(title)")
+    .eq("id", sessionId)
+    .maybeSingle();
+  if (!s) return { success: false, error: "Meeting not found." };
+  if (s.status !== "scheduled") return { success: false, error: "This meeting has already started or ended." };
+  const { data: rows } = await supabaseAdmin
+    .from("meet_session_attendees")
+    .select("user_id")
+    .eq("session_id", sessionId)
+    .eq("invite_status", "invited")
+    .not("user_id", "is", null)
+    .not("role", "in", '("requested","denied")');
+  const ids = ((rows || []) as any[]).map((r) => r.user_id).filter((x) => x !== auth.userId);
+  if (!ids.length) return { success: true, reminded: 0 };
+  const title = one((s as any).meeting)?.title || "Meeting";
+  await notifyMeetInApp(ids, `Please reply: ${title}`, `${when(s.scheduled_start)}. Please accept, or say you can't attend.`, `/meet/join/${sessionId}`);
+  await sendMeetEmail("RSVP reminder", {
+    entityId: sessionId,
+    sessionId,
+    actorId: auth.userId,
+    recipients: { "Everyone invited": ids },
+    link: `/meet/join/${sessionId}`,
+    data: { meeting_title: title, session_code: s.code || "", start_time: when(s.scheduled_start), link: `${process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech"}/meet/join/${sessionId}` },
+  }).catch(() => null);
+  await supabaseAdmin.from("meet_activity_log").insert({ entity_type: "session", entity_id: sessionId, action: "rsvp_chased", field: "invite_status", new_value: `${ids.length} reminded`, user_id: auth.userId, channel: "web" });
+  return { success: true, reminded: ids.length };
+}

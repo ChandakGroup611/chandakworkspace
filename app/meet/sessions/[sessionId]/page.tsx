@@ -69,6 +69,7 @@ export default async function SessionWorkspacePage({
           people={replies.people}
           mine={replies.mine}
           canReply={upcoming && !!replies.mine && (session as any).meeting?.organizer_id !== auth.userId}
+          canChase={upcoming && (auth.isSuperAdmin || auth.isMeetAdmin || [(session as any).meeting?.organizer_id, (session as any).meeting?.chair_id, (session as any).minute_taker_id].includes(auth.userId))}
           users={(masters.users || []) as any}
         />
       )}

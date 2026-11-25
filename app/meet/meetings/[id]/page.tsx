@@ -169,6 +169,7 @@ export default async function MeetingDetailPage({
           people={replies.people}
           mine={replies.mine}
           canReply={!!replies.mine && meeting.organizer_id !== auth.userId}
+          canChase={auth.isSuperAdmin || auth.isMeetAdmin || [meeting.organizer_id, meeting.chair_id, (meeting as any).default_minute_taker_id].includes(auth.userId)}
           users={(masters.users || []) as any}
         />
       )}
