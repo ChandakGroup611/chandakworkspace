@@ -156,7 +156,7 @@ export default function SessionWorkspaceClient({
   const newPoints = points.filter((p) => !p.is_backup && p.carry_forward_count === 0);
 
   const handlePointCreated = (newPt: MeetingPoint) => {
-    setPoints((prev) => [...prev.filter((p) => p.id !== newPt.id), newPt]);
+    setPoints((prev) => [...prev, newPt]);
   };
 
   const handleStatusChange = async (pointId: string, status: PointStatus) => {

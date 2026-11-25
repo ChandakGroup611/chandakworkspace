@@ -36,7 +36,7 @@ export function EndSessionModal({ open, onOpenChange, sessionId, sessionCode, po
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [check, setCheck] = useState<EndChecklist | null>(null);
   const [confirmed, setConfirmed] = useState(false);
-  const [followUp, setFollowUp] = useState(false);
+  const [followUp, setFollowUp] = useState(true);
   const [followUpAt, setFollowUpAt] = useState("");
   const [progress, setProgress] = useState<null | { carried: number; open: number; nextNo: number | null; drafting: "running" | "done" | "failed" }>(null);
 

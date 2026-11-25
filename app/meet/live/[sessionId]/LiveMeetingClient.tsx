@@ -293,8 +293,7 @@ export default function LiveMeetingClient({
   };
 
   const handlePointCreated = (newPt: MeetingPoint) => {
-    // The live update may have added it already: keep one copy, with the fuller data from capture
-    setPoints((prev) => [...prev.filter((p) => p.id !== newPt.id), newPt]);
+    setPoints((prev) => [...prev, newPt]);
   };
 
   const handleToggleAttendance = async (attendeeId: string, currentStatus: string) => {

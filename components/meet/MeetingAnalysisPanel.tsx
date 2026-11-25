@@ -63,7 +63,7 @@ export default function MeetingAnalysisPanel({ meetingId }: { meetingId: string 
             {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />} {a.ai ? "Ask AI again" : "Ask AI for its view"}
           </button>
         ) : (
-          <span className="text-[12px] text-muted">The AI's own view needs an AI key set up on the server. The findings below work without it.</span>
+          <span className="text-[12px] text-muted">AI view needs an AI key in Settings (the findings below don't).</span>
         )}
       </div>
 
