@@ -6,6 +6,7 @@ import { Shell, TABS } from "../../_components/shell";
 import * as V from "../../_components/views";
 import { GetStarted } from "../../_components/start";
 import { CreateBudget } from "../../_components/create";
+import { BudgetRecord } from "../../_components/budget-record";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +29,16 @@ export default async function BudgetScreen({ params, searchParams }: {
   const version = versions.find((v) => String(v.number) === search.v) ?? versions[versions.length - 1] ?? null;
   const ctx: V.Ctx = { sb, me, projects, project, versions, version, names, search };
 
+  // One record, one page: an existing budget is opened on its own page and changed in Edit budget,
+  // never in the Create form. /create with a draft open goes to Edit; old "view in form" links go to the page.
+  const openDraft = versions.find((x) => x.status === "draft") ?? null;
+  if (tab === "create" && search.mode === "view" && search.v) redirect(`/budget/${project.id}/view?v=${search.v}`);
+  if (tab === "create" && openDraft && D.canChangeDraft(me, openDraft)) redirect(`/budget/${project.id}/edit?v=${openDraft.number}`);
+
   let body: React.ReactNode;
   if (tab === "start") body = await GetStarted(ctx);
-  else if (tab === "create") body = await CreateBudget(ctx);
+  else if (tab === "create") body = await CreateBudget(ctx, "create");
+  else if (tab === "edit") body = await CreateBudget(ctx, "edit");
   else if (tab === "import") body = await V.ImportTab(ctx);
   else if (tab === "setup") body = await V.Setup(ctx);
   else if (tab === "guide") body = <BudgetLearningGuide projectId={project.id} version={version} />;
@@ -40,7 +48,7 @@ export default async function BudgetScreen({ params, searchParams }: {
   else if (!version) body = D.can(me, "project.setup", project.id) || D.can(me, "version.open", project.id) ? await GetStarted(ctx) : V.NoVersion(ctx);
   else {
     const c = { ...ctx, version };
-    body = await ({ overview: V.Overview, entry: V.Entry, workings: V.Workings, schedules: V.Schedules, line: V.LineView, summary: V.Summary, detail: V.Detail, compare: V.Compare } as Record<string, (c: V.Ctx & { version: D.Version }) => Promise<React.ReactNode>>)[tab](c);
+    body = await ({ view: BudgetRecord, overview: V.Overview, entry: V.Entry, workings: V.Workings, schedules: V.Schedules, line: V.LineView, summary: V.Summary, detail: V.Detail, compare: V.Compare } as Record<string, (c: V.Ctx & { version: D.Version }) => Promise<React.ReactNode>>)[tab](c);
   }
   return <Shell me={me} projects={projects} project={project} versions={versions} version={version} tab={tab}>{body}</Shell>;
 }

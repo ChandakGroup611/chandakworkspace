@@ -87,9 +87,9 @@ export async function GetStarted(c: Ctx) {
         : "No figures yet.",
       action: work && draft ? { href: href("entry", "mode=form"), label: "Enter line by line" } : undefined,
       body: !work ? <p className="sub">Open R1 first.</p> : draft && canEdit ? <>
-        <p className="sub">The <b>Create budget form</b> takes every workbook input in one guided flow; <b>line by line</b> walks through each line with Save &amp; next; the <b>budget sheet</b> shows every line in one table. All three edit the same figures.</p>
+        <p className="sub">The <b>Edit budget</b> page has every input on one page; <b>line by line</b> walks through each line with Save &amp; next; the <b>budget sheet</b> shows every line in one table. All three edit the same figures.</p>
         <div className="actions-group">
-          <Link className="btn-action primary" href={`/budget/${pid}/create`}>Create budget form</Link>
+          <Link className="btn-action primary" href={`/budget/${pid}/edit?v=${draft.number}`}>Edit budget</Link>
           <Link className="btn-action" href={href("entry", "mode=form")}>Enter line by line</Link>
           <Link className="btn-action" href={href("entry")}>Open budget sheet</Link>
           <Link className="btn-action" href={href("schedules")}>Schedules (workings)</Link>

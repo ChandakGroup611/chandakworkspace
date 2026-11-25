@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as M from "@/lib/budget/masters-actions";
 import { useAction } from "./forms";
+import { TablePeek } from "./record-list";
 import {
   Dialog,
   DialogContent,
@@ -132,6 +133,7 @@ export function MastersSettings({
   const categories = [...new Map(summary.map((r) => [r.category, r.category_sort])).entries()].sort((a, b) => a[1] - b[1]);
 
   return (
+    <TablePeek>
     <div className="space-y-6">
       {!editable && (
         <div className="banner info">
@@ -207,6 +209,7 @@ export function MastersSettings({
         />
       )}
     </div>
+    </TablePeek>
   );
 }
 

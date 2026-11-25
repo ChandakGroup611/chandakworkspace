@@ -8,6 +8,7 @@ import { fieldTitle } from "@/lib/budget/fields";
 import { CustomFieldsForm, CustomInput, type Picks } from "./custom-fields";
 import * as F from "./forms";
 import { ImportPanel } from "./import-panel";
+import { DeleteLineButton, RecordList } from "./record-list";
 import { type FormLine, LineByLineForm, LinesGrid } from "./manual";
 import { MasterNav, Notice, VersionBanner } from "./shell";
 import { getAlerts, latestNote, type Alert } from "@/lib/budget/insights";
@@ -306,7 +307,7 @@ export async function Overview(c: Ctx & { version: Version }) {
                 <td className="n">{fmt(xt.ctc_cr)}</td><td className="n">{pt && <Neg v={xt.ctc_cr - pt.ctc_cr} />}</td><td>{(x.prepared_by && names[x.prepared_by]) || ""}</td><td>{x.reason}</td>
                 <td className="actions">
                   <div className="actions-group">
-                    <Link className="btn-action" href={`/budget/${project.id}/overview?v=${x.number}`} title="View overview">View</Link>
+                    <Link className="btn-action" href={`/budget/${project.id}/view?v=${x.number}`} title="Open this budget">Open</Link>
                     <Link className="btn-action primary" href={`/budget/${project.id}/entry?v=${x.number}`} title="Open the budget sheet of this version">Budget sheet</Link>
                   </div>
                 </td></tr>;
@@ -342,7 +343,7 @@ function NextStep({ c, draft }: { c: Ctx & { version: Version }; draft: Version 
   if (v.status === "draft") {
     title = `R${v.number} is a draft: prepare the figures`;
     text = "Type the figures line by line or in the sheet (or import them), add any new lines, then send it for sign-off from the banner above.";
-    if (D.canChangeDraft(me, v)) actions.push({ href: `/budget/${pid}/create`, label: "Create budget form", primary: true });
+    if (D.canChangeDraft(me, v)) actions.push({ href: `/budget/${pid}/edit?v=${v.number}`, label: "Edit budget", primary: true });
     if (canPrepare) actions.push({ href: `/budget/${pid}/entry?v=${v.number}&mode=form`, label: "Enter line by line" });
     if (canPrepare) actions.push({ href: `/budget/${pid}/entry?v=${v.number}`, label: "Open budget sheet" });
     if (D.can(me, "project.setup", pid)) actions.push({ href: `/budget/${pid}/start?v=${v.number}`, label: "Get started checklist" });
@@ -715,7 +716,7 @@ export async function Entry(c: Ctx & { version: Version }) {
           <div className="row" style={{ alignItems: "center", gap: 8 }}>
             <Filters ctx={c} depts={g.departments.map((d) => d.department)} towers={towers} />
             <div className="actions-group">
-              {v.status === "draft" && D.canChangeDraft(me, v) && <Link href={`/budget/${project.id}/create`} className="btn-action primary">Edit in Create budget form</Link>}
+              {v.status === "draft" && D.canChangeDraft(me, v) && <Link href={`/budget/${project.id}/edit?v=${v.number}`} className="btn-action primary">Edit budget</Link>}
               {canAddLine && <a href="#add-lines" className="btn-action">+ Add lines</a>}
               {canOpenNext && <Link href={`/budget/${project.id}/create`} className="btn-action primary">+ Create budget</Link>}
               {v.status === "draft" && splitHeads.length > 0 && towers.length > 0 && (
@@ -962,11 +963,16 @@ export async function LineView(c: Ctx & { version: Version }) {
   const rule = f.is_memo ? "Memo item, outside every total" : f.ctc_rule === "rate" ? `Rate ₹${f.ctc_rate}/sft × ${RATE_BASES.find(([k]) => k === f.ctc_basis)?.[1] ?? f.ctc_basis}`
     : f.ctc_rule === "balance" ? `Balance of ${fmt(Number(f.balance_of_paise) / 1e9)} Cr less the other lines of its ${f.balance_scope}` : schedule ? `Worked out in the schedule "${schedule.title}"` : f.is_tax ? "GST rule" : "Typed";
   const incurredHref = `/budget/${project.id}/incurred?v=${v.number}&head=${f.cost_head_id}&tower=${f.subproject_id ?? 0}&upto=${v.as_on.slice(0, 7)}`;
+  const canDeleteLine = v.status === "draft" && (D.can(me, "budget.delete", project.id) || D.can(me, "budget.edit", project.id) || D.canChangeDraft(me, v));
   return (
     <>
       <section className="panel">
         <div className="panel-head"><h2>{name}</h2><span className="sub">R{v.number} as on {dmy(v.as_on)} · {v.status.replace("_", " ")}</span>
-          <div className="row"><Link className="btn" href={`/budget/${project.id}/entry?v=${v.number}`}>Budget entry</Link><Link className="btn" href={`/budget/${project.id}/detail?v=${v.number}`}>Detail report</Link></div></div>
+          <div className="row">
+            <Link className="btn" href={`/budget/${project.id}/entry?v=${v.number}`}>Budget entry</Link>
+            <Link className="btn" href={`/budget/${project.id}/detail?v=${v.number}`}>Detail report</Link>
+            {canDeleteLine && <DeleteLineButton lineId={f.line_id} back={`/budget/${project.id}/view?v=${v.number}`} />}
+          </div></div>
         <div className="scroll"><table><tbody>
           <tr><td>Initial budget (a)</td><td className="n">{fmt(f.initial_cr)} Cr</td></tr>
           <tr><td>Estimated CTC (b)</td><td className="n">{fmt(f.ctc_cr)} Cr</td></tr>
@@ -1259,8 +1265,7 @@ export async function Incurred(c: Ctx) {
     .sort((a, b) => ((dept.get(a.department_id)?.sort ?? 999) - (dept.get(b.department_id)?.sort ?? 999)) || a.sort - b.sort);
   // ?head=&tower=&upto= shows the entries behind one budget line (tower 0 = not split by tower)
   const line = search.head ? { head: Number(search.head), tower: search.tower ? Number(search.tower) : null, upto: search.upto } : null;
-  const shown = entries.filter((e) => (!search.dept || dept.get(head.get(e.cost_head_id)!.department_id)?.name === search.dept)
-    && (!line || (e.cost_head_id === line.head && (line.tower == null || (e.subproject_id ?? 0) === line.tower) && (!line.upto || e.month.slice(0, 7) <= line.upto))));
+  const shown = entries.filter((e) => (!line || (e.cost_head_id === line.head && (line.tower == null || (e.subproject_id ?? 0) === line.tower) && (!line.upto || e.month.slice(0, 7) <= line.upto))));
   const billHeads = new Map<number, string[]>();
   for (const e of entries) if (e.bill_id) {
     const h = head.get(e.cost_head_id)!;
@@ -1333,82 +1338,42 @@ export async function Incurred(c: Ctx) {
           </div>
         </div>
 
-        <div className="scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Bill date</th>
-                <th className="label">Vendor</th>
-                <th>Bill no.</th>
-                <th>Work order</th>
-                <th>Split over</th>
-                <th className="n">Basic (₹)</th>
-                <th className="n">GST (₹)</th>
-                <th className="n">Total (₹)</th>
-                <th>Entered by</th>
-                <th className="actions-col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bills.map((b) => {
-                const billSplits = entries.filter((e) => e.bill_id === b.bill_id);
-                return (
-                  <tr key={b.bill_id}>
-                    <td>{dmy(b.bill_date)}</td>
-                    <td><strong>{b.vendor}</strong></td>
-                    <td>{b.bill_no}</td>
-                    <td>{b.work_order || "—"}</td>
-                    <td>
-                      <div className="trunc" title={(billHeads.get(b.bill_id) ?? []).join(", ")}>
-                        {(billHeads.get(b.bill_id) ?? []).join(", ") || "—"}
-                      </div>
-                    </td>
-                    <td className="n">{fmtRupees(b.basic_paise)}</td>
-                    <td className="n">{fmtRupees(b.gst_paise)}</td>
-                    <td className="n"><strong>{fmtRupees(b.total_paise)}</strong></td>
-                    <td>{(b.entered_by && c.names[b.entered_by]) || ""}</td>
-                    <td className="actions">
-                      {D.can(me, "cost.enter", project.id) && (
-                        <div className="actions-group">
-                          <F.RecordBillModal
-                            projectId={project.id}
-                            heads={headOptions}
-                            towers={towers}
-                            date={b.bill_date}
-                            vendors={vendors.map((v) => ({ id: v.id, name: v.name }))}
-                            bill={{
-                              bill_id: b.bill_id,
-                              vendor: b.vendor,
-                              bill_no: b.bill_no,
-                              bill_date: b.bill_date,
-                              work_order: b.work_order,
-                              gst_paise: b.gst_paise,
-                              note: b.note,
-                              splits: billSplits.map((e) => ({
-                                head: e.cost_head_id,
-                                tower: e.subproject_id,
-                                amount_paise: e.amount_paise,
-                              })),
-                            }}
-                            trigger={<button type="button" className="btn-action">Edit</button>}
-                          />
-                          <F.DeleteBill id={b.bill_id} />
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-              {bills.length === 0 && (
-                <tr>
-                  <td colSpan={10} className="sub text-center py-6">
-                    No bills recorded yet. Use &quot;Record Bill&quot; above to add vendor invoices.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <RecordList
+          columns={[{ label: "Bill date" }, { label: "Vendor", className: "label" }, { label: "Bill no." }, { label: "Work order" }, { label: "Split over" },
+            { label: "Basic (₹)", className: "n" }, { label: "GST (₹)", className: "n" }, { label: "Total (₹)", className: "n" }, { label: "Entered by" }]}
+          searchPlaceholder="Search vendor, bill no., work order, cost head…"
+          filters={[
+            { key: "vendor", label: "Vendor", options: [...new Set(bills.map((b) => b.vendor))].sort().map((x): [string, string] => [x, x]) },
+            { key: "month", label: "Month", options: [...new Set(bills.map((b) => b.bill_date.slice(0, 7)))].sort().reverse().map((m): [string, string] => [m, monthName(m + "-01")]) },
+          ]}
+          empty={<>No bills recorded yet. Use <b>Record Bill</b> above to add vendor invoices.</>}
+          rows={bills.map((b) => {
+            const billSplits = entries.filter((e) => e.bill_id === b.bill_id);
+            const over = (billHeads.get(b.bill_id) ?? []).join(", ");
+            const editable = D.can(me, "cost.enter", project.id);
+            return {
+              id: String(b.bill_id),
+              search: [b.vendor, b.bill_no, b.work_order, over, b.note].filter(Boolean).join(" ").toLowerCase(),
+              filters: { vendor: b.vendor, month: b.bill_date.slice(0, 7) },
+              cells: [dmy(b.bill_date), <strong key="v">{b.vendor}</strong>, b.bill_no, b.work_order || "—", <div key="o" className="trunc" title={over}>{over || "—"}</div>,
+                fmtRupees(b.basic_paise), fmtRupees(b.gst_paise), <strong key="t">{fmtRupees(b.total_paise)}</strong>, (b.entered_by && c.names[b.entered_by]) || ""],
+              title: `${b.vendor} · Bill ${b.bill_no}`,
+              subtitle: `${dmy(b.bill_date)} · ₹${fmtRupees(b.total_paise)}`,
+              detail: [["Vendor", b.vendor], ["Bill no.", b.bill_no], ["Bill date", dmy(b.bill_date)], ["Work order", b.work_order ?? ""], ["Basic (₹)", fmtRupees(b.basic_paise)],
+                ["GST (₹)", fmtRupees(b.gst_paise)], ["Total (₹)", <strong key="t">{fmtRupees(b.total_paise)}</strong>], ["Note", b.note ?? ""], ["Entered by", (b.entered_by && c.names[b.entered_by]) || ""]],
+              extra: billSplits.length > 0 ? <div className="scroll"><table><thead><tr><th>Split to cost head</th><th>Tower</th><th className="n">Amount (₹)</th></tr></thead><tbody>
+                {billSplits.map((e) => { const h = head.get(e.cost_head_id)!; return <tr key={e.id}><td>{dept.get(h.department_id)?.name} · {h.sub_category || h.category}</td><td>{e.subproject_id ? tower.get(e.subproject_id) : "—"}</td><td className="n">{fmtRupees(e.amount_paise)}</td></tr>; })}
+              </tbody></table></div> : null,
+              actions: editable ? <>
+                <F.RecordBillModal projectId={project.id} heads={headOptions} towers={towers} date={b.bill_date} vendors={vendors.map((v) => ({ id: v.id, name: v.name }))}
+                  bill={{ bill_id: b.bill_id, vendor: b.vendor, bill_no: b.bill_no, bill_date: b.bill_date, work_order: b.work_order, gst_paise: b.gst_paise, note: b.note,
+                    splits: billSplits.map((e) => ({ head: e.cost_head_id, tower: e.subproject_id, amount_paise: e.amount_paise })) }}
+                  trigger={<button type="button" className="btn-action">Edit</button>} />
+                <F.DeleteBill id={b.bill_id} />
+              </> : undefined,
+            };
+          })}
+        />
       </section>
 
       {/* Cost Incurred Entries Ledger */}
@@ -1419,7 +1384,6 @@ export async function Incurred(c: Ctx) {
             <span className="sub">{shown.length} entries · {fmt(toCr(total))} crores total incurred</span>
           </div>
           <div className="row" style={{ alignItems: "center", gap: 8 }}>
-            <F.QuerySelect name="dept" label="" value={search.dept ?? ""} options={[["", "All departments"], ...depts.map((d): [string, string] => [d.name, d.name])]} />
             {allowed.length > 0 && (
               <F.RecordEntryModal
                 projectId={project.id}
@@ -1433,50 +1397,42 @@ export async function Incurred(c: Ctx) {
 
         {lineHead && <Notice>Showing entries behind {dept.get(lineHead.department_id)?.name} · {lineHead.sub_category || lineHead.category}{line!.tower ? ` · ${tower.get(line!.tower)}` : line!.tower === 0 ? " (not split by tower)" : ""}{line!.upto ? ` up to ${monthName(line!.upto + "-01")}` : ""}. <Link href={`/budget/${project.id}/incurred${v ? `?v=${v.number}` : ""}`}>Show all</Link></Notice>}
 
-        <div className="scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th className="label">Department</th>
-                <th className="label">Cost head</th>
-                <th>Tower</th>
-                <th className="n">Amount (₹)</th>
-                <th>Reference</th>
-                {listed.map((f) => <th key={f.id} className={isNum(f) ? "n" : ""} title={fieldTitle(f)}>{f.label}</th>)}
-                <th>Source</th>
-                <th>Entered by</th>
-                <th className="actions-col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((e) => {
-                const h = head.get(e.cost_head_id)!;
-                return (
-                  <tr key={e.id}>
-                    <td>{monthName(e.month)}</td>
-                    <td>{dept.get(h.department_id)?.name}</td>
-                    <td><strong>{h.sub_category || h.category}</strong></td>
-                    <td>{e.subproject_id ? <span className="chip">{tower.get(e.subproject_id)}</span> : ""}</td>
-                    <td className="n"><span className={e.amount_paise < 0 ? "neg" : ""}><strong>{fmtRupees(e.amount_paise)}</strong></span></td>
-                    <td><div className="trunc" title={e.reference ?? ""}>{e.reference}</div></td>
-                    {listed.map((f) => <td key={f.id} className={isNum(f) ? "n" : ""}><CustomInput field={f} entity="cost_entry" entityId={e.id} cell={cf.cells.get(e.id)?.[f.key]} editable={D.can(me, "cost.enter", project.id, h.department_id)} picks={picks} compact /></td>)}
-                    <td>{e.bill_id ? <span className="chip">Bill</span> : e.source === "excel" ? <span className="chip xl">Excel</span> : <span className="chip typed">Typed</span>}</td>
-                    <td>{(e.entered_by && c.names[e.entered_by]) || ""}</td>
-                    <td>{D.can(me, "cost.enter", project.id, h.department_id) && (e.bill_id ? <span className="note">Change on bill</span> : <F.EntryActions e={e} heads={headOptions} towers={towers} />)}</td>
-                  </tr>
-                );
-              })}
-              {shown.length === 0 && (
-                <tr>
-                  <td colSpan={9 + listed.length} className="sub text-center py-6">
-                    No entries found matching filters.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <RecordList
+          columns={[{ label: "Month" }, { label: "Department", className: "label" }, { label: "Cost head", className: "label" }, { label: "Tower" }, { label: "Amount (₹)", className: "n" },
+            { label: "Reference" }, ...listed.map((f) => ({ label: f.label, className: isNum(f) ? "n" : "" })), { label: "Source" }, { label: "Entered by" }]}
+          searchPlaceholder="Search cost head, reference, department…"
+          initialFilters={search.dept ? { dept: search.dept } : undefined}
+          filters={[
+            { key: "dept", label: "Department", options: depts.map((d): [string, string] => [d.name, d.name]) },
+            { key: "month", label: "Month", options: [...new Set(shown.map((e) => e.month.slice(0, 7)))].sort().reverse().map((m): [string, string] => [m, monthName(m + "-01")]) },
+            ...(towers.length ? [{ key: "tower", label: "Tower", options: [["-", "Not split by tower"] as [string, string], ...towers.map((t): [string, string] => [t.name, t.name])] }] : []),
+            { key: "source", label: "Source", options: [["Bill", "From a bill"], ["Excel", "Imported"], ["Typed", "Typed"]] },
+          ]}
+          empty="No cost entries yet. Use Record Entry above, record a bill, or import a cost incurred sheet."
+          footer={<tr className="total"><td colSpan={4}>Total ({shown.length} entries)</td><td className="n">{fmtRupees(total)}</td><td colSpan={4 + listed.length}></td></tr>}
+          rows={shown.map((e) => {
+            const h = head.get(e.cost_head_id)!;
+            const dname = dept.get(h.department_id)?.name ?? "";
+            const src = e.bill_id ? "Bill" : e.source === "excel" ? "Excel" : "Typed";
+            const editable = D.can(me, "cost.enter", project.id, h.department_id);
+            const tname = e.subproject_id ? tower.get(e.subproject_id) ?? "" : "";
+            return {
+              id: String(e.id),
+              search: [dname, h.category, h.sub_category, tname, e.reference, src].filter(Boolean).join(" ").toLowerCase(),
+              filters: { dept: dname, month: e.month.slice(0, 7), tower: tname || "-", source: src },
+              cells: [monthName(e.month), dname, <strong key="h">{h.sub_category || h.category}</strong>, tname ? <span className="chip">{tname}</span> : "",
+                <span key="a" className={e.amount_paise < 0 ? "neg" : ""}><strong>{fmtRupees(e.amount_paise)}</strong></span>, <div key="r" className="trunc" title={e.reference ?? ""}>{e.reference}</div>,
+                ...listed.map((f) => <CustomInput key={f.id} field={f} entity="cost_entry" entityId={e.id} cell={cf.cells.get(e.id)?.[f.key]} editable={editable} picks={picks} compact />),
+                <span key="s" className={`chip ${src === "Excel" ? "xl" : src === "Typed" ? "typed" : ""}`}>{src}</span>, (e.entered_by && c.names[e.entered_by]) || ""],
+              title: `${h.sub_category || h.category} · ₹${fmtRupees(e.amount_paise)}`,
+              subtitle: `${dname} · ${monthName(e.month)}`,
+              detail: [["Month", monthName(e.month)], ["Department", dname], ["Cost head", `${h.category}${h.sub_category ? ` · ${h.sub_category}` : ""}`], ["Tower", tname || "Not split by tower"],
+                ["Amount (₹)", <strong key="a">{fmtRupees(e.amount_paise)}</strong>], ["Reference", e.reference ?? ""], ["Source", src === "Bill" ? "From a vendor bill" : src === "Excel" ? "Imported from Excel" : "Typed"],
+                ["Entered by", (e.entered_by && c.names[e.entered_by]) || ""]],
+              actions: editable ? (e.bill_id ? <span className="note">Change on the bill</span> : <F.EntryActions e={e} heads={headOptions} towers={towers} />) : undefined,
+            };
+          })}
+        />
       </section>
     </>
   );

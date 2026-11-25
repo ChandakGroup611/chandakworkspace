@@ -7,6 +7,7 @@ export const TABS: [string, string][] = [
   ["start", "Get started"], ["create", "Create budget"], ["overview", "Overview"], ["budgets", "Budgets Registry"], ["entry", "Budget entry"], ["import", "Import from Excel"], ["summary", "Summary report"],
   ["detail", "Detail report"], ["compare", "Compare versions"], ["incurred", "Cost incurred"], ["periods", "Month / quarter / year"],
   ["setup", "Project setup"], ["workings", "Tower workings"], ["schedules", "Schedules"], ["line", "Budget line"], ["guide", "Workflow guide & learning hub"],
+  ["view", "Budget"], ["edit", "Edit budget"],
 ];
 
 /* ---------- information architecture ----------
@@ -18,7 +19,7 @@ export const TABS: [string, string][] = [
 export type Area = "home" | "start" | "overview" | "prepare" | "actuals" | "reports" | "setup" | "help" | "admin";
 
 export const AREA_OF: Record<string, Area> = {
-  home: "home", start: "start", overview: "overview", budgets: "overview",
+  home: "home", start: "start", overview: "overview", budgets: "overview", view: "overview", edit: "prepare",
   create: "prepare", entry: "prepare", workings: "prepare", schedules: "prepare", import: "prepare", line: "prepare",
   incurred: "actuals",
   summary: "reports", detail: "reports", compare: "reports", periods: "reports",
@@ -29,11 +30,11 @@ export const AREA_OF: Record<string, Area> = {
 interface SubTab { id: string; label: string }
 const AREAS: { id: Area; label: string; first: string; subs?: SubTab[] }[] = [
   { id: "start", label: "Get started", first: "start" },
-  { id: "overview", label: "Overview", first: "overview", subs: [
-    { id: "overview", label: "Dashboard" }, { id: "budgets", label: "All Budgets & Revisions" },
+  { id: "overview", label: "Budget", first: "view", subs: [
+    { id: "view", label: "Budget details" }, { id: "overview", label: "Dashboard" }, { id: "budgets", label: "Versions of this project" },
   ] },
   { id: "prepare", label: "Prepare budget", first: "entry", subs: [
-    { id: "create", label: "Create budget" }, { id: "entry", label: "Budget entry" }, { id: "workings", label: "Tower workings" }, { id: "schedules", label: "Schedules" }, { id: "import", label: "Import Excel (optional)" },
+    { id: "edit", label: "Edit budget" }, { id: "entry", label: "Budget sheet" }, { id: "workings", label: "Tower workings" }, { id: "schedules", label: "Schedules" }, { id: "import", label: "Import Excel (optional)" },
   ] },
   { id: "actuals", label: "Actuals", first: "incurred" },
   { id: "reports", label: "Reports", first: "summary", subs: [
@@ -48,7 +49,7 @@ const ADMIN_TABS: { id: string; label: string; href: string; right: (me: Me) => 
 ];
 const TAB_LABEL: Record<string, string> = Object.fromEntries([
   ...AREAS.flatMap((a) => (a.subs ?? []).map((t) => [t.id, t.label] as [string, string])),
-  ["start", "Get started"], ["line", "Budget line"], ["guide", "Workflow guide"], ["approvals", "Approvals"], ...ADMIN_TABS.map((t) => [t.id, t.label] as [string, string]),
+  ["start", "Get started"], ["create", "Create budget"], ["list", "All budgets"], ["line", "Budget line"], ["guide", "Workflow guide"], ["approvals", "Approvals"], ...ADMIN_TABS.map((t) => [t.id, t.label] as [string, string]),
 ]);
 
 /** Which areas this person may open for the project (the current one is always shown). */
@@ -71,7 +72,7 @@ export function landingTab(me: Me, projectId: number) {
   if (limitedToDepartments(me) && can(me, "budget.edit", projectId)) return "entry";
   const a = areasFor(me, projectId);
   if (!a.prepare && !a.setup && a.reports) return "summary";
-  return "overview";
+  return "view";
 }
 
 const STEPS = ["Set up", "Prepare", "Sign-off", "Approved"] as const;
@@ -112,7 +113,7 @@ export function Shell({ me, projects, project, versions, version, tab, children 
                 <span className="crumb-sep" aria-hidden>›</span><span className="crumb-current">{TAB_LABEL[tab]}</span>
               </> : project ? <>
                 <span className="crumb-sep" aria-hidden>›</span>
-                <Link href={href("overview")} className="crumb-project">{project.name}</Link>
+                <Link href={href("view")} className="crumb-project">{project.name}</Link>
                 {version && <span className={`pill ${version.status}`}>R{version.number} · {version.status.replace("_", " ")}</span>}
                 {area !== "overview" && <><span className="crumb-sep" aria-hidden>›</span>
                   {areaDef?.subs ? <><Link href={href(areaDef.first)}>{areaDef.label}</Link><span className="crumb-sep" aria-hidden>›</span><span className="crumb-current">{TAB_LABEL[tab] ?? tab}</span></>
@@ -133,6 +134,8 @@ export function Shell({ me, projects, project, versions, version, tab, children 
                 />
               )}
               <div className="top-links">
+                <Link href="/budget/list" className="icon-link strong" aria-current={tab === "list" ? "page" : undefined} title="Every budget of every project, with filters">All budgets</Link>
+                {can(me, "project.create") || can(me, "version.open") ? <Link href="/budget/create" className="icon-link cta" aria-current={tab === "create" && !project ? "page" : undefined}>+ Create budget</Link> : null}
                 <Link href="/budget/approvals" className="icon-link" aria-current={tab === "approvals" ? "page" : undefined} title="Budget versions waiting for sign-off, across all projects">Approvals</Link>
                 <Link href={helpHref} className="icon-link" aria-current={area === "help" ? "page" : undefined} title="Workflow guide">? Guide</Link>
                 {can(me, "project.view") && <Link href="/budget/admin/masters" className="icon-link" aria-current={tab === "masters" ? "page" : undefined} title="Budget Masters: Projects, Towers, Building Types, Departments, Cost Heads, GST, Vendors">Masters</Link>}

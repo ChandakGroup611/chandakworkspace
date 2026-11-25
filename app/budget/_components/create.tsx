@@ -12,19 +12,23 @@ import type { WizardGst } from "@/lib/budget/wizard-actions";
 const cr = (paise: number | null | undefined) => (paise == null ? "" : String(+(Number(paise) / 1e9).toFixed(9)));
 const s = (v: unknown) => (v == null ? "" : String(v));
 
-export async function CreateBudget(c: Ctx) {
+export async function CreateBudget(c: Ctx, mode: "create" | "edit" = "create") {
   const { sb, me, project, versions } = c;
   const pid = project.id;
   const realOpen = versions.find((v) => v.status !== "approved") ?? null;
-  // Record standard: ?mode=view&v=<n> shows that saved version in this same form, read-only.
-  const viewing = c.search?.mode === "view" ? versions.find((v) => String(v.number) === c.search?.v) ?? null : null;
-  const open = viewing ?? realOpen;
-  const canEditViewed = !!viewing && viewing.id === realOpen?.id && viewing.status !== "in_review" && D.canChangeDraft(me, viewing);
-  const canOpenNext = !!viewing && !realOpen && viewing.status === "approved" && D.can(me, "version.open", pid)
-    && viewing.number === Math.max(...versions.filter((v) => v.status === "approved").map((v) => v.number));
-  if (!viewing && open?.status === "in_review") return <Notice kind="draft">R{open.number} is under sign-off, so its figures are locked. <Link href={`/budget/${pid}/overview?v=${open.number}`}>Take it back to draft</Link> from the Overview to change it.</Notice>;
-  if (!viewing && (open ? !D.canChangeDraft(me, open) : !D.can(me, "version.open", pid)))
-    return <Notice>The budget preparer or an administrator creates the budget here. {D.can(me, "budget.edit", pid) && open ? <>You can type your department&apos;s lines on the <Link href={`/budget/${pid}/entry?v=${open.number}&mode=form`}>budget entry</Link>.</> : null}</Notice>;
+  const lastApp = versions.filter((v) => v.status === "approved").pop() ?? null;
+  const nextNo = Math.max(0, ...versions.map((v) => v.number)) + 1;
+  if (mode === "edit") {
+    // Edit budget always changes the open draft; an approved or signed-off version is opened read-only on its page.
+    if (!realOpen) return <Notice kind="locked">{lastApp ? <>R{lastApp.number} is approved and locked, so it cannot be edited. <Link href={`/budget/${pid}/view?v=${lastApp.number}`}>Open R{lastApp.number}</Link>{D.can(me, "version.open", pid) && <> or <Link href={`/budget/${pid}/create`}>start revision R{nextNo}</Link> from its figures</>}.</> : <>This project has no budget yet. <Link href={`/budget/${pid}/create`}>Create R1</Link>.</>}</Notice>;
+    if (realOpen.status === "in_review") return <Notice kind="draft">R{realOpen.number} is under sign-off, so its figures are locked. <Link href={`/budget/${pid}/view?v=${realOpen.number}`}>Open R{realOpen.number}</Link> and use Take back to change it.</Notice>;
+    if (!D.canChangeDraft(me, realOpen)) return <Notice>Only the person who prepared R{realOpen.number} (or an administrator) edits the whole budget. {D.can(me, "budget.edit", pid) ? <>You can change your department&apos;s lines on the <Link href={`/budget/${pid}/entry?v=${realOpen.number}&mode=form`}>budget sheet</Link>.</> : null}</Notice>;
+  } else {
+    if (realOpen?.status === "in_review") return <Notice kind="draft">R{realOpen.number} is under sign-off, so a new revision cannot be started yet. <Link href={`/budget/${pid}/view?v=${realOpen.number}`}>Open R{realOpen.number}</Link>.</Notice>;
+    if (realOpen) return <Notice>Draft R{realOpen.number} is already open. <Link href={`/budget/${pid}/view?v=${realOpen.number}`}>Open it</Link>{D.can(me, "budget.edit", pid) ? <> or type your lines on the <Link href={`/budget/${pid}/entry?v=${realOpen.number}&mode=form`}>budget sheet</Link></> : null}.</Notice>;
+    if (!D.can(me, "version.open", pid)) return <Notice>The budget preparer or an administrator creates the budget here.</Notice>;
+  }
+  const open = mode === "edit" ? realOpen : null;
   const base = versions.filter((v) => v.status === "approved").pop() ?? null;
   const source = open ?? base;
   const [depts, towers, heads, template] = await Promise.all([D.getDepartments(sb), D.getTowers(sb, pid), D.getHeads(sb, pid), getTemplate(sb)]);
@@ -84,30 +88,25 @@ export async function CreateBudget(c: Ctx) {
       <section className="panel guide-head">
         <div>
           <h2>
-            {viewing
-              ? `${viewing.number === 1 ? "Original Baseline Budget" : `Revision ${viewing.number - 1}`} (R${viewing.number}) · ${viewing.status.replace("_", " ")}`
-              : open
-              ? open.number === 1
-                ? "Edit Original Baseline Budget Draft"
-                : `Edit Revision ${open.number - 1} Draft (R${open.number})`
+            {open
+              ? `Edit ${open.number === 1 ? "Original Baseline Budget" : `Revision ${open.number - 1}`} · R${open.number} draft`
               : next === 1
-              ? "Create Original Baseline Budget"
+              ? "Create Original Baseline Budget (R1)"
               : `Create Revision ${next - 1} (R${next})`}
           </h2>
           <p className="sub">
-            {next === 1
-              ? "Establishes the initial approved baseline budget for this project against which all future revisions, actual costs, and variances will be tracked."
-              : "Every input of the detail budget workbook, step by step: version, project areas, towers, budget lines by department, GST and cost incurred."}
+            {open
+              ? "Every part of the budget on one page: change what you need and press Save changes. Totals update as you type."
+              : next === 1
+              ? "Establishes the initial baseline budget for this project against which all future revisions, actual costs, and variances will be tracked."
+              : `Starts from the figures of approved R${base?.number}; change only what moved.`}
           </p>
         </div>
-        {!viewing && <div className="actions-group">
-          {open && <Link className="btn-action" href={`/budget/${pid}/entry?v=${open.number}&mode=form`}>Line by line instead</Link>}
+        <div className="actions-group">
+          {open && <Link className="btn-action" href={`/budget/${pid}/view?v=${open.number}`}>← Back to budget</Link>}
+          {open && <Link className="btn-action" href={`/budget/${pid}/entry?v=${open.number}`}>Budget sheet</Link>}
           <Link className="btn-action" href={`/budget/${pid}/import${open ? `?v=${open.number}` : ""}`}>Import Excel instead</Link>
-        </div>}
-        {viewing && <div className="actions-group">
-          <Link className="btn-action" href={`/budget/${pid}/overview?v=${viewing.number}`}>Overview</Link>
-          <Link className="btn-action" href={`/budget/${pid}/entry?v=${viewing.number}`}>Budget sheet</Link>
-        </div>}
+        </div>
       </section>
       {lines.some((l) => l.headId && figs.find((f) => `l${f.line_id}` === l.key)?.ctc_rule === "balance") &&
         <Notice>Lines set as &quot;balance of a total&quot; are shown with their current CTC; saving here keeps that amount as a typed CTC.</Notice>}
@@ -119,9 +118,7 @@ export async function CreateBudget(c: Ctx) {
         departments={depts.map((d) => ({ id: d.id, name: d.name, summary_category: d.summary_category }))}
         lines={lines} gst={gst} deptRemarks={Object.fromEntries(Object.entries(source?.department_remarks ?? {}).map(([k, v]) => [k, String(v)]))}
         summaryOptions={summaryOptions} gstRules={gstRules}
-        readOnly={!!viewing}
-        editHref={canEditViewed || canOpenNext ? `/budget/${pid}/create` : undefined}
-        editLabel={canEditViewed ? `Edit R${viewing?.number}` : canOpenNext ? `Start R${next} from these figures` : undefined}
+        layout={open ? "sheet" : "steps"}
       />
     </>
   );

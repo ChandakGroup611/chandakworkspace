@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { AppButton } from "@/components/ui/AppButton";
 import { useRecordHighlight } from "@/components/ui/record";
+import { DeleteDraftButton } from "./record-list";
 import * as A from "@/lib/budget/actions";
 import { addTowerFull } from "@/lib/budget/manual-actions";
 import { BUILDING_TYPES, RATE_BASES, fmt, fmtRupees, formatBudgetPeriod, versionTitle, versionSubtitle, dmy } from "@/lib/budget/format";
@@ -2112,7 +2113,7 @@ export function ProjectsMasterTable({
                   <tr key={p.id}>
                     <td><span className="chip">{p.code}</span></td>
                     <td>
-                      <Link href={`/budget/${p.id}/overview`} className="font-semibold text-primary hover:underline">
+                      <Link href={`/budget/${p.id}/view?v=${cur.number}`} className="font-semibold text-primary hover:underline">
                         {p.name}
                       </Link>
                       {p.location && (
@@ -2156,11 +2157,11 @@ export function ProjectsMasterTable({
                     </td>
                     <td className="actions">
                       <div className="actions-group">
-                        <Link href={`/budget/${p.id}/overview?v=${cur.number}`} className="btn-action">
-                          Overview
+                        <Link href={`/budget/${p.id}/view?v=${cur.number}`} className="btn-action primary">
+                          Open budget
                         </Link>
-                        <Link href={`/budget/${p.id}/budgets`} className="btn-action">
-                          Budgets
+                        <Link href={`/budget/list?project=${p.id}`} className="btn-action">
+                          All versions
                         </Link>
                         <Link href={`/budget/${p.id}/entry?v=${cur.number}`} className="btn-action">
                           Entry
@@ -2193,7 +2194,7 @@ export function ProjectsMasterTable({
               <div key={p.id} className="project-progress-card">
                 <div className="project-progress-header">
                   <div>
-                    <Link href={`/budget/${p.id}/overview?v=${cur.number}`} className="project-progress-title">
+                    <Link href={`/budget/${p.id}/view?v=${cur.number}`} className="project-progress-title">
                       {p.name}
                     </Link>
                     {p.location && <div className="project-progress-loc">{p.location}</div>}
@@ -2251,8 +2252,8 @@ export function StageProcessBar({
   const q = versionNumber ? `?v=${versionNumber}` : "";
   const stages = [
     { num: 1, title: "Setup & Masters", tab: "setup", activeFor: ["setup", "masters"] },
-    { num: 2, title: "Budget Planning", tab: "entry", activeFor: ["entry", "create", "workings", "schedules", "import", "line"] },
-    { num: 3, title: "Review & Sign-Off", tab: "overview", activeFor: ["overview", "signoff"] },
+    { num: 2, title: "Budget Planning", tab: "entry", activeFor: ["entry", "create", "edit", "workings", "schedules", "import", "line"] },
+    { num: 3, title: "Review & Sign-Off", tab: "view", activeFor: ["view", "overview", "signoff"] },
     { num: 4, title: "Execution & Actuals", tab: "incurred", activeFor: ["incurred", "periods"] },
     { num: 5, title: "Reports & Analytics", tab: "summary", activeFor: ["summary", "detail", "compare"] },
   ];
@@ -2630,17 +2631,17 @@ export function BudgetsRegistryTable({
                     <div className="actions-group">
                       {/* Record standard: open the version in the same 6-step form it was made with */}
                       <Link
-                        href={`/budget/${project.id}/create?mode=view&v=${v.number}`}
+                        href={`/budget/${project.id}/view?v=${v.number}`}
                         className="btn-action primary"
-                        title="View this budget in the 6-step form it was entered with"
+                        title="Open this budget's page"
                       >
                         View
                       </Link>
                       {canManage && v.status === "draft" && (
                         <Link
-                          href={`/budget/${project.id}/create`}
+                          href={`/budget/${project.id}/edit?v=${v.number}`}
                           className="btn-action"
-                          title="Edit this draft in the 6-step form"
+                          title="Edit this draft"
                         >
                           Edit
                         </Link>
@@ -2671,6 +2672,13 @@ export function BudgetsRegistryTable({
                           version={v}
                           project={project}
                           trigger={<button type="button" className="btn-action">Edit Details</button>}
+                        />
+                      )}
+                      {canManage && v.status === "draft" && (
+                        <DeleteDraftButton
+                          versionId={v.id}
+                          number={v.number}
+                          back={`/budget/${project.id}/budgets`}
                         />
                       )}
                     </div>

@@ -80,7 +80,7 @@ export default async function BudgetApprovals() {
                   <td className="actions">
                     <div className="actions-group">
                       <Link className="btn-action" href={`/budget/${r.p.id}/detail?v=${r.v.number}`}>Read detail</Link>
-                      <Link className="btn-action" href={`/budget/${r.p.id}/create?mode=view&v=${r.v.number}`}>View form</Link>
+                      <Link className="btn-action" href={`/budget/${r.p.id}/view?v=${r.v.number}`}>Open budget</Link>
                     </div>
                     <SignoffActions versionId={r.v.id} number={r.v.number} projectId={r.p.id} status={r.v.status} chain={r.chain}
                       mayApprove={D.canApprove(me, r.v)} mayRecall={false} next={r.next ? { title: r.next.title, mine: true } : null} />
