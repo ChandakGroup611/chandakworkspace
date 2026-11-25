@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Mic, MicOff, X, Check, Copy, Printer, Sparkles } from "lucide-react";
 import { toast } from "react-toastify";
 import { AppButton } from "@/components/ui/AppButton";
+import { VoiceInputArea } from "@/components/voice/VoiceInputArea";
 import {
   applyValuesToActiveForm,
   fillActiveFormFromVoice,
@@ -193,12 +194,11 @@ export function GlobalVoiceAssistant() {
             Works on any open form, modal, Settings, or Masters screen. Say field names and values (e.g. &quot;name is …, priority is High, due date is tomorrow&quot;).
           </p>
 
-          <textarea
-            rows={2}
+          <VoiceInputArea
             value={transcript}
-            onChange={(e) => setTranscript(e.target.value)}
-            placeholder="Spoken command appears here…"
-            className="w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
+            onChange={setTranscript}
+            listening={listening}
+            placeholder="Spoken or typed command appears here…"
           />
 
           <div className="flex flex-wrap items-center gap-2">

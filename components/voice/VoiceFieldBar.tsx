@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Mic, MicOff, Sparkles, Check } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
+import { VoiceInputArea } from "@/components/voice/VoiceInputArea";
 import { parseVoiceFields, type ParsedVoiceFields } from "@/lib/voice/field-parser";
 import { inspectActiveFormFields } from "@/lib/voice/dom-form-filler";
 
@@ -148,12 +149,15 @@ export function VoiceFieldBar({ entityLabel, onApply }: VoiceFieldBarProps) {
 
       {(listening || transcript || errorMsg) && (
         <div className="space-y-1.5">
-          <input
-            type="text"
+          <VoiceInputArea
             value={transcript}
-            onChange={(e) => setTranscript(e.target.value)}
-            placeholder={listening ? "Listening… speak field names and values clearly" : "Spoken command appears here…"}
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
+            onChange={setTranscript}
+            listening={listening}
+            placeholder={
+              listening
+                ? "Listening… speak field names and values clearly"
+                : "Spoken command appears here…"
+            }
           />
           {errorMsg && <p className="text-[11px] text-danger-text">{errorMsg}</p>}
           {appliedLabels.length > 0 && (
