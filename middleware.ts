@@ -4,6 +4,8 @@ import { MODULE_CHOSEN_COOKIE } from "@/lib/module-gate";
 
 // Pages that never go through the module gate (sign-in flow, onboarding, public share links, shared user settings).
 const GATE_EXEMPT = /^\/(select-module|login|register|auth\/|api\/|profile|settings|share\/|verify-drawing\/|offline|_next\/)/;
+// Pages for people without an account: links shared outside the company check the recipient themselves.
+const NO_LOGIN_PAGES = /^\/share\/[^/]+\/?$/;
 
 const API_METHOD_CONTRACT: Record<string, string[]> = {
   "/api/version": ["GET", "HEAD"],
@@ -190,7 +192,7 @@ export async function middleware(request: NextRequest) {
 
   // If user is not authenticated and trying to access protected page routes, redirect to /login
   // Never redirect Server Action RPC calls to /login HTML, as that breaks the client action protocol with 307
-  if (!user && !isAuthPage && !isApiRoute && !isAuthCallback && !isServerAction) {
+  if (!user && !isAuthPage && !isApiRoute && !isAuthCallback && !isServerAction && !NO_LOGIN_PAGES.test(pathname)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", pathname + request.nextUrl.search);
