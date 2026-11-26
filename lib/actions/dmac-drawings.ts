@@ -1,5 +1,6 @@
 "use server";
 
+import { requireDesign } from "@/lib/permissions/design-guard";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 
@@ -53,6 +54,7 @@ export async function fetchBuildingSectionMatrixAction(
   buildingId?: string
 ): Promise<{ success: boolean; data?: BuildingSectionMatrixResult; error?: string }> {
   try {
+    await requireDesign("any");
     const supabase = await getSupabase();
 
     // 1. Fetch Floors
@@ -172,6 +174,7 @@ export async function fetchBuildingSectionMatrixAction(
  */
 export async function fetchDrawingDetailAction(drawingId: string) {
   try {
+    await requireDesign("any");
     const supabase = await getSupabase();
 
     // 1. Drawing Core Record
@@ -279,6 +282,7 @@ export async function submitDrawingRevisionAction(params: {
   commentResponses?: { commentId: string; responseMessage: string }[];
 }) {
   try {
+    await requireDesign("drawings");
     const supabase = await getSupabase();
     const {
       data: { user },
@@ -433,6 +437,7 @@ export async function reviewDrawingRevisionAction(params: {
   }[];
 }) {
   try {
+    await requireDesign("gfc");
     const supabase = await getSupabase();
     const {
       data: { user },
@@ -513,6 +518,7 @@ export async function reviewDrawingRevisionAction(params: {
  */
 export async function fetchWaitingLongestQueueAction(projectId: string) {
   try {
+    await requireDesign("any");
     const supabase = await getSupabase();
 
     const { data, error } = await supabase
@@ -554,6 +560,7 @@ export async function createMarkupCommentAction(params: {
   };
 }) {
   try {
+    await requireDesign("any");
     const supabase = await getSupabase();
     const {
       data: { user },
@@ -611,6 +618,7 @@ export async function updateMarkupCommentAction(params: {
   status?: "OPEN" | "RESOLVED" | "CLOSED";
 }) {
   try {
+    await requireDesign("any");
     const supabase = await getSupabase();
     const {
       data: { user },
@@ -645,6 +653,7 @@ export async function updateMarkupCommentAction(params: {
  */
 export async function deleteMarkupCommentAction(commentId: string) {
   try {
+    await requireDesign("any");
     const supabase = await getSupabase();
     const {
       data: { user },
@@ -673,6 +682,7 @@ export async function addCommentThreadReplyAction(params: {
   authorEmail?: string;
 }) {
   try {
+    await requireDesign("any");
     const supabase = await getSupabase();
     const {
       data: { user },

@@ -1,9 +1,8 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { requireDesign } from "@/lib/permissions/design-guard";
 import { can, invalidateModuleAccessCache } from "@/lib/permissions/module-access";
-import { cookies } from "next/headers";
 import { 
   ProjectMaster, 
   TowerMaster, 
@@ -35,70 +34,12 @@ import {
 // ==============================================================================
 
 
-// ---------- server-side access guard ----------
-// Every save / delete below runs with full database access, so this guard is what enforces the
-// Design access set on Design → Access & roles (design_user_access): the person's Design role, their
-// project scope (all projects or the assigned ones) and the capability switches. Super Admin passes.
-type DesignCap = "any" | "admin" | "masters" | "matrix" | "drawings" | "gfc" | "transmittals" | "rfis";
-const CAP_COLUMN: Record<Exclude<DesignCap, "any" | "admin">, string> = {
-  masters: "can_masters_manage", matrix: "can_matrix_edit", drawings: "can_drawings_upload",
-  gfc: "can_drawings_approve_gfc", transmittals: "can_transmittals_create", rfis: "can_rfis_manage",
-};
-const CAP_LABEL: Record<DesignCap, string> = {
-  any: "use Design Tracking", admin: "manage Design access and policies", masters: "manage Design masters",
-  matrix: "edit the design matrix", drawings: "upload or change drawings", gfc: "approve drawings for GFC",
-  transmittals: "create transmittals", rfis: "manage RFIs",
-};
+// Server-side access guard: see lib/permissions/design-guard.ts
 
-const CAP_PERMISSION_MAP: Record<DesignCap, string> = {
-  any: "DESIGN_PROJECTS_VIEW",
-  admin: "DESIGN_SETTINGS",
-  masters: "DESIGN_MASTERS_MANAGE",
-  matrix: "MATRIX_EDIT",
-  drawings: "DRAWINGS_UPLOAD",
-  gfc: "DRAWINGS_APPROVE_GFC",
-  transmittals: "TRANSMITTALS_CREATE",
-  rfis: "RFIS_RAISE",
-};
-
-async function requireDesign(cap: DesignCap, projectIds?: (string | null | undefined)[] | string | null) {
-  const { getCachedUser } = await import("@/lib/auth/cached-user");
-  const { user } = await getCachedUser();
-  if (!user) throw new Error("Please sign in again.");
-  const { hasPermission } = await import("@/lib/permissions");
-  if (await hasPermission(user.id, "SUPER_ADMIN")) return user;
-
-  const { can } = await import("@/lib/permissions/module-access");
-  const ids = (Array.isArray(projectIds) ? projectIds : [projectIds]).filter((x): x is string => !!x && x !== "ALL");
-  const reqPerm = CAP_PERMISSION_MAP[cap] || "DESIGN_PROJECTS_VIEW";
-
-  let allowedByModule = false;
-  if (ids.length > 0) {
-    const checks = await Promise.all(ids.map((id) => can(user.id, "DESIGN_TRACKING", reqPerm, { project_id: id })));
-    allowedByModule = checks.every(Boolean);
-  } else {
-    allowedByModule = await can(user.id, "DESIGN_TRACKING", reqPerm);
-  }
-
-  if (allowedByModule) return user;
-
-  const { data: access } = await supabaseAdmin.from("design_user_access").select("*").eq("user_id", user.id).maybeSingle();
-  if (!access) throw new Error("You don't have access to Design Tracking. Ask a Design administrator to add you.");
-  const isDesignAdmin = String(access.design_role || "").toUpperCase() === "DESIGN_ADMIN";
-  if (cap === "admin" && !isDesignAdmin) throw new Error(`Only a Design administrator can ${CAP_LABEL.admin}.`);
-  if (!isDesignAdmin && cap !== "any" && cap !== "admin" && !access[CAP_COLUMN[cap]]) {
-    throw new Error(`Your Design access doesn't allow you to ${CAP_LABEL[cap]}.`);
-  }
-  if (!isDesignAdmin && ids.length && String(access.project_access_type || "ALL").toUpperCase() === "SPECIFIC") {
-    const allowed: string[] = access.assigned_project_ids || [];
-    if (ids.some((id) => !allowed.includes(id))) throw new Error("This project is outside your assigned Design projects.");
-  }
-  return user;
-}
-
+// Every action here passes requireDesign first, and the design_* tables no longer accept writes from
+// the browser key, so the actions use the service-role client.
 async function getSupabase() {
-  const cookieStore = await cookies();
-  return createClient(cookieStore);
+  return supabaseAdmin;
 }
 
 /**
@@ -106,6 +47,7 @@ async function getSupabase() {
  */
 export async function fetchFullDesignTrackingState() {
   try {
+    await requireDesign("any");
     const supabase = await getSupabase();
 
     // Parallel fetch with error suppression if tables don't exist yet
@@ -749,6 +691,16 @@ export async function saveDrawingAction(drawing: DrawingItem): Promise<{
   try {
     await requireDesign("drawings", (drawing as any).projectId);
     const supabase = await getSupabase();
+    const wantsGfc = !!(drawing as any).isGfc || drawing.status === "Approved (GFC)" || drawing.status === "Site Handed Over";
+    if (wantsGfc) {
+      const { data: existing } = await supabaseAdmin
+        .from("design_drawings")
+        .select("is_gfc, status")
+        .eq("id", drawing.id)
+        .maybeSingle();
+      const alreadyGfc = !!existing && (existing.is_gfc || existing.status === "Approved (GFC)" || existing.status === "Site Handed Over");
+      if (!alreadyGfc) await requireDesign("gfc", (drawing as any).projectId);
+    }
     const row = {
       id: drawing.id,
       project_id: (drawing as any).projectId || null,
@@ -1184,6 +1136,7 @@ export async function fetchRbacPoliciesAction(): Promise<{
   error?: string;
 }> {
   try {
+    await requireDesign("any");
     const { data, error } = await supabaseAdmin
       .from("design_rbac_policies")
       .select("*")
@@ -1319,6 +1272,7 @@ export async function fetchDesignWorkspaceUsersAction(): Promise<{
   error?: string;
 }> {
   try {
+    await requireDesign("any");
     const supabase = await getSupabase();
 
     const [

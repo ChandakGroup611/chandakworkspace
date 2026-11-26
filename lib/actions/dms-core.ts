@@ -1,5 +1,7 @@
 "use server";
 
+import { createHash } from "crypto";
+import { requireDesign, safeStorageSegment } from "@/lib/permissions/design-guard";
 import { createClient } from "@/utils/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { cookies } from "next/headers";
@@ -196,7 +198,7 @@ export async function fetchFolderTreeAction(workspaceId?: string): Promise<{
   error?: string;
 }> {
   try {
-    const supabase = await getSupabase();
+    await requireDesign("any");
 
     // 1. Resolve workspace
     let wsId = workspaceId;
@@ -301,6 +303,7 @@ export async function createFolderAction(params: {
   approvalRequired?: boolean;
 }): Promise<{ success: boolean; folder?: DmsFolderNode; error?: string }> {
   try {
+    await requireDesign("masters");
     const cleanName = params.name.trim();
     if (!cleanName) {
       return { success: false, error: "Folder name is required" };
@@ -447,7 +450,7 @@ export async function fetchFolderDocumentsAction(params: {
   error?: string;
 }> {
   try {
-    const supabase = await getSupabase();
+    await requireDesign("any");
     const limit = params.limit || 25;
     const offset = params.offset || 0;
 
@@ -566,11 +569,11 @@ export async function fetchDocTypesAndFieldsAction(workspaceId?: string): Promis
   error?: string;
 }> {
   try {
-    const supabase = await getSupabase();
+    await requireDesign("any");
 
     let fetchedDocTypes: any[] = [];
     try {
-      const { data: docTypes, error: dtErr } = await supabase
+      const { data: docTypes, error: dtErr } = await supabaseAdmin
         .from("dms_doc_types")
         .select(`
           id,
@@ -592,7 +595,7 @@ export async function fetchDocTypesAndFieldsAction(workspaceId?: string): Promis
     // Fetch field definitions
     let mappedFields: DmsFieldDefinitionItem[] = [];
     try {
-      const { data: fields } = await supabase
+      const { data: fields } = await supabaseAdmin
         .from("dms_field_definitions")
         .select(`
           id,
@@ -653,6 +656,7 @@ export async function createDocTypeAction(params: {
   error?: string;
 }> {
   try {
+    await requireDesign("masters");
     const cleanName = params.name.trim();
     if (!cleanName) {
       return { success: false, error: "Document Type name is required" };
@@ -726,11 +730,12 @@ export async function uploadDmsDocumentFileAction(formData: FormData): Promise<{
   error?: string;
 }> {
   try {
+    await requireDesign("drawings");
     const file = formData.get("file") as File | null;
     if (!file) return { success: false, error: "No file provided" };
 
-    const workspaceId = (formData.get("workspaceId") as string) || "CHANDAK_CORP";
-    const folderId = (formData.get("folderId") as string) || "general";
+    const workspaceId = safeStorageSegment(formData.get("workspaceId") as string, "CHANDAK_CORP");
+    const folderId = safeStorageSegment(formData.get("folderId") as string, "general");
 
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const timestamp = Date.now();
@@ -738,13 +743,14 @@ export async function uploadDmsDocumentFileAction(formData: FormData): Promise<{
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const mimeType = file.type || "application/pdf";
+    const checksumSha256 = createHash("sha256").update(buffer).digest("hex");
 
     let bucket = "ticket-attachments";
     let { error: upErr } = await supabaseAdmin.storage
       .from(bucket)
       .upload(storagePath, buffer, {
         contentType: mimeType,
-        upsert: true
+        upsert: false
       });
 
     if (upErr) {
@@ -753,21 +759,13 @@ export async function uploadDmsDocumentFileAction(formData: FormData): Promise<{
         .from(bucket)
         .upload(storagePath, buffer, {
           contentType: mimeType,
-          upsert: true
+          upsert: false
         });
 
       if (fallbackErr) {
-        console.warn("Storage upload failed, falling back to data URI:", fallbackErr);
-        const base64Data = buffer.toString("base64");
-        const dataUri = `data:${mimeType};base64,${base64Data}`;
-        return {
-          success: true,
-          storageUrl: dataUri,
-          fileName: file.name,
-          fileSizeBytes: file.size,
-          mimeType,
-          checksumSha256: `sha256-${timestamp}`
-        };
+        // Never store the file itself in the database: report the failure instead.
+        console.error("Storage upload failed:", fallbackErr);
+        return { success: false, error: "Could not store the file. Please try again." };
       }
     }
 
@@ -779,7 +777,7 @@ export async function uploadDmsDocumentFileAction(formData: FormData): Promise<{
       fileName: file.name,
       fileSizeBytes: file.size,
       mimeType,
-      checksumSha256: `sha256-${timestamp}`
+      checksumSha256
     };
   } catch (err: any) {
     console.error("[uploadDmsDocumentFileAction] Error:", err);
@@ -806,6 +804,7 @@ export async function saveDocumentWithIndexingAction(params: {
   requiresQc?: boolean;
 }): Promise<{ success: boolean; documentId?: string; error?: string }> {
   try {
+    await requireDesign("drawings");
     const supabase = await getSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -976,6 +975,7 @@ export async function lockUnlockDocumentAction(params: {
   durationHours?: number;
 }): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("drawings");
     const supabase = await getSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -983,9 +983,28 @@ export async function lockUnlockDocumentAction(params: {
     }
     const userId: string = user.id;
 
+    const { data: currentLock } = await supabaseAdmin
+      .from("dms_document_locks")
+      .select("locked_by, expires_at")
+      .eq("document_id", params.documentId)
+      .maybeSingle();
+    const lockActive = !!currentLock && (!currentLock.expires_at || new Date(currentLock.expires_at).getTime() > Date.now());
+    const lockedBySomeoneElse = lockActive && !!currentLock?.locked_by && currentLock.locked_by !== userId;
+
     if (params.action === "UNLOCK") {
+      // Only the person holding the lock (or a Design administrator) can release an active lock.
+      if (lockedBySomeoneElse) {
+        try {
+          await requireDesign("admin");
+        } catch {
+          return { success: false, error: "This document is checked out by someone else." };
+        }
+      }
       await supabaseAdmin.from("dms_document_locks").delete().eq("document_id", params.documentId);
     } else {
+      if (lockedBySomeoneElse) {
+        return { success: false, error: "This document is already checked out by someone else." };
+      }
       const hours = params.durationHours || 4;
       const expiresAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
 
@@ -1016,12 +1035,17 @@ export async function submitQcDecisionAction(params: {
   decisionComment?: string;
 }): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("gfc");
     const supabase = await getSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return { success: false, error: "Unauthorized: Authentication required to submit QC decisions" };
     }
     const userId: string = user.id;
+
+    if (params.status === "REJECTED" && !params.decisionComment?.trim()) {
+      return { success: false, error: "A comment is required when rejecting a document." };
+    }
 
     const updatePayload: any = {
       status: params.status,
@@ -1076,7 +1100,7 @@ export async function fetchFolderPermissionsAction(folderId: string): Promise<{
   error?: string;
 }> {
   try {
-    const supabase = await getSupabase();
+    await requireDesign("any");
 
     // Check in-memory store first
     const cached = IN_MEMORY_FOLDER_PERMISSIONS.get(folderId);
@@ -1084,7 +1108,7 @@ export async function fetchFolderPermissionsAction(folderId: string): Promise<{
     // Try reading folder inherit_permissions flag from database
     let dbInherit = cached ? cached.inheritPermissions : true;
     try {
-      const { data: folderData } = await supabase
+      const { data: folderData } = await supabaseAdmin
         .from("dms_folders")
         .select("id, inherit_permissions")
         .eq("id", folderId)
@@ -1097,7 +1121,7 @@ export async function fetchFolderPermissionsAction(folderId: string): Promise<{
     }
 
     try {
-      const { data: permsData, error: permsErr } = await supabase
+      const { data: permsData, error: permsErr } = await supabaseAdmin
         .from("dms_folder_permissions")
         .select("*")
         .eq("folder_id", folderId)
@@ -1166,6 +1190,7 @@ export async function saveFolderPermissionsAction(params: {
   }>;
 }): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireDesign("admin");
     const supabase = await getSupabase();
     const {
       data: { user },
@@ -1196,7 +1221,7 @@ export async function saveFolderPermissionsAction(params: {
 
     // 2. Update folder inherit_permissions flag in database (safe try)
     try {
-      await supabase
+      await supabaseAdmin
         .from("dms_folders")
         .update({
           inherit_permissions: params.inheritPermissions,
@@ -1209,7 +1234,7 @@ export async function saveFolderPermissionsAction(params: {
 
     // 3. Persist to dms_folder_permissions table if available in database
     try {
-      await supabase
+      await supabaseAdmin
         .from("dms_folder_permissions")
         .delete()
         .eq("folder_id", params.folderId);
@@ -1230,7 +1255,7 @@ export async function saveFolderPermissionsAction(params: {
           updated_at: new Date().toISOString()
         }));
 
-        await supabase
+        await supabaseAdmin
           .from("dms_folder_permissions")
           .insert(rowsToInsert);
       }
@@ -1240,7 +1265,7 @@ export async function saveFolderPermissionsAction(params: {
 
     // 4. Log Audit Event (safe try)
     try {
-      await supabase.from("dms_audit_logs").insert({
+      await supabaseAdmin.from("dms_audit_logs").insert({
         actor_id: user?.id || null,
         actor_email: user?.email || "system",
         action: "UPDATE_FOLDER_PERMISSIONS",

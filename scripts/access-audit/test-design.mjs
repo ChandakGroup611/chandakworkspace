@@ -13,10 +13,15 @@ export async function runDesignAccessTest() {
   const logFail = (rule, desc, error) => results.push({ module: 'Design Tracking', rule, desc, status: 'FAIL', error });
 
   const designContent = fs.readFileSync('lib/actions/designTracking.ts', 'utf8');
+  // requireDesign lives in a shared guard used by every Design Tracking, DMAC and DMS action file.
+  const guardContent = fs.readFileSync('lib/permissions/design-guard.ts', 'utf8');
 
   // Test 1: requireDesign central authority and zero permissive fallbacks
   try {
-    const fnMatch = designContent.match(/async function requireDesign\([\s\S]*?^}/m);
+    for (const f of ['lib/actions/designTracking.ts', 'lib/actions/design.ts', 'lib/actions/dms-core.ts', 'lib/actions/dmac-drawings.ts']) {
+      assert(fs.readFileSync(f, 'utf8').includes('from "@/lib/permissions/design-guard"'), `${f} does not use the shared requireDesign guard`);
+    }
+    const fnMatch = guardContent.match(/async function requireDesign\([\s\S]*?^}/m);
     assert(fnMatch, 'requireDesign function not found');
     const fnCode = fnMatch[0];
     assert(fnCode.includes('can(user.id, "DESIGN_TRACKING"'), 'requireDesign does not call module-access can()');
@@ -29,7 +34,7 @@ export async function runDesignAccessTest() {
 
   // Test 2: Project-scoping enforcement in requireDesign
   try {
-    const fnMatch = designContent.match(/async function requireDesign\([\s\S]*?^}/m);
+    const fnMatch = guardContent.match(/async function requireDesign\([\s\S]*?^}/m);
     const fnCode = fnMatch ? fnMatch[0] : '';
     assert(fnCode.includes('{ project_id: id }'), 'requireDesign does not pass project_id to can() scoping');
     assert(fnCode.includes('checks.every(Boolean)'), 'requireDesign does not require all target project IDs to be in scope');

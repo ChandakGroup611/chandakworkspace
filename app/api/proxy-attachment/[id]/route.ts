@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
+import { requireDesign } from '@/lib/permissions/design-guard';
+
+function isDesignStorageUrl(url: string | null | undefined): boolean {
+  if (!url || !url.startsWith('storage:')) return false;
+  const [, bucket = '', ...rest] = url.split(':');
+  const path = rest.join(':');
+  return bucket === 'design-drawings' || bucket === 'dms-documents' || path.startsWith('drawings/') || path.startsWith('dms/');
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -101,6 +109,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const isRaw = searchParams.get('raw') === '1';
 
     let attachment: { file_name: string; file_url: string; file_type?: string | null } | null = null;
+    let designFile = false;
     
     // Direct storage URL or query param resolution
     const directStorageUrl = searchParams.get('storage_url') || (id.startsWith('storage%3A') || id.startsWith('storage:') ? decodeURIComponent(id) : null);
@@ -167,6 +176,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     if (!attachment) {
       let { data: drawingDoc } = await supabaseAdmin.from('design_drawings').select('*').eq('id', id).maybeSingle();
       if (drawingDoc && drawingDoc.file_url) {
+        designFile = true;
         attachment = {
           file_name: drawingDoc.file_name || drawingDoc.title || `${drawingDoc.code || 'drawing'}.pdf`,
           file_url: drawingDoc.file_url,
@@ -223,6 +233,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         }
 
         if (dmsDoc && dmsDoc.storage_key) {
+          designFile = true;
           attachment = {
             file_name: dmsDoc.original_file_name || dmsDoc.title || 'dms_document.pdf',
             file_url: dmsDoc.storage_key,
@@ -338,6 +349,15 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     
     if (!attachment) {
       return new NextResponse('Attachment Not Found', { status: 404 });
+    }
+
+    // Design Tracking / DMS files need Design access, not just a login.
+    if (designFile || isDesignStorageUrl(attachment.file_url)) {
+      try {
+        await requireDesign('any');
+      } catch {
+        return new NextResponse('Forbidden: Design Tracking access required', { status: 403 });
+      }
     }
 
     const cleanFileName = (attachment.file_name || 'attachment').replace(/[\r\n"]/g, '_');

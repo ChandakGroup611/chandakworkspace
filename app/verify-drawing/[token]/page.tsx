@@ -14,6 +14,10 @@ import {
   Lock
 } from "lucide-react";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
+
+// Always look the token up at request time.
+export const dynamic = "force-dynamic";
 
 interface VerifyPageProps {
   params: Promise<{ token: string }>;
@@ -33,35 +37,67 @@ interface QrVerificationResult {
   latestApprovedRev?: string;
 }
 
+const INVALID_RESULT: QrVerificationResult = {
+  isValid: false,
+  drawingNumber: "",
+  title: "",
+  discipline: "",
+  projectName: "",
+  buildingName: "",
+  revisionNumber: "",
+  status: "REJECTED",
+};
+
+// Looks the QR token up in the drawing register. Anything we cannot match to an issued-for-construction
+// revision is shown as "cannot verify", never as valid.
+async function lookupQrToken(token: string): Promise<QrVerificationResult> {
+  if (!token || !/^[A-Za-z0-9_-]{16,100}$/.test(token)) return INVALID_RESULT;
+
+  const { data: rev, error } = await supabaseAdmin
+    .from("dmac_drawing_revisions")
+    .select(
+      "drawing_id, rev_no, is_gfc, is_superseded, gfc_released_at, " +
+        "drawing:dmac_drawings(drawing_number, title, deleted_at, project:dmac_projects(name), building:dmac_buildings(name), department:dmac_departments(name))"
+    )
+    .eq("qr_code_token", token)
+    .maybeSingle();
+
+  const r: any = rev;
+  if (error || !r || !r.is_gfc || !r.drawing || r.drawing.deleted_at) return INVALID_RESULT;
+
+  const base = {
+    isValid: true,
+    drawingNumber: r.drawing.drawing_number,
+    title: r.drawing.title,
+    discipline: r.drawing.department?.name || "",
+    projectName: r.drawing.project?.name || "",
+    buildingName: r.drawing.building?.name || "",
+    revisionNumber: `R${r.rev_no}`,
+    gfcReleasedAt: r.gfc_released_at
+      ? new Date(r.gfc_released_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })
+      : undefined,
+  };
+
+  if (!r.is_superseded) return { ...base, status: "ACTIVE_GFC" };
+
+  const { data: latest } = await supabaseAdmin
+    .from("dmac_drawing_revisions")
+    .select("rev_no")
+    .eq("drawing_id", r.drawing_id)
+    .eq("is_gfc", true)
+    .eq("is_superseded", false)
+    .maybeSingle();
+
+  return {
+    ...base,
+    status: "SUPERSEDED",
+    latestApprovedRev: latest ? `R${latest.rev_no} (GFC)` : "a newer revision",
+  };
+}
+
 export default async function VerifyDrawingQrPage({ params }: VerifyPageProps) {
   const { token } = await params;
-  const isInvalid = !token || token.includes("invalid") || token.includes("expired") || token.length < 8;
-  const isSuperseded = token.includes("old") || token.includes("r0");
-
-  const data: QrVerificationResult = isInvalid
-    ? {
-        isValid: false,
-        drawingNumber: "",
-        title: "",
-        discipline: "",
-        projectName: "",
-        buildingName: "",
-        revisionNumber: "",
-        status: "REJECTED"
-      }
-    : {
-        isValid: true,
-        drawingNumber: "TA-STR-F08-01",
-        title: "Tower a - 8th floor typical slab structural layout",
-        discipline: "Structural Engineering",
-        projectName: "Tower A (G+10)",
-        buildingName: "Tower A",
-        revisionNumber: isSuperseded ? "R0" : "R1",
-        status: isSuperseded ? "SUPERSEDED" : "ACTIVE_GFC",
-        gfcReleasedAt: "08 Oct 2026",
-        certifiedBy: "Lead Structural Engineer",
-        latestApprovedRev: isSuperseded ? "R1 (GFC)" : undefined,
-      };
+  const data = await lookupQrToken(token);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 antialiased">
@@ -125,7 +161,7 @@ export default async function VerifyDrawingQrPage({ params }: VerifyPageProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Certified By:</span>
-              <strong className="text-foreground">{data.certifiedBy}</strong>
+              <strong className="text-foreground">{data.certifiedBy || "—"}</strong>
             </div>
           </div>
 
@@ -156,7 +192,7 @@ export default async function VerifyDrawingQrPage({ params }: VerifyPageProps) {
             </p>
             <p className="text-[11px] leading-relaxed">
               Construction using this drawing is strictly prohibited. An updated revision{" "}
-              <strong>{data.latestApprovedRev || "R1"}</strong> has been released. Please obtain the latest stamp from the site office.
+              <strong>{data.latestApprovedRev || "A newer revision"}</strong> has been released. Please obtain the latest stamp from the site office.
             </p>
           </div>
         </div>

@@ -1,7 +1,7 @@
 "use server";
 
-import { getCachedUser } from "@/lib/auth/cached-user";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { requireDesign, isDesignStoragePath, safeStorageSegment } from "@/lib/permissions/design-guard";
 import { 
   DrawingItem, 
   DrawingStatus, 
@@ -10,15 +10,6 @@ import {
   ConsultantPartner 
 } from "../../Design_Tracking/src/types";
 import { DesignTrackingService } from "../../Design_Tracking/src/services/designService";
-
-async function getAuthenticatedUser() {
-  try {
-    const { user } = await getCachedUser();
-    return user || null;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * Server Actions: Design & Engineering Tracking
@@ -36,8 +27,7 @@ export async function fetchDrawingsListAction(filters?: {
   error?: string;
 }> {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) return { success: false, drawings: [], error: "Unauthorized" };
+    await requireDesign("any");
 
     // Dynamic fetch from Supabase design_drawings table
     let dbDrawings: any[] | null = null;
@@ -113,8 +103,7 @@ export async function createDrawingAction(payload: Omit<DrawingItem, "id">): Pro
   error?: string;
 }> {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) return { success: false, error: "Unauthorized" };
+    await requireDesign("drawings", (payload as any).projectId);
 
     const drawing = await DesignTrackingService.createDrawing(payload);
 
@@ -161,8 +150,13 @@ export async function updateDrawingStatusAction(
   error?: string;
 }> {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) return { success: false, error: "Unauthorized" };
+    const { data: existing } = await supabaseAdmin
+      .from("design_drawings")
+      .select("project_id")
+      .eq("id", drawingId)
+      .maybeSingle();
+    // Releasing for construction needs the GFC approval right; other status changes need upload rights.
+    await requireDesign(status === "Approved (GFC)" ? "gfc" : "drawings", existing?.project_id);
 
     const drawing = await DesignTrackingService.updateDrawingStatus(drawingId, status);
 
@@ -197,8 +191,7 @@ export async function fetchGfcReleasesAction(): Promise<{
   error?: string;
 }> {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) return { success: false, releases: [], error: "Unauthorized" };
+    await requireDesign("any");
 
     // Dynamic fetch from Supabase
     try {
@@ -239,8 +232,7 @@ export async function fetchConsultantsAction(): Promise<{
   error?: string;
 }> {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) return { success: false, consultants: [], error: "Unauthorized" };
+    await requireDesign("any");
 
     // Dynamic fetch from Supabase design_consultants table
     try {
@@ -304,8 +296,7 @@ export async function uploadDesignDrawingFileAction(formData: FormData): Promise
   error?: string;
 }> {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) return { success: false, error: "Unauthorized" };
+    await requireDesign("drawings", (formData.get("projectId") as string) || null);
 
     const file = formData.get("file") as File | null;
     if (!file) return { success: false, error: "No file provided" };
@@ -313,8 +304,8 @@ export async function uploadDesignDrawingFileAction(formData: FormData): Promise
     const project = (formData.get("project") as string) || "General";
     const code = (formData.get("code") as string) || "DRW";
 
-    const cleanProject = project.replace(/[^a-zA-Z0-9_-]/g, "_");
-    const cleanCode = code.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const cleanProject = safeStorageSegment(project, "General");
+    const cleanCode = safeStorageSegment(code, "DRW");
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const timestamp = Date.now();
     const storagePath = `drawings/${cleanProject}/${cleanCode}_${timestamp}_${cleanFileName}`;
@@ -327,7 +318,7 @@ export async function uploadDesignDrawingFileAction(formData: FormData): Promise
       .from(bucket)
       .upload(storagePath, buffer, {
         contentType: file.type || "application/octet-stream",
-        upsert: true
+        upsert: false
       });
 
     if (upErr) {
@@ -336,7 +327,7 @@ export async function uploadDesignDrawingFileAction(formData: FormData): Promise
         .from(bucket)
         .upload(storagePath, buffer, {
           contentType: file.type || "application/octet-stream",
-          upsert: true
+          upsert: false
         });
       if (fallbackErr) {
         return { success: false, error: fallbackErr.message || upErr.message };
@@ -367,8 +358,7 @@ export async function fetchDesignDrawingSignedUrlAction(storageUrlOrId: string):
   error?: string;
 }> {
   try {
-    const user = await getAuthenticatedUser();
-    if (!user) return { success: false, error: "Unauthorized" };
+    await requireDesign("any");
 
     if (!storageUrlOrId) return { success: false, error: "Missing URL/ID" };
 
@@ -376,6 +366,10 @@ export async function fetchDesignDrawingSignedUrlAction(storageUrlOrId: string):
       const parts = storageUrlOrId.replace("storage:", "").split(":");
       const bucket = parts[0];
       const path = parts.slice(1).join(":");
+      // Only Design Tracking / DMS files: never sign links into other modules' buckets.
+      if (!isDesignStoragePath(bucket, path)) {
+        return { success: false, error: "This file is not a Design Tracking file." };
+      }
 
       const { data, error } = await supabaseAdmin.storage
         .from(bucket)
