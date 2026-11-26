@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LineChart, Lock, ArrowRight, ArrowLeft, Wallet } from "lucide-react";
+import { LineChart, Lock, ArrowRight, ArrowLeft } from "lucide-react";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { listAccessibleDashboards } from "@/lib/dashboards/access";
 import { getUserAllowedModules } from "@/lib/actions/module-switcher";
@@ -37,13 +37,11 @@ export default async function DashboardsPage({
     redirect("/select-module");
   }
 
-  const canAccessOrgBudget = userModules.modules.some((m) => m.code === "ORG_BUDGET");
-
   const dashboards = await listAccessibleDashboards(user.id);
 
   const sp = searchParams ? await searchParams : {};
-  // If the user only has access to a single dashboard and no Organization Budget, open it directly unless intentionally viewing list
-  if (dashboards.length === 1 && !canAccessOrgBudget && sp?.view !== "list") {
+  // If the user only has access to a single dashboard, open it directly unless intentionally viewing list
+  if (dashboards.length === 1 && sp?.view !== "list") {
     redirect(`/dashboards/${dashboards[0].def.key}`);
   }
 
@@ -68,7 +66,7 @@ export default async function DashboardsPage({
         </p>
       </div>
 
-      {dashboards.length === 0 && !canAccessOrgBudget ? (
+      {dashboards.length === 0 ? (
         <div className="theme-card-structural rounded-lg p-8 flex flex-col items-center text-center gap-3">
           <Lock className="h-8 w-8 text-muted-foreground" />
           <h2 className="text-lg font-semibold text-foreground">No dashboards assigned yet</h2>
@@ -111,40 +109,6 @@ export default async function DashboardsPage({
               </span>
             </a>
           ))}
-
-          {canAccessOrgBudget && (
-            <Link
-              href="/budget"
-              className="theme-card-structural rounded-lg p-5 flex flex-col gap-4 transition-colors hover:border-border-active group"
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 bg-accent-soft text-accent-soft-text"
-                >
-                  <Wallet className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <h2 className="font-semibold text-foreground truncate">Organization Budget & Cost Control</h2>
-                  <p className="text-xs text-muted-foreground">
-                    Projects, Towers & Cost Centers
-                  </p>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Project, tower and department budgets with revisions (R1, R2, ...), variance tracking, and cost incurred actuals.
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {["Revisions (R1..Rn)", "Variance & CTC", "Tower Workings", "Vendor Bills"].map((p) => (
-                  <span key={p} className="text-[11px] font-medium px-2 py-0.5 rounded-full border border-border text-muted-foreground">
-                    {p}
-                  </span>
-                ))}
-              </div>
-              <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-accent-soft-text">
-                Open Organization Budget <ArrowRight className="h-4 w-4" />
-              </span>
-            </Link>
-          )}
         </div>
       )}
     </div>

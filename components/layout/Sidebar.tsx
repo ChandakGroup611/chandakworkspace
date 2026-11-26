@@ -125,7 +125,6 @@ const taskNavGroups: NavGroup[] = [
           { label: "Reports and analytics", href: "/amc/reports", permission: "AMC_VIEW" }
         ]
       },
-      { label: "Organization Budget", href: "/budget", icon: Wallet },
       { label: "Users", href: "/users", icon: Users, permission: "USERS_VIEW" },
       { label: "Access policies", href: "/rbac", icon: Key, permission: "USERS_VIEW" },
       { label: "IAM controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
@@ -143,7 +142,6 @@ const taskNavGroups: NavGroup[] = [
         subItems: [
           { label: "Companies", href: "/masters/companies", permission: "COMPANIES_VIEW" },
           { label: "Vendors", href: "/masters/vendors", permission: "MASTERS_VIEW" },
-          { label: "Budget masters", href: "/budget/masters", permission: "MASTERS_VIEW" },
           { label: "System masters", href: "/masters", permission: "SYSTEM_MASTERS_VIEW" }
         ]
       },
@@ -213,7 +211,6 @@ const dashboardsNavGroups: NavGroup[] = [
       { label: "Engineering budget", href: "/dashboards/engg", icon: LineChart, permission: "DASH_ENGG_VIEW" },
       { label: "Sales (Salesforce)", href: "/dashboards/sfdc", icon: LineChart, permission: "DASH_SFDC_VIEW" },
       { label: "Workspace admin", href: "/dashboards/cws", icon: LineChart, permission: "DASH_CWS_VIEW" },
-      { label: "Organization Budget", href: "/budget", icon: Wallet },
       { label: "Access policies", href: "/rbac?module=DASHBOARDS", icon: Key, permission: "DASH_ADM_VIEW" },
     ]
   }
