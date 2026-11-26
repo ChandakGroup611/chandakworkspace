@@ -2211,7 +2211,7 @@ html:not([data-mode="dark"]):not(.dark) .budget-app { --bg: #f3f5f9; }
 .budget-app .stepper li.done { color: var(--good); font-weight: 600; }
 .budget-app .stepper li.current { color: var(--ink); font-weight: 600; }
 .budget-app .stepper li.done .dot { border-color: transparent; background: var(--good-soft); color: var(--good); }
-.budget-app .stepper li.current .dot { border-color: var(--accent); color: var(--accent); }
+.budget-app .stepper li.current .dot { background: transparent; border-color: var(--accent); color: var(--accent); }
 .budget-app .stepper li + li::before { background: color-mix(in srgb, var(--good) 35%, var(--line)); width: 14px; }
 
 /* Cards and tables: same radius, border and header as the core app */

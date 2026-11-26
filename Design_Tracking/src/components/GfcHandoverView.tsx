@@ -17,6 +17,7 @@ import {
   Layers
 } from "lucide-react";
 import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 interface GfcHandoverViewProps {
   releases: GfcRelease[];
@@ -269,8 +270,8 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
             <tbody className="divide-y divide-border/60">
               {filteredReleases.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-muted-foreground text-xs">
-                    No GFC handover records match current filter criteria.
+                  <td colSpan={8} className="p-0">
+                    <EmptyState compact kind="no-results" title="No GFC handover records match current filter criteria." />
                   </td>
                 </tr>
               ) : (

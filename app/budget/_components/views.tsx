@@ -12,6 +12,7 @@ import { DeleteLineButton, RecordList } from "./record-list";
 import { type FormLine, LineByLineForm, LinesGrid } from "./manual";
 import { MasterNav, Notice, VersionBanner } from "./shell";
 import { getAlerts, latestNote, type Alert } from "@/lib/budget/insights";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 // The budget screens. Server components: they read the calculated views as the signed-in user.
 
@@ -1840,8 +1841,8 @@ export async function Setup(c: Ctx) {
                 })}
                 {sorted.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="sub text-center py-6">
-                      No cost heads configured yet. Click &quot;Add Cost Head&quot; above to create one.
+                    <td colSpan={6} className="p-0">
+                      <EmptyState compact kind="empty" title="No cost heads configured yet. Click &quot;Add Cost Head&quot; above to create one." />
                     </td>
                   </tr>
                 )}

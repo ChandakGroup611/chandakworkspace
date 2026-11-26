@@ -114,7 +114,10 @@ export function Shell({ me, projects, project, versions, version, tab, children 
                 <span className="crumb-sep" aria-hidden>›</span><h1 className="crumb-current">{TAB_LABEL[tab]}</h1>
               </> : project ? <>
                 <span className="crumb-sep" aria-hidden>›</span>
-                <Link href={href("view")} className="crumb-project">{project.name}</Link>
+                {/* in the Budget area (except Budget details, which has its own heading) the project name is the page heading */}
+                {area === "overview" && tab !== "view"
+                  ? <h1 className="crumb-current"><Link href={href("view")} className="crumb-project">{project.name}</Link></h1>
+                  : <Link href={href("view")} className="crumb-project">{project.name}</Link>}
                 {version && <span className={`pill ${version.status}`}>R{version.number} · {version.status.replace("_", " ")}</span>}
                 {area !== "overview" && <><span className="crumb-sep" aria-hidden>›</span>
                   {areaDef?.subs ? <><Link href={href(areaDef.first)}>{areaDef.label}</Link><span className="crumb-sep" aria-hidden>›</span><h1 className="crumb-current">{TAB_LABEL[tab] ?? tab}</h1></>

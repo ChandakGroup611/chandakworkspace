@@ -23,9 +23,14 @@ try {
   process.exit(2);
 }
 const failures = [];
+const blocked = [];
+const UA = (await (async () => { const p = await browser.newPage(); const u = await p.evaluate(() => navigator.userAgent); await p.close(); return u; })()).replace("HeadlessChrome", "Chrome");
 try {
   for (const path of PATHS) {
-    const page = await browser.newPage();
+    // Hostinger's bot protection answers 403 to "HeadlessChrome"; this is the site's own
+    // deploy check, so it presents as the same Chrome without the "Headless" marker.
+    const ctx = await browser.newContext({ userAgent: UA });
+    const page = await ctx.newPage();
     const errors = [];
     page.on("pageerror", (err) => errors.push(String(err && err.message ? err.message : err)));
     let status = 0;
@@ -38,16 +43,21 @@ try {
     }
     const text = await page.locator("body").innerText().catch(() => "");
     const crashed = CRASH_TEXT.test(text);
+    if (status === 401 || status === 403) { blocked.push(path); console.log(`SKIP ${path} · HTTP ${status} (blocked by bot protection, page not checked)`); await ctx.close(); continue; }
     const ok = status > 0 && status < 500 && !crashed;
     console.log(`${ok ? "OK  " : "FAIL"} ${path} · HTTP ${status}${crashed ? " · error screen shown" : ""}`);
     if (errors.length) console.log(`     warnings: ${errors.slice(0, 3).join(" | ")}`);
     if (!ok) failures.push(path);
-    await page.close();
+    await ctx.close();
   }
 } finally {
   await browser.close();
 }
 
+if (!failures.length && blocked.length === PATHS.length) {
+  console.warn("Browser crash check could not see the app (every page blocked); not treated as a failure.");
+  process.exit(2);
+}
 if (failures.length) {
   console.error(`Browser smoke check failed on: ${failures.join(", ")}`);
   process.exit(1);

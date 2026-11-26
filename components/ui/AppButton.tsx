@@ -42,7 +42,7 @@ const sizes: Record<NonNullable<AppButtonProps["size"]>, string> = {
   md: "h-[var(--control-h,36px)] px-3.5 text-[13.5px]",
   lg: "h-10 px-4 text-[14px]",
   icon: "h-[var(--control-h,36px)] w-[var(--control-h,36px)] p-0",
-  "icon-sm": "h-7 w-7 p-0",
+  "icon-sm": "h-7 w-7 p-0 pointer-coarse:h-10 pointer-coarse:w-10",
 };
 
 export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(

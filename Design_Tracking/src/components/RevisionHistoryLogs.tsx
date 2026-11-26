@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
 import { formatDate } from "@/components/ui/data";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 interface RevisionHistoryProps {
   drawings: DrawingItem[];
@@ -770,8 +771,8 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
               <tbody className="divide-y divide-border/60">
                 {filteredLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-16 text-muted-foreground">
-                      No revision logs found matching current search.
+                    <td colSpan={7} className="p-0">
+                      <EmptyState compact kind="no-results" title="No revision logs found matching current search." />
                     </td>
                   </tr>
                 ) : (

@@ -23,6 +23,7 @@ import {
 import { AppButton } from "@/components/ui/AppButton";
 import { StatusBadge } from "@/components/meet/StatusBadge";
 import type { MeetingMoMVersion } from "@/types/meet";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 interface ReportsClientProps {
   initialReportData: {
@@ -262,8 +263,8 @@ export default function ReportsClient({ initialReportData }: ReportsClientProps)
               <tbody className="divide-y divide-border">
                 {initialReportData.r1MoMs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-10 text-center text-subtle">
-                      No published or drafted MoM versions generated yet.
+                    <td colSpan={6} className="p-0">
+                      <EmptyState compact kind="empty" title="No published or drafted MoM versions generated yet." />
                     </td>
                   </tr>
                 ) : (

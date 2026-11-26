@@ -19,6 +19,7 @@ import {
   Zap,
   Users
 } from "lucide-react";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 interface DesignReportsAnalyticsProps {
   drawings: DrawingItem[];
@@ -247,8 +248,8 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
             <tbody className="divide-y divide-border/60">
               {consultants.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-muted-foreground text-xs">
-                    No consultants recorded in directory yet.
+                  <td colSpan={6} className="p-0">
+                    <EmptyState compact kind="empty" title="No consultants recorded in directory yet." />
                   </td>
                 </tr>
               ) : (

@@ -30,6 +30,7 @@ import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
 import { TransactionFormLayout, WorkingDocumentLayout } from "./DesignTransactionLayout";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { confirmAction, promptAction } from "@/components/ui/feedback/confirm";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 export function TransmittalManager() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -466,8 +467,8 @@ export function TransmittalManager() {
             <tbody className="divide-y divide-border">
               {filteredTransmittals.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-muted-foreground text-xs">
-                    No transmittal records found matching current criteria.
+                  <td colSpan={8} className="p-0">
+                    <EmptyState compact kind="no-results" title="No transmittal records found matching current criteria." />
                   </td>
                 </tr>
               ) : (

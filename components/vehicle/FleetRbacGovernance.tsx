@@ -71,6 +71,7 @@ import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 const ROLE_BADGE_COLORS = [
   { id: "amber", label: "Amber", class: "bg-warning-soft text-warning-text border-warning/30" },
@@ -1088,8 +1089,8 @@ export default function FleetRbacGovernance() {
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-muted-foreground">
-                      No personnel match your search filters.
+                    <td colSpan={5} className="p-0">
+                      <EmptyState compact kind="no-results" title="No personnel match your search filters." />
                     </td>
                   </tr>
                 ) : (

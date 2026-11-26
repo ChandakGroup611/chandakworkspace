@@ -30,6 +30,7 @@ import { useFlashHighlight } from "@/components/ui/record";
 import { Pencil, ExternalLink } from "lucide-react";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
+import { EmptyState } from "@/components/ui/feedback/States";
 import { fetchDesignDrawingSignedUrlAction } from "@/lib/actions/design";
 import { confirmAction } from "@/components/ui/feedback/confirm";
 
@@ -455,8 +456,21 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
             <tbody className="divide-y divide-border/60">
               {filteredDrawings.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-16 text-muted-foreground">
-                    No drawing sheets match the selected filter.
+                  <td colSpan={8} className="p-0">
+                    {drawings.length === 0 ? (
+                      <EmptyState
+                        title="No drawings in the register yet"
+                        description="Upload the first drawing sheet and it appears here with its revision and status."
+                        action={<AppButton type="button" onClick={onOpenUploadModal}>Upload drawing</AppButton>}
+                      />
+                    ) : (
+                      <EmptyState
+                        kind="no-results"
+                        title="No drawing sheets match these filters"
+                        description="Change or clear the filters to see the other sheets."
+                        action={<AppButton type="button" variant="secondary" onClick={handleClearAllFilters}>Clear filters</AppButton>}
+                      />
+                    )}
                   </td>
                 </tr>
               ) : (
