@@ -673,10 +673,18 @@ jobs:
         run: |
           # Added 26 Nov 2026: every page returned 200 but crashed in the browser, which the
           # curl checks above cannot see. Fails only if the app's error screen is shown.
+          # Uses the Chrome that GitHub runners already have (Playwright's own browser
+          # download does not support every runner OS). If no browser can start, warn only.
           mkdir -p /tmp/browser-smoke && cp scripts/browser-smoke.mjs /tmp/browser-smoke/
-          cd /tmp/browser-smoke && npm init -y >/dev/null && npm i --no-audit --no-fund playwright@1.55.1
-          npx playwright install --with-deps chromium
-          if ! BASE_URL=https://chandakgroup.tech node browser-smoke.mjs; then
+          cd /tmp/browser-smoke && npm init -y >/dev/null && npm i --no-audit --no-fund playwright-core@1.55.1 || { echo "::warning::Could not install the browser check; skipped."; exit 0; }
+          export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          echo "Browser: ${CHROME_PATH:-none found}"
+          set +e
+          BASE_URL=https://chandakgroup.tech node browser-smoke.mjs
+          CODE=$?
+          set -e
+          if [ "$CODE" = "2" ]; then echo "::warning::Browser crash check could not run on this runner; skipped."; exit 0; fi
+          if [ "$CODE" != "0" ]; then
             echo "::error::Pages crash in the browser after this deploy. Triggering rollback to $OLD_TARGET..."
             DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
             TS=$(date +%s)

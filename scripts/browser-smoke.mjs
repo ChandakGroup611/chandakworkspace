@@ -6,14 +6,22 @@
 // headless browser and fails only if the app's error screen appears or the server
 // errors (5xx / no response). Other browser errors are logged as warnings, so ordinary
 // console noise can never trigger a rollback. Usage: BASE_URL=https://chandakgroup.tech node scripts/browser-smoke.mjs
-import { chromium } from "playwright";
 
 const BASE = (process.env.BASE_URL || "https://chandakgroup.tech").replace(/\/$/, "");
 // Public pages that still load the root layout and its shared chunks.
 const PATHS = ["/login", "/no-access"];
 const CRASH_TEXT = /didn't load|Application error|Unhandled Runtime Error/i;
 
-const browser = await chromium.launch();
+// Exit codes: 0 = pages fine, 1 = crash seen (deploy should roll back),
+// 2 = the check itself could not run (warn only, never roll back for that).
+let browser;
+try {
+  const { chromium } = await import("playwright-core");
+  browser = await chromium.launch(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {});
+} catch (err) {
+  console.warn("Browser crash check skipped: could not start a browser. " + String(err && err.message ? err.message : err));
+  process.exit(2);
+}
 const failures = [];
 try {
   for (const path of PATHS) {
