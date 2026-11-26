@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { DesignDiscipline, DrawingItem } from "../types";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { 
@@ -20,12 +20,14 @@ import {
 import { RecordModeProvider, RecordFieldset, type RecordMode } from "@/components/ui/record";
 import { TransactionFormLayout } from "./DesignTransactionLayout";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
-import { uploadDesignDrawingFileAction } from "@/lib/actions/design";
+import { toast } from "react-toastify";
+import { fetchDmacSetupAction, submitNewDrawingAction, type DmacSetup } from "@/lib/actions/dmac-drawings";
 
 interface UploadDrawingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onDrawingUploaded: (drawing: Omit<DrawingItem, "id">) => void;
+  /** Called with the new drawing's register id once it is registered (and R0 submitted). */
+  onDrawingUploaded: (drawingRef: string) => void;
   /** Record standard: the saved drawing, for view / edit in this same form. */
   drawing?: DrawingItem | null;
   /** create (default) · view (read-only) · edit (details only; file and revision change through Review) */
@@ -67,6 +69,36 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   const [description, setDescription] = useState(d?.description || "");
   const [fileSize, setFileSize] = useState(d?.fileSize || "");
   const [submitting, setSubmitting] = useState(false);
+
+  // Review-loop fields (create only): where the sheet sits and when it is due
+  const [projectId, setProjectId] = useState(projects[0]?.id || "");
+  const [setup, setSetup] = useState<DmacSetup | null>(null);
+  const [setupError, setSetupError] = useState<string | null>(null);
+  const [buildingId, setBuildingId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [floorIds, setFloorIds] = useState<string[]>([]);
+  const [plannedSubmission, setPlannedSubmission] = useState("");
+  const [plannedApproval, setPlannedApproval] = useState("");
+
+  useEffect(() => {
+    if (!isCreate || !projectId) return;
+    let live = true;
+    setSetup(null);
+    setSetupError(null);
+    fetchDmacSetupAction(projectId).then((res) => {
+      if (!live) return;
+      if (!res.success) { setSetupError(res.error); return; }
+      setSetup(res.data);
+      const firstTower = res.data.buildings.find((b) => b.code !== "GEN") || res.data.buildings[0];
+      setBuildingId(firstTower?.id || "");
+      setFloorIds([]);
+      const match = res.data.departments.find((dep) => dep.name.toLowerCase().startsWith(discipline.toLowerCase().slice(0, 4)));
+      setDepartmentId((cur) => (res.data.departments.some((x) => x.id === cur) ? cur : match?.id || res.data.departments[0]?.id || ""));
+    });
+    return () => { live = false; };
+  }, [isCreate, projectId]);
+
+  const building = setup?.buildings.find((b) => b.id === buildingId);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Staged local file state
@@ -139,7 +171,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (recordMode === "view") { onEdit?.(); return; }
-    if (!code.trim() || !title.trim()) return;
+    if (!title.trim() || (!isCreate && !code.trim())) return;
 
     // Edit: details only. The sheet code, revision and file change through Review / a new revision.
     if (recordMode === "edit" && d) {
@@ -156,50 +188,35 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
       return;
     }
 
+    if (!selectedFile) { setUploadError("Attach the drawing sheet for R0."); return; }
+    if (!departmentId || !buildingId) { setUploadError("Pick the building and discipline."); return; }
+
     setSubmitting(true);
     setUploadError(null);
-
-    let storageUrl: string | undefined = undefined;
-    let fileName: string | undefined = undefined;
-    let fileType: string | undefined = undefined;
-    let finalFileSize = fileSize || "N/A";
-
     try {
-      if (selectedFile) {
-        const formData = new FormData();
-        formData.append("file", selectedFile);
-        formData.append("project", project || (projects[0]?.name || "General"));
-        formData.append("code", code.trim().toUpperCase());
+      const fd = new FormData();
+      fd.append("projectId", projectId);
+      fd.append("buildingId", buildingId);
+      fd.append("departmentId", departmentId);
+      fd.append("floorIds", JSON.stringify(floorIds));
+      if (floorIds[0]) fd.append("primaryFloorId", floorIds[0]);
+      fd.append("title", title.trim());
+      fd.append("drawingNumber", code.trim().toUpperCase());
+      fd.append("plannedSubmissionDate", plannedSubmission);
+      fd.append("plannedApprovalDate", plannedApproval);
+      fd.append("consultantName", consultant.trim());
+      fd.append("changeSummary", description.trim());
+      fd.append("file", selectedFile);
 
-        const uploadRes = await uploadDesignDrawingFileAction(formData);
-        if (!uploadRes.success) {
-          throw new Error(uploadRes.error || "Failed to upload drawing file to secure storage");
-        }
-        storageUrl = uploadRes.storageUrl;
-        fileName = uploadRes.fileName;
-        fileType = uploadRes.fileType;
-        finalFileSize = uploadRes.fileSize || finalFileSize;
+      const res = await submitNewDrawingAction(fd);
+      if (!res.success) throw new Error(res.error);
+      if (res.data.submitted) {
+        toast.success(`${res.data.drawingNumber} registered and R0 sent for review.`);
+      } else {
+        toast.warning(`${res.data.drawingNumber} is registered, but R0 wasn't submitted: ${res.data.submitError}. Open it from the register to submit the file.`);
       }
-
-      onDrawingUploaded({
-        code: code.trim().toUpperCase(),
-        title: title.trim(),
-        discipline,
-        project: project || (projects[0]?.name || "Unassigned"),
-        revision,
-        status: "Under Review",
-        consultant: consultant.trim() || "Design Consultant",
-        submittedDate: new Date().toISOString().split("T")[0],
-        fileSize: finalFileSize,
-        fileUrl: storageUrl,
-        fileName: fileName || selectedFile?.name,
-        fileType: fileType || selectedFile?.type,
-        description: description.trim() || undefined
-      });
-
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
+      onDrawingUploaded(res.data.drawingRef);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       setSubmitting(false);
       onClose();
     } catch (err: any) {
@@ -242,10 +259,10 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
       backLabel="Back to Drawing Register"
       onReset={isCreate ? handleReset : undefined}
       onSave={recordMode === "view" && !onEdit ? undefined : handleSubmit}
-      saveLabel={isCreate ? "Register Drawing" : recordMode === "edit" ? "Save changes" : "Edit"}
+      saveLabel={isCreate ? "Register and submit R0" : recordMode === "edit" ? "Save changes" : "Edit"}
       saveIcon={recordMode === "view" ? Pencil : Save}
       isSubmitting={submitting}
-      isSaveDisabled={!code.trim() || !title.trim()}
+      isSaveDisabled={isCreate ? !title.trim() || !selectedFile || !buildingId || !departmentId : !code.trim() || !title.trim()}
     >
       <RecordFieldset className="space-y-6 max-w-4xl">
         {uploadError && (
@@ -268,18 +285,33 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">Target project *</label>
                 <select
-                  value={project}
-                  onChange={(e) => setProject(e.target.value)}
+                  value={isCreate ? projectId : project}
+                  disabled={!isCreate}
+                  onChange={(e) => {
+                    setProjectId(e.target.value);
+                    setProject(projects.find((p) => p.id === e.target.value)?.name || "");
+                  }}
                   className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-primary font-semibold"
                 >
                   {projects.map(p => (
-                    <option key={p.id} value={p.name}>{p.name}</option>
+                    <option key={p.id} value={isCreate ? p.id : p.name}>{p.name}</option>
                   ))}
                 </select>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">Engineering discipline *</label>
+                {isCreate ? (
+                  <select
+                    value={departmentId}
+                    onChange={(e) => setDepartmentId(e.target.value)}
+                    className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary font-semibold cursor-pointer"
+                  >
+                    {(setup?.departments || []).map((dep) => (
+                      <option key={dep.id} value={dep.id}>{dep.name} ({dep.code})</option>
+                    ))}
+                  </select>
+                ) : (
                 <select
                   value={discipline}
                   onChange={(e) => setDiscipline(e.target.value as DesignDiscipline)}
@@ -294,8 +326,64 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                   <option value="Interior">Interior / common area finishes</option>
                   <option value="BIM">BIM & 3d clash coordination</option>
                 </select>
+                )}
               </div>
             </div>
+            {isCreate && setupError && (
+              <p className="text-xs text-danger-text">{setupError}</p>
+            )}
+            {isCreate && setup && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">Building / tower *</label>
+                    <select
+                      value={buildingId}
+                      onChange={(e) => { setBuildingId(e.target.value); setFloorIds([]); }}
+                      className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground font-semibold cursor-pointer"
+                    >
+                      {setup.buildings.map((b) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">Planned submission</label>
+                    <input type="date" value={plannedSubmission} onChange={(e) => setPlannedSubmission(e.target.value)}
+                      className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">Planned approval</label>
+                    <input type="date" value={plannedApproval} min={plannedSubmission || undefined} onChange={(e) => setPlannedApproval(e.target.value)}
+                      className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground" />
+                  </div>
+                </div>
+                {building && building.floors.length > 0 && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">
+                      Floors this sheet covers <span className="font-normal text-muted-foreground">(first ticked is the primary floor; pick several for a typical-floor sheet)</span>
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[...building.floors].reverse().map((f) => {
+                        const on = floorIds.includes(f.id);
+                        return (
+                          <button
+                            key={f.id}
+                            type="button"
+                            onClick={() => setFloorIds((cur) => (on ? cur.filter((x) => x !== f.id) : [...cur, f.id]))}
+                            className={`h-7 px-2.5 rounded-md border text-[11px] font-mono font-semibold cursor-pointer ${
+                              on ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {f.code}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </AppCardContent>
         </AppCard>
 
@@ -310,10 +398,12 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
           <AppCardContent className="p-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="sm:col-span-2 space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">Drawing sheet code *</label>
+                <label className="text-xs font-semibold text-foreground">
+                  Drawing number {isCreate ? <span className="font-normal text-muted-foreground">(leave blank to number it automatically)</span> : "*"}
+                </label>
                 <input
                   type="text"
-                  required
+                  required={!isCreate}
                   value={code}
                   disabled={!isCreate}
                   onChange={(e) => setCode(e.target.value)}
@@ -327,8 +417,8 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                 <input
                   type="text"
                   required
-                  value={revision}
-                  disabled={!isCreate}
+                  value={isCreate ? "R0" : revision}
+                  disabled
                   onChange={(e) => setRevision(e.target.value)}
                   placeholder="e.g. R0, R1"
                   className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary disabled:opacity-70"
@@ -399,7 +489,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                 <span>Digital CAD / PDF file attachment</span>
               </div>
               <span className="text-[11px] font-normal text-muted-foreground">
-                Supported: PDF, DWG, DXF, STEP, STP, STL, ZIP, PNG, JPG
+                Supported: PDF, DWG, DXF, ZIP, PNG, JPG, TIFF (up to 28 MB)
               </span>
             </AppCardTitle>
           </AppCardHeader>
@@ -407,7 +497,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.dwg,.dxf,.step,.stp,.stl,.zip,.png,.jpg,.jpeg,.xlsx,.docx"
+              accept=".pdf,.dwg,.dxf,.zip,.png,.jpg,.jpeg,.tif,.tiff"
               onChange={(e) => {
                 if (e.target.files && e.target.files.length > 0) {
                   handleFileChange(e.target.files[0]);
@@ -462,7 +552,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                     Click to browse or drag and drop drawing file
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Direct-to-storage upload pipeline • Up to 250 MB per CAD file
+                    Stored privately with a SHA-256 checksum • Up to 28 MB
                   </div>
                 </div>
               </div>

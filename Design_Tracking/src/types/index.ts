@@ -10,7 +10,9 @@ export type DesignDiscipline =
   | "Interior";
 
 export type DrawingStatus = 
+  | "Not Submitted"
   | "Under Review" 
+  | "Approved"
   | "Approved (GFC)" 
   | "Revision Requested" 
   | "Site Handed Over";

@@ -374,18 +374,15 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
 
   // Record standard: the drawing just registered is highlighted in the register.
   const [newDrawingId, setNewDrawingId] = useFlashHighlight();
-  const handleDrawingUploaded = (newDrawing: Omit<DrawingItem, "id">) => {
-    const created: DrawingItem = {
-      ...newDrawing,
-      id: `drw-${Date.now().toString(36)}`
-    };
-    DesignMasterStore.saveDrawing(created);
-    setNewDrawingId(created.id);
+  // The drawing is saved on the server (register + R0 submission); reload the register and highlight it.
+  const handleDrawingUploaded = async (drawingRef: string) => {
+    await DesignMasterStore.refreshDrawings();
+    setNewDrawingId(drawingRef);
   };
 
-  const handleStatusUpdated = (drawingId: string, newStatus: DrawingStatus) => {
-    const approvedDate = newStatus === "Approved (GFC)" ? new Date().toISOString().slice(0, 10) : undefined;
-    DesignMasterStore.updateDrawingStatus(drawingId, newStatus, approvedDate);
+  // A review step was recorded on the server; reload so every screen shows the new state.
+  const handleReviewRecorded = () => {
+    void DesignMasterStore.refreshDrawings();
   };
 
   const isAnyHostTransactionOpen = isDataEntryOpen || isUploadOpen || Boolean(selectedDrawingForReview);
@@ -415,7 +412,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
           drawing={selectedDrawingForReview}
           isOpen={!!selectedDrawingForReview}
           onClose={() => setSelectedDrawingForReview(null)}
-          onStatusUpdated={handleStatusUpdated}
+          onReviewRecorded={handleReviewRecorded}
         />
       )}
 
@@ -536,7 +533,6 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
             <ApprovalsReviewQueue 
               drawings={accessibleDrawings}
               onOpenReviewModal={(drawing) => setSelectedDrawingForReview(drawing)}
-              onQuickStatusUpdate={handleStatusUpdated}
             />
           )}
 

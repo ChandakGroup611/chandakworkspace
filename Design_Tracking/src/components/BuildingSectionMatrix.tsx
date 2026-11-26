@@ -60,6 +60,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
 
   // Live database data fetched from Supabase
   const [serverMatrixData, setServerMatrixData] = useState<BuildingSectionMatrixResult | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -73,7 +74,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
         .catch(() => {});
     }
     return () => { isMounted = false; };
-  }, [selectedProjectId, selectedTowerId]);
+  }, [selectedProjectId, selectedTowerId, reloadKey]);
 
   // In-Browser PDF Vector Markup State
   const [isMarkupViewerOpen, setIsMarkupViewerOpen] = useState(false);
@@ -941,8 +942,9 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
           revisions={markupRevisions}
           initialComments={markupComments}
           onDecisionCommitted={() => {
-            // refresh or close drawer
             setSelectedCell(null);
+            setReloadKey((k) => k + 1);
+            void DesignMasterStore.refreshDrawings();
           }}
         />
       )}
