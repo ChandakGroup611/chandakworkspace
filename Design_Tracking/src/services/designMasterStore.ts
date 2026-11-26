@@ -72,6 +72,7 @@ import {
   saveDrawingAction,
   deleteDrawingAction,
   saveDrawingRevisionAction,
+  fetchDrawingRegisterRowsAction,
   saveTransmittalAction,
   deleteTransmittalAction,
   saveRfiAction,
@@ -3794,21 +3795,41 @@ export class DesignMasterStore {
       state.drawings.unshift(drawing);
     }
     this.notify();
-    saveDrawingAction(drawing).catch(err => {
-      console.error("Failed to sync Drawing to database:", err);
-    });
+    saveDrawingAction(drawing)
+      .then(res => { if (!res.success) console.error("Drawing details not saved:", res.error); })
+      .catch(err => console.error("Failed to sync Drawing to database:", err))
+      .finally(() => { void this.refreshDrawings(); });
   }
 
+  /**
+   * Review-loop steps (submit, review, GFC) are saved on the server first; this reloads the
+   * register projection so every screen shows what the database now holds.
+   */
+  public static async refreshDrawings(): Promise<void> {
+    const res = await fetchDrawingRegisterRowsAction();
+    if (res.success && res.rows) {
+      if (res.rows.length === 0) {
+        this.getState().drawings = [];
+        this.notify();
+      } else {
+        this.hydrateFromDatabase({ drawings: res.rows });
+      }
+    }
+  }
+
+  /** Only the site hand-over is set from the browser; every other status comes from the review loop. */
   public static updateDrawingStatus(id: string, status: DrawingItem["status"], approvedDate?: string): void {
     const state = this.getState();
     const item = (state.drawings || []).find(d => d.id === id);
-    if (item) {
+    if (item && status === "Site Handed Over") {
       item.status = status;
       if (approvedDate) item.approvedDate = approvedDate;
       this.notify();
-      saveDrawingAction(item).catch(err => {
-        console.error("Failed to sync Drawing status update to database:", err);
-      });
+      saveDrawingAction(item)
+        .then(res => { if (!res.success) console.error("Hand-over not saved:", res.error); })
+        .finally(() => { void this.refreshDrawings(); });
+    } else if (item) {
+      void this.refreshDrawings();
     }
   }
 
@@ -3816,9 +3837,10 @@ export class DesignMasterStore {
     const state = this.getState();
     state.drawings = (state.drawings || []).filter(d => d.id !== id);
     this.notify();
-    deleteDrawingAction(id).catch(err => {
-      console.error("Failed to sync Drawing delete to database:", err);
-    });
+    deleteDrawingAction(id)
+      .then(res => { if (!res.success) console.error("Drawing not removed:", res.error); })
+      .catch(err => console.error("Failed to sync Drawing delete to database:", err))
+      .finally(() => { void this.refreshDrawings(); });
   }
 
   // ============================================================================
