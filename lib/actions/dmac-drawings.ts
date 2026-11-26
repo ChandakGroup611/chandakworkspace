@@ -12,6 +12,7 @@
 import { createHash } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireDesign, safeStorageSegment } from "@/lib/permissions/design-guard";
+import { notifyDrawingEvent } from "@/lib/dmac/notify";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_FILE_BYTES = 28 * 1024 * 1024; // the server action body limit is 30 MB
@@ -456,6 +457,7 @@ export async function submitNewDrawingAction(formData: FormData): Promise<
         p_change_summary: String(formData.get("changeSummary") || "") || "First issue",
       });
       if (subErr) throw subErr;
+      await notifyDrawingEvent("Drawing Submitted", drawingId as string, user.id, { revision: (rev as any)?.revision || "R0" });
       return {
         success: true,
         data: { drawingId: drawingId as string, drawingRef: drawingId as string, drawingNumber, revision: (rev as any)?.revision || "R0", submitted: true },
@@ -527,6 +529,7 @@ export async function submitDrawingRevisionAction(formData: FormData): Promise<A
       p_change_summary: String(formData.get("changeSummary") || "") || null,
     });
     if (error) throw error;
+    await notifyDrawingEvent("Drawing Submitted", d.id, user.id, { revision: (data as any).revision });
     return { success: true, data: { revisionId: (data as any).revisionId, revision: (data as any).revision } };
   } catch (err) {
     return fail(err, "Failed to submit revision");
@@ -577,7 +580,13 @@ export async function reviewDrawingRevisionAction(params: {
       p_allow_own_submission: await isSuperAdmin(user.id),
     });
     if (error) throw error;
-    return { success: true, data: data as any };
+    const outcome = data as { status: string; holder: string; openComments: number };
+    await notifyDrawingEvent(outcome.status === "APPROVED" ? "Drawing Approved" : "Drawing Returned", d.id, user.id, {
+      code: params.decisionCode,
+      remarks: params.remarks,
+      openComments: outcome.openComments,
+    });
+    return { success: true, data: outcome };
   } catch (err) {
     return fail(err, "Failed to record review decision");
   }
@@ -594,6 +603,7 @@ export async function releaseDrawingGfcAction(drawingRef: string): Promise<Actio
       p_drawing_id: d.id,
     });
     if (error) throw error;
+    await notifyDrawingEvent("GFC Released", d.id, user.id, { revision: (data as any).revision });
     return { success: true, data: { revision: (data as any).revision, verifyPath: `/verify-drawing/${(data as any).qrToken}` } };
   } catch (err) {
     return fail(err, "Failed to release drawing for construction");
