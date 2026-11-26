@@ -1778,11 +1778,12 @@
   font-weight: 700;
 }
 .budget-app .stage-item.active .stage-num {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
+  /* follows the button text colour, so it stays readable when dark themes use a light accent */
+  background: color-mix(in srgb, var(--accent-ink) 22%, transparent);
+  color: var(--accent-ink);
 }
 .budget-app .stage-sep {
-  color: var(--line-strong);
+  color: var(--muted);
   font-size: 12px;
   user-select: none;
 }

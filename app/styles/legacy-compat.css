@@ -64,7 +64,9 @@
   [class*="bg-rose-"], [class*="bg-red-"], [class*="bg-amber-"], [class*="bg-orange-"],
   [class*="bg-slate-8"], [class*="bg-slate-9"], [class*="bg-primary"], [class*="bg-theme-btn-primary"],
   [class*="bg-danger"], [class*="bg-accent"], [class*="bg-sidebar"], [class*="from-"],
-  .bg-success, .bg-warning, .bg-info, .bg-danger-solid) .text-white,
+  .bg-success, .bg-warning, .bg-info, .bg-danger-solid) .text-white.text-white,
 [data-mode="light"] :is(.bg-success, .bg-warning, .bg-info, .bg-danger-solid, .bg-primary).text-white {
+  /* .text-white.text-white: the rule above is (0,4,0) and used to win, so white text
+     inside a green/red/blue fill (ticks, chips, plate labels) turned dark (1.0–2.4:1). */
   color: #ffffff;
 }

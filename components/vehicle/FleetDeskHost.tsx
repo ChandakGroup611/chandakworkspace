@@ -1733,7 +1733,7 @@ export default function FleetDeskHost({
       >
         {/* ui-audit-ignore-next-line HSRP IND blue strip */}
         {/* ui-audit-ignore-next-line HSRP IND strip */}
-          <div className="bg-info px-1.5 py-0.5 flex flex-col items-center justify-center border-r border-info-border shrink-0">
+          <div className="px-1.5 py-0.5 flex flex-col items-center justify-center border-r shrink-0" style={{ background: "#1f3d99", borderColor: "#16306f" }}>
           {/* ui-audit-ignore-next-line HSRP white text */}
           <span className="text-[11px] leading-none font-semibold tracking-normal !text-white select-none" style={{ color: "#ffffff", fontWeight: 900 }}>
             IND
@@ -10543,7 +10543,7 @@ export default function FleetDeskHost({
                     <div className="flex items-center gap-2">
                       {/* Blue IND Badge */}
                       {/* ui-audit-ignore-next-line HSRP IND blue strip */}
-                      <div className="flex flex-col items-center justify-center bg-info text-white rounded-xs px-1.5 py-0.5 leading-none">
+                      <div className="flex flex-col items-center justify-center text-white rounded-xs px-1.5 py-0.5 leading-none" style={{ background: "#1f3d99" }}>
                         <span className="text-xs">🇮🇳</span>
                         {/* ui-audit-ignore-next-line HSRP IND white text */}
                         <span className="text-[11px] font-mono font-semibold tracking-normal !text-white" style={{ color: "#ffffff", fontWeight: 900 }}>

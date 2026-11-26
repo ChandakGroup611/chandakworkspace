@@ -923,7 +923,7 @@
 }
 [data-mode="dark"] :is([class~="bg-success"], [class~="bg-warning"], [class~="bg-danger"], [class~="bg-info"],
   [class*=" bg-success/"], [class*=" bg-warning/"], [class*=" bg-danger/"], [class*=" bg-info/"],
-  [class^="bg-success/"], [class^="bg-warning/"], [class^="bg-danger/"], [class^="bg-info/"]):is([class~="text-white"], [class~="text-white/90"], [class~="text-white/80"]),
-[data-mode="dark"] :is([class~="bg-success"], [class~="bg-warning"], [class~="bg-danger"], [class~="bg-info"]) :is([class~="text-white"], [class~="text-white/90"], [class~="text-white/80"]) {
+  [class^="bg-success/"], [class^="bg-warning/"], [class^="bg-danger/"], [class^="bg-info/"]):is([class~="text-white"], [class~="text-white/90"], [class~="text-white/85"], [class~="text-white/80"]),
+[data-mode="dark"] :is([class~="bg-success"], [class~="bg-warning"], [class~="bg-danger"], [class~="bg-info"]) :is([class~="text-white"], [class~="text-white/90"], [class~="text-white/85"], [class~="text-white/80"]) {
   color: var(--on-status);
 }
