@@ -1,24 +1,35 @@
 "use server";
 
 import { createHash } from "crypto";
-import { requireDesign, safeStorageSegment } from "@/lib/permissions/design-guard";
-import { createClient } from "@/utils/supabase/server";
+import { safeStorageSegment } from "@/lib/permissions/design-guard";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
-import { cookies } from "next/headers";
+import {
+  dmsActor,
+  dmsError,
+  documentRights,
+  documentRightsMany,
+  folderRights,
+  hiddenFieldIds,
+  isUuid,
+  resolveWorkspaceId,
+  type DmsActor,
+  type DmsRights,
+} from "@/lib/dms/access";
 
-async function getSupabase() {
-  try {
-    const cookieStore = await cookies();
-    return createClient(cookieStore);
-  } catch {
-    return supabaseAdmin;
-  }
-}
+/**
+ * DMS core: folders, documents, versions, check-out, recycle bin, purge and QC.
+ * Every rule (the six permission layers, locks, QC, purge) lives in the database functions of
+ * supabase/migrations/20261126120000_dms_core.sql; these actions resolve the person, store files
+ * and call those functions. Nothing is kept in server memory.
+ */
+
+export type { DmsRights } from "@/lib/dms/access";
 
 export interface DmsFolderPermissionItem {
   id: string;
   folderId: string;
   userId?: string | null;
+  groupId?: string | null;
   userEmail?: string;
   userName?: string;
   roleCode?: string | null;
@@ -39,6 +50,9 @@ export interface DmsFolderNode {
   approvalRequired: boolean;
   inheritPermissions: boolean;
   documentCount?: number;
+  /** false when the folder is shown only because something inside it is visible */
+  canOpen?: boolean;
+  rights?: DmsRights;
   children?: DmsFolderNode[];
 }
 
@@ -54,11 +68,16 @@ export interface DmsDocumentSummary {
   approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
   fileSizeBytes: number;
   mimeType: string;
+  /** kept for older callers; files are always served through /api/proxy-attachment */
   storageKey: string;
   isLocked: boolean;
+  lockedByMe?: boolean;
   lockedByName?: string;
+  lockExpiresAt?: string;
   createdAt: string;
   updatedAt: string;
+  createdByName?: string;
+  rights?: DmsRights;
   fieldValues?: Record<string, any>;
   masterTags?: { tableCode: string; recordKey: string }[];
 }
@@ -81,221 +100,184 @@ export interface DmsDocTypeItem {
   fieldDefinitions?: DmsFieldDefinitionItem[];
 }
 
-const CHANDAK_WORKSPACE_UUID = "5b01404f-534a-4078-9bc1-a2d15484b33a";
-const CHANDAK_ROOT_FOLDER_UUID = "22ad963e-cdd6-46b4-a587-ea3393bf6dd2";
-
-// In-memory fallback tree to guarantee zero failure if database schema cache is warming
-let IN_MEMORY_FOLDERS_TREE: DmsFolderNode[] = [
-  {
-    id: CHANDAK_ROOT_FOLDER_UUID,
-    workspaceId: CHANDAK_WORKSPACE_UUID,
-    parentId: null,
-    name: "Chandak Master Archive",
-    path: "chandak_root",
-    depth: 0,
-    approvalRequired: true,
-    inheritPermissions: true,
-    documentCount: 0,
-    children: [
-      {
-        id: "8d3e8ae1-2e3d-479d-a34b-58759488fade",
-        workspaceId: CHANDAK_WORKSPACE_UUID,
-        parentId: CHANDAK_ROOT_FOLDER_UUID,
-        name: "Architectural Drawings (GFC)",
-        path: "chandak_root.arch",
-        depth: 1,
-        approvalRequired: true,
-        inheritPermissions: true,
-        documentCount: 0,
-        children: []
-      },
-      {
-        id: "1be4e031-b17a-490f-b1cd-865c7bc0bcae",
-        workspaceId: CHANDAK_WORKSPACE_UUID,
-        parentId: CHANDAK_ROOT_FOLDER_UUID,
-        name: "Structural Designs & Proofs",
-        path: "chandak_root.str",
-        depth: 1,
-        approvalRequired: true,
-        inheritPermissions: true,
-        documentCount: 0,
-        children: []
-      },
-      {
-        id: "a3f099a1-479e-4b50-b7ad-2ac4d93cdc75",
-        workspaceId: CHANDAK_WORKSPACE_UUID,
-        parentId: CHANDAK_ROOT_FOLDER_UUID,
-        name: "MEP Engineering & Coordination",
-        path: "chandak_root.mep",
-        depth: 1,
-        approvalRequired: true,
-        inheritPermissions: true,
-        documentCount: 0,
-        children: []
-      }
-    ]
-  }
-];
-
-let IN_MEMORY_DOC_TYPES: DmsDocTypeItem[] = [
-  { id: "7f8b4fc0-8158-4fdc-8cf1-448d15bd9ad8", code: "ARCH_DWG", name: "Architectural Drawing", description: "Master floor plans, elevations & sections", fieldDefinitions: [] },
-  { id: "d980d902-547a-4940-860b-335fde4631f1", code: "STR_CALC", name: "Structural Design & Calculations", description: "RCC frames, structural steel & soil reports", fieldDefinitions: [] },
-  { id: "ea15a12c-4981-41ae-b191-a953fc26407c", code: "MEP_SPEC", name: "MEPF Technical Specifications", description: "HVAC, electrical, plumbing & fire safety specs", fieldDefinitions: [] },
-  { id: "cbc61dca-381f-4ce0-aceb-eaaaab5b13a2", code: "STAT_NOC", name: "Statutory Clearance & NOC", description: "MCGM, Fire CFO, MOEF, Aviation sanctions", fieldDefinitions: [] },
-  { id: "cbb19570-2ec2-4c5a-b6e4-883e0743b925", code: "GFC_TRANS", name: "GFC Transmittal Slip", description: "Official Good-for-Construction release package", fieldDefinitions: [] }
-];
-
-let IN_MEMORY_DOCUMENTS: DmsDocumentSummary[] = [];
-
-function flattenTree(nodes: DmsFolderNode[]): DmsFolderNode[] {
-  const result: DmsFolderNode[] = [];
-  function recurse(list: DmsFolderNode[]) {
-    for (const item of list) {
-      result.push(item);
-      if (item.children && item.children.length > 0) {
-        recurse(item.children);
-      }
-    }
-  }
-  recurse(nodes);
-  return result;
+export interface DmsVersionItem {
+  id: string;
+  versionNo: number;
+  fileName: string;
+  fileSizeBytes: number;
+  mimeType: string;
+  changeNote: string | null;
+  uploadedByName: string;
+  uploadedByMe: boolean;
+  createdAt: string;
+  qcStatus: string | null;
+  qcComment: string | null;
+  qcByName: string | null;
 }
 
-function addFolderToInMemoryTree(nodes: DmsFolderNode[], newNode: DmsFolderNode): boolean {
-  if (!newNode.parentId) {
-    if (!nodes.some(n => n.id === newNode.id)) {
-      nodes.push(newNode);
-    }
-    return true;
-  }
-  for (const node of nodes) {
-    if (node.id === newNode.parentId) {
-      if (!node.children) node.children = [];
-      // Prevent duplicate insertion
-      if (!node.children.some(c => c.id === newNode.id)) {
-        node.children.push(newNode);
-      }
-      return true;
-    }
-    if (node.children && node.children.length > 0) {
-      const found = addFolderToInMemoryTree(node.children, newNode);
-      if (found) return true;
-    }
-  }
-  // If parent not found in tree, add at root level
-  if (!nodes.some(n => n.id === newNode.id)) {
-    nodes.push(newNode);
-  }
-  return true;
+export interface DmsActivityItem {
+  action: string;
+  actorEmail: string | null;
+  details: Record<string, any>;
+  createdAt: string;
 }
 
-/**
- * Fetch Recursive DMS Folder Tree for Workspace
- */
+export interface DmsRecycleItem {
+  documentId: string;
+  title: string;
+  fileName: string;
+  folderName: string;
+  deletedAt: string;
+  deletedByName: string;
+  canRestore: boolean;
+  canPurge: boolean;
+}
+
+export interface DmsQcItem {
+  documentId: string;
+  title: string;
+  folderId: string;
+  folderName: string;
+  versionNo: number;
+  uploadedByName: string;
+  uploadedAt: string;
+  ownUpload: boolean;
+}
+
+type Result<T = {}> = ({ success: true } & T) | { success: false; error: string };
+
+const MAX_FILE_BYTES = 28 * 1024 * 1024; // the server action body limit is 30 MB
+const BLOCKED_EXTENSIONS = new Set(["exe", "bat", "cmd", "com", "msi", "js", "vbs", "ps1", "sh", "jar", "scr", "dll", "html", "htm", "svg"]);
+
+// ---------- helpers ----------
+
+async function namesFor(ids: (string | null | undefined)[]): Promise<Map<string, string>> {
+  const unique = [...new Set(ids.filter(isUuid))];
+  const out = new Map<string, string>();
+  if (!unique.length) return out;
+  const { data: people } = await supabaseAdmin.from("user_master").select("id, full_name, email").in("id", unique);
+  for (const p of people || []) out.set(p.id, p.full_name || p.email || "");
+  return out;
+}
+
+function parseStorageKey(key: string | null | undefined): { bucket: string; path: string } | null {
+  const m = /^storage:([^:]+):(.+)$/.exec(key || "");
+  return m ? { bucket: m[1], path: m[2] } : null;
+}
+
+async function storeDmsFile(file: File, workspaceId: string, folderId: string, documentKey: string) {
+  if (!file || typeof file.arrayBuffer !== "function" || file.size === 0) throw new Error("Choose a file to upload.");
+  if (file.size > MAX_FILE_BYTES) throw new Error("Files must be 28 MB or smaller.");
+  const ext = (file.name.split(".").pop() || "").toLowerCase();
+  if (BLOCKED_EXTENSIONS.has(ext)) throw new Error(`.${ext} files cannot be stored in the DMS.`);
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const checksum = createHash("sha256").update(buffer).digest("hex");
+  const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-120) || "file";
+  const path = `dms/${safeStorageSegment(workspaceId, "ws")}/${safeStorageSegment(folderId, "folder")}/${safeStorageSegment(
+    documentKey,
+    "doc"
+  )}/${Date.now()}_${cleanName}`;
+  const mimeType = file.type || "application/octet-stream";
+  const { error } = await supabaseAdmin.storage.from("dms-documents").upload(path, buffer, { contentType: mimeType, upsert: false });
+  if (error) {
+    console.error("[dms] storage upload failed:", error);
+    throw new Error("Could not store the file. Please try again.");
+  }
+  return { storageKey: `storage:dms-documents:${path}`, path, checksum, mimeType, size: file.size, fileName: file.name };
+}
+
+async function removeStoredFiles(keys: string[]) {
+  const byBucket = new Map<string, string[]>();
+  for (const k of keys) {
+    const p = parseStorageKey(k);
+    if (!p) continue;
+    byBucket.set(p.bucket, [...(byBucket.get(p.bucket) || []), p.path]);
+  }
+  for (const [bucket, paths] of byBucket) {
+    const { error } = await supabaseAdmin.storage.from(bucket).remove(paths);
+    if (error) console.error(`[dms] could not remove ${paths.length} file(s) from ${bucket}:`, error);
+  }
+}
+
+function toNode(f: any, counts: Map<string, number>, rights?: DmsRights, canOpen = true): DmsFolderNode {
+  const path = String(f.path || "");
+  return {
+    id: f.id,
+    workspaceId: f.workspace_id,
+    parentId: f.parent_id,
+    name: f.name,
+    path,
+    depth: Math.max(0, path.split(".").length - 1),
+    approvalRequired: !!f.approval_required,
+    inheritPermissions: f.inherit_permissions !== false,
+    documentCount: counts.get(f.id) || 0,
+    canOpen,
+    rights,
+    children: [],
+  };
+}
+
+// ---------- folders ----------
+
 export async function fetchFolderTreeAction(workspaceId?: string): Promise<{
   success: boolean;
   folders?: DmsFolderNode[];
   error?: string;
 }> {
   try {
-    await requireDesign("any");
+    const actor = await dmsActor();
+    const wsId = await resolveWorkspaceId(workspaceId);
+    if (!wsId) return { success: true, folders: [] };
 
-    // 1. Resolve workspace
-    let wsId = workspaceId;
-    if (!wsId || wsId === "CHANDAK_CORP") {
-      try {
-        const { data: ws } = await supabaseAdmin
-          .from("dms_workspaces")
-          .select("id")
-          .eq("code", "CHANDAK_CORP")
-          .maybeSingle();
-        if (ws?.id) {
-          wsId = ws.id;
-        }
-      } catch {}
-    }
-
-    // 2. Fetch Folders via admin client for reliability
-    let foldersData: any[] | null = null;
-    try {
-      const res = await supabaseAdmin
+    const [{ data: folders, error }, { data: rightsRows, error: rErr }, { data: docRows }] = await Promise.all([
+      supabaseAdmin
         .from("dms_folders")
-        .select(`
-          id,
-          workspace_id,
-          parent_id,
-          name,
-          path,
-          approval_required,
-          inherit_permissions,
-          created_at
-        `)
+        .select("id, workspace_id, parent_id, name, path, approval_required, inherit_permissions")
+        .eq("workspace_id", wsId)
         .is("deleted_at", null)
-        .order("path", { ascending: true });
-      foldersData = res.data;
-    } catch {
-      // Table might still be synchronizing in schema cache
-    }
+        .order("path", { ascending: true }),
+      supabaseAdmin.rpc("fn_dms_folder_rights_all", { p_user: actor.id, p_workspace: wsId, p_base: actor.base }),
+      supabaseAdmin.from("dms_documents").select("folder_id").eq("workspace_id", wsId).is("deleted_at", null),
+    ]);
+    if (error) throw error;
+    if (rErr) throw rErr;
 
-    if (!foldersData || foldersData.length === 0) {
-      return { success: true, folders: [] };
-    }
+    const rights = new Map<string, DmsRights>(((rightsRows as any[]) || []).map((r) => [r.folder_id, r.rights]));
+    const counts = new Map<string, number>();
+    for (const d of docRows || []) counts.set(d.folder_id, (counts.get(d.folder_id) || 0) + 1);
 
-    // 3. Count documents per folder
-    const countMap = new Map<string, number>();
-    try {
-      const { data: docCounts } = await supabaseAdmin
-        .from("dms_documents")
-        .select("folder_id")
-        .is("deleted_at", null);
-
-      (docCounts || []).forEach((d) => {
-        if (d.folder_id) countMap.set(d.folder_id, (countMap.get(d.folder_id) || 0) + 1);
-      });
-    } catch {}
-
-    const flatNodes: DmsFolderNode[] = (foldersData || []).map((f: any) => {
-      const pathStr = String(f.path || "");
-      const depth = pathStr.split(".").length - 1;
-      return {
-        id: f.id,
-        workspaceId: f.workspace_id || "CHANDAK_CORP",
-        parentId: f.parent_id,
-        name: f.name,
-        path: pathStr,
-        depth: Math.max(0, depth),
-        approvalRequired: !!f.approval_required,
-        inheritPermissions: !!f.inherit_permissions,
-        documentCount: countMap.get(f.id) || 0,
-        children: []
-      };
-    });
-
-    // Build hierarchical tree
-    const nodeMap = new Map<string, DmsFolderNode>();
-    flatNodes.forEach((node) => nodeMap.set(node.id, { ...node, children: [] }));
-
-    const tree: DmsFolderNode[] = [];
-    flatNodes.forEach((node) => {
-      const current = nodeMap.get(node.id)!;
-      if (node.parentId && nodeMap.has(node.parentId)) {
-        nodeMap.get(node.parentId)!.children!.push(current);
-      } else {
-        tree.push(current);
+    // Show folders the person can open, plus the parents needed to reach them
+    const byId = new Map((folders || []).map((f: any) => [f.id, f]));
+    const shown = new Set<string>();
+    for (const f of folders || []) {
+      if (!rights.get(f.id)?.view) continue;
+      let cur: any = f;
+      while (cur && !shown.has(cur.id)) {
+        shown.add(cur.id);
+        cur = cur.parent_id ? byId.get(cur.parent_id) : null;
       }
-    });
+    }
 
-    const finalTree = tree.length > 0 ? tree : flatNodes;
-    return { success: true, folders: finalTree };
+    const nodes = new Map<string, DmsFolderNode>();
+    for (const f of folders || []) {
+      if (!shown.has(f.id)) continue;
+      const r = rights.get(f.id);
+      // Document counts only for folders the person can open
+      nodes.set(f.id, toNode(f, r?.view ? counts : new Map(), r, !!r?.view));
+    }
+    const tree: DmsFolderNode[] = [];
+    for (const node of nodes.values()) {
+      const parent = node.parentId ? nodes.get(node.parentId) : null;
+      if (parent) parent.children!.push(node);
+      else tree.push(node);
+    }
+    return { success: true, folders: tree };
   } catch (err: any) {
-    console.error("[fetchFolderTreeAction] Error:", err);
-    return { success: false, error: err.message, folders: [] };
+    return { success: false, error: dmsError(err, "Could not load folders."), folders: [] };
   }
 }
 
-/**
- * Create New Subfolder with ltree Path Generation
- */
 export async function createFolderAction(params: {
   workspaceId: string;
   parentId?: string;
@@ -303,139 +285,107 @@ export async function createFolderAction(params: {
   approvalRequired?: boolean;
 }): Promise<{ success: boolean; folder?: DmsFolderNode; error?: string }> {
   try {
-    await requireDesign("masters");
-    const cleanName = params.name.trim();
-    if (!cleanName) {
-      return { success: false, error: "Folder name is required" };
+    const actor = await dmsActor();
+    let parentId = params.parentId;
+    if (!isUuid(parentId)) {
+      const wsId = await resolveWorkspaceId(params.workspaceId);
+      const { data: root } = await supabaseAdmin
+        .from("dms_folders")
+        .select("id")
+        .eq("workspace_id", wsId)
+        .is("parent_id", null)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      parentId = root?.id;
     }
+    if (!parentId) return { success: false, error: "Choose the parent folder." };
 
-    const supabase = await getSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return { success: false, error: "Unauthorized: Authentication required to create folders" };
-    }
-    const userId: string = user.id;
-
-    // Resolve workspace UUID with guaranteed fallback
-    let targetWsId = params.workspaceId;
-    if (!targetWsId || !/^[0-9a-fA-F-]{36}$/.test(targetWsId)) {
-      try {
-        const { data: ws } = await supabaseAdmin
-          .from("dms_workspaces")
-          .select("id")
-          .eq("code", "CHANDAK_CORP")
-          .maybeSingle();
-        if (ws?.id) {
-          targetWsId = ws.id;
-        } else {
-          targetWsId = CHANDAK_WORKSPACE_UUID;
-        }
-      } catch {
-        targetWsId = CHANDAK_WORKSPACE_UUID;
-      }
-    }
-
-    // Sanitize label for ltree path (letters, numbers, underscore only)
-    const sanitizedLabel = cleanName
-      .toLowerCase()
-      .replace(/[^a-z0-9_]/g, "_")
-      .replace(/^_+|_+$/g, "")
-      .slice(0, 25) || "folder";
-
-    let parentFolderId: string | null = null;
-    let parentPath = "chandak_root";
-
-    if (params.parentId && /^[0-9a-fA-F-]{36}$/.test(params.parentId)) {
-      try {
-        const { data: parentFolder } = await supabaseAdmin
-          .from("dms_folders")
-          .select("id, path")
-          .eq("id", params.parentId)
-          .maybeSingle();
-
-        if (parentFolder) {
-          parentFolderId = parentFolder.id;
-          parentPath = parentFolder.path || "chandak_root";
-        }
-      } catch {}
-    }
-
-    // If no parent found or specified, anchor to the root folder
-    if (!parentFolderId) {
-      try {
-        const { data: rootFolder } = await supabaseAdmin
-          .from("dms_folders")
-          .select("id, path")
-          .is("parent_id", null)
-          .limit(1)
-          .maybeSingle();
-
-        if (rootFolder) {
-          parentFolderId = rootFolder.id;
-          parentPath = rootFolder.path || "chandak_root";
-        } else {
-          parentFolderId = CHANDAK_ROOT_FOLDER_UUID;
-          parentPath = "chandak_root";
-        }
-      } catch {
-        parentFolderId = CHANDAK_ROOT_FOLDER_UUID;
-        parentPath = "chandak_root";
-      }
-    }
-
-    const ltreePath = `${parentPath}.${sanitizedLabel}_${Date.now().toString().slice(-4)}`;
-
-    const folderPayload: any = {
-      name: cleanName,
-      path: ltreePath,
-      approval_required: params.approvalRequired ?? true,
-      inherit_permissions: true,
-      workspace_id: targetWsId,
-      parent_id: parentFolderId
-    };
-
-    if (userId) folderPayload.created_by = userId;
-
-    const { data: newFolder, error: insertErr } = await supabaseAdmin
+    const { data: id, error } = await supabaseAdmin.rpc("fn_dms_create_folder", {
+      p_actor: actor.id,
+      p_base: actor.base,
+      p_parent: parentId,
+      p_name: params.name,
+      p_approval_required: params.approvalRequired ?? true,
+    });
+    if (error) throw error;
+    const { data: f } = await supabaseAdmin
       .from("dms_folders")
-      .insert(folderPayload)
-      .select()
+      .select("id, workspace_id, parent_id, name, path, approval_required, inherit_permissions")
+      .eq("id", id)
       .single();
-
-    if (insertErr || !newFolder) {
-      console.error("[createFolderAction] Insert Error:", insertErr);
-      return { success: false, error: insertErr?.message || "Failed to create folder in database" };
-    }
-
-    const createdFolderNode: DmsFolderNode = {
-      id: newFolder.id,
-      workspaceId: newFolder.workspace_id || CHANDAK_WORKSPACE_UUID,
-      parentId: newFolder.parent_id,
-      name: newFolder.name,
-      path: newFolder.path,
-      depth: (newFolder.path as string).split(".").length - 1,
-      approvalRequired: !!newFolder.approval_required,
-      inheritPermissions: !!newFolder.inherit_permissions,
-      documentCount: 0,
-      children: []
-    };
-
-    return {
-      success: true,
-      folder: createdFolderNode
-    };
+    return { success: true, folder: toNode(f, new Map(), await folderRights(actor, id as string)) };
   } catch (err: any) {
-    console.error("[createFolderAction] Exception:", err);
-    return {
-      success: false,
-      error: err?.message || "An unexpected error occurred while creating the folder"
-    };
+    return { success: false, error: dmsError(err, "Could not create the folder.") };
   }
 }
 
-/**
- * Fetch Documents within a Folder (with Pagination, Search & EAV Fields)
- */
+export async function updateFolderAction(params: { folderId: string; name?: string; approvalRequired?: boolean }): Promise<Result> {
+  try {
+    const actor = await dmsActor();
+    const { error } = await supabaseAdmin.rpc("fn_dms_update_folder", {
+      p_actor: actor.id,
+      p_base: actor.base,
+      p_folder: params.folderId,
+      p_name: params.name ?? null,
+      p_approval_required: params.approvalRequired ?? null,
+    });
+    if (error) throw error;
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not update the folder.") };
+  }
+}
+
+export async function deleteFolderAction(folderId: string): Promise<Result> {
+  try {
+    const actor = await dmsActor();
+    const { error } = await supabaseAdmin.rpc("fn_dms_delete_folder", { p_actor: actor.id, p_base: actor.base, p_folder: folderId });
+    if (error) throw error;
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not delete the folder.") };
+  }
+}
+
+// ---------- documents ----------
+
+function summarize(row: any, rights: DmsRights | undefined, actorId: string, names: Map<string, string>): DmsDocumentSummary {
+  const versions = (Array.isArray(row.dms_document_versions) ? row.dms_document_versions : [row.dms_document_versions]).filter(Boolean);
+  const current = versions.find((v: any) => v.version_no === row.current_version_no) || versions.sort((a: any, b: any) => b.version_no - a.version_no)[0] || {};
+  const lockRow = Array.isArray(row.dms_document_locks) ? row.dms_document_locks[0] : row.dms_document_locks;
+  const lockActive = !!lockRow && new Date(lockRow.expires_at).getTime() > Date.now();
+  const type = Array.isArray(row.dms_doc_types) ? row.dms_doc_types[0] : row.dms_doc_types;
+  return {
+    id: row.id,
+    folderId: row.folder_id,
+    docTypeId: row.doc_type_id,
+    docTypeCode: type?.code || "DOC",
+    docTypeName: type?.name || "Document",
+    title: row.title,
+    originalFileName: row.original_file_name,
+    currentVersionNo: row.current_version_no || 1,
+    approvalStatus: row.approval_status || "PENDING",
+    fileSizeBytes: Number(current.file_size_bytes || 0),
+    mimeType: current.mime_type || "application/octet-stream",
+    storageKey: "",
+    isLocked: lockActive,
+    lockedByMe: lockActive && lockRow.locked_by === actorId,
+    lockedByName: lockActive ? names.get(lockRow.locked_by) || "someone" : undefined,
+    lockExpiresAt: lockActive ? lockRow.expires_at : undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    createdByName: names.get(row.created_by) || undefined,
+    rights,
+  };
+}
+
+const DOC_SELECT = `id, folder_id, doc_type_id, title, original_file_name, current_version_no, approval_status, created_by, created_at, updated_at,
+  dms_doc_types ( code, name ),
+  dms_document_versions ( version_no, file_size_bytes, mime_type ),
+  dms_document_locks ( locked_by, expires_at )`;
+
 export async function fetchFolderDocumentsAction(params: {
   folderId: string;
   limit?: number;
@@ -447,587 +397,477 @@ export async function fetchFolderDocumentsAction(params: {
   success: boolean;
   documents?: DmsDocumentSummary[];
   totalCount?: number;
+  folderRights?: DmsRights;
   error?: string;
 }> {
   try {
-    await requireDesign("any");
-    const limit = params.limit || 25;
-    const offset = params.offset || 0;
+    const actor = await dmsActor();
+    if (!isUuid(params.folderId)) return { success: true, documents: [], totalCount: 0 };
+    const fr = await folderRights(actor, params.folderId);
+    if (!fr.view) return { success: false, error: "You don't have access to this folder.", documents: [] };
 
-    const targetFolderId = (params.folderId && /^[0-9a-fA-F-]{36}$/.test(params.folderId))
-      ? params.folderId
-      : CHANDAK_ROOT_FOLDER_UUID;
-
+    const limit = Math.min(Math.max(params.limit || 50, 1), 200);
+    const offset = Math.max(params.offset || 0, 0);
     let query = supabaseAdmin
       .from("dms_documents")
-      .select(`
-        id,
-        folder_id,
-        doc_type_id,
-        title,
-        original_file_name,
-        current_version_no,
-        approval_status,
-        created_at,
-        updated_at,
-        dms_doc_types (
-          code,
-          name
-        ),
-        dms_document_versions (
-          id,
-          version_no,
-          storage_key,
-          file_name,
-          file_size_bytes,
-          mime_type
-        ),
-        dms_document_locks (
-          locked_by,
-          expires_at
-        )
-      `, { count: "exact" })
-      .eq("folder_id", targetFolderId)
+      .select(DOC_SELECT)
+      .eq("folder_id", params.folderId)
       .is("deleted_at", null)
-      .order("created_at", { ascending: false });
-
-    if (params.docTypeId) {
-      query = query.eq("doc_type_id", params.docTypeId);
-    }
-    if (params.statusFilter) {
+      .order("updated_at", { ascending: false });
+    if (isUuid(params.docTypeId)) query = query.eq("doc_type_id", params.docTypeId);
+    if (params.statusFilter && ["PENDING", "APPROVED", "REJECTED"].includes(params.statusFilter)) {
       query = query.eq("approval_status", params.statusFilter);
     }
-    if (params.searchQuery && params.searchQuery.trim()) {
-      const q = params.searchQuery.trim();
-      query = query.or(`title.ilike.%${q}%,original_file_name.ilike.%${q}%`);
-    }
+    const q = (params.searchQuery || "").trim().replace(/[%_,()*\\]/g, " ").trim();
+    if (q) query = query.or(`title.ilike.%${q}%,original_file_name.ilike.%${q}%`);
 
-    query = query.range(offset, offset + limit - 1);
-
-    const { data: rows, count, error } = await query;
+    // Rights are per document (type, private view, QC), so filter a generous window then page
+    const { data: rows, error } = await query.range(0, 999);
     if (error) throw error;
+    const rights = await documentRightsMany(actor, (rows || []).map((r: any) => r.id));
+    const visible = (rows || []).filter((r: any) => rights.get(r.id)?.view);
+    const page = visible.slice(offset, offset + limit);
 
-    const documents: DmsDocumentSummary[] = (rows || []).map((row: any) => {
-      // Pick latest version
-      const versions = Array.isArray(row.dms_document_versions)
-        ? row.dms_document_versions
-        : [row.dms_document_versions];
-      const latestVer = versions.sort((a: any, b: any) => b.version_no - a.version_no)[0] || {};
-
-      const lock = Array.isArray(row.dms_document_locks)
-        ? row.dms_document_locks[0]
-        : row.dms_document_locks;
-      const isLocked = lock && new Date(lock.expires_at) > new Date();
-
-      return {
-        id: row.id,
-        folderId: row.folder_id,
-        docTypeId: row.doc_type_id,
-        docTypeCode: row.dms_doc_types?.code || "GEN",
-        docTypeName: row.dms_doc_types?.name || "General Document",
-        title: row.title,
-        originalFileName: row.original_file_name,
-        currentVersionNo: row.current_version_no || 1,
-        approvalStatus: row.approval_status || "PENDING",
-        fileSizeBytes: latestVer.file_size_bytes || row.file_size_bytes || 0,
-        mimeType: latestVer.mime_type || row.mime_type || "application/pdf",
-        storageKey: latestVer.storage_key || row.storage_key || "",
-        isLocked: !!isLocked,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-      };
-    });
-
-    // Merge any recent in-memory indexed documents not yet in database
-    const memoryForFolder = IN_MEMORY_DOCUMENTS.filter(
-      (mDoc) => mDoc.folderId === params.folderId && !documents.some((d) => d.id === mDoc.id)
+    const names = await namesFor(
+      page.flatMap((r: any) => {
+        const l = Array.isArray(r.dms_document_locks) ? r.dms_document_locks[0] : r.dms_document_locks;
+        return [r.created_by, l?.locked_by];
+      })
     );
-    const combinedDocuments = [...memoryForFolder, ...documents];
-
     return {
       success: true,
-      documents: combinedDocuments,
-      totalCount: (count || documents.length) + memoryForFolder.length,
+      documents: page.map((r: any) => summarize(r, rights.get(r.id), actor.id, names)),
+      totalCount: visible.length,
+      folderRights: fr,
     };
   } catch (err: any) {
-    console.error("[fetchFolderDocumentsAction] DB Error, using memory fallback:", err);
-    const memoryDocs = IN_MEMORY_DOCUMENTS.filter((mDoc) => mDoc.folderId === params.folderId);
-    return {
-      success: true,
-      documents: memoryDocs,
-      totalCount: memoryDocs.length,
-    };
+    return { success: false, error: dmsError(err, "Could not load documents."), documents: [] };
   }
 }
 
-/**
- * Fetch Doc Types and Dynamic Field Group Schema for Indexing
- */
+export async function fetchDocumentDetailAction(documentId: string): Promise<
+  Result<{
+    document: DmsDocumentSummary;
+    versions: DmsVersionItem[];
+    fields: { id: string; label: string; value: string }[];
+    activity: DmsActivityItem[];
+    folderName: string;
+  }>
+> {
+  try {
+    const actor = await dmsActor();
+    if (!isUuid(documentId)) return { success: false, error: "Document not found." };
+    const rights = await documentRights(actor, documentId);
+    if (!rights.view) return { success: false, error: "You don't have access to this document." };
+
+    const { data: row, error } = await supabaseAdmin.from("dms_documents").select(`${DOC_SELECT}, workspace_id`).eq("id", documentId).single();
+    if (error) throw error;
+
+    const [{ data: versions }, { data: qc }, { data: values }, { data: activity }, { data: folder }, hidden] = await Promise.all([
+      supabaseAdmin
+        .from("dms_document_versions")
+        .select("id, version_no, file_name, file_size_bytes, mime_type, change_note, uploaded_by, created_at")
+        .eq("document_id", documentId)
+        .order("version_no", { ascending: false }),
+      supabaseAdmin.from("dms_qc_approvals").select("version_no, status, decision_comment, decided_by").eq("document_id", documentId),
+      supabaseAdmin
+        .from("dms_field_values")
+        .select("field_definition_id, text_value, number_value, date_value, json_value, dms_field_definitions ( field_label )")
+        .eq("document_id", documentId),
+      supabaseAdmin
+        .from("dms_audit_logs")
+        .select("action, actor_email, details, created_at")
+        .eq("entity_type", "DOCUMENT")
+        .eq("entity_id", documentId)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabaseAdmin.from("dms_folders").select("name").eq("id", row.folder_id).maybeSingle(),
+      hiddenFieldIds(actor, row.workspace_id),
+    ]);
+
+    const qcByVersion = new Map((qc || []).map((q: any) => [q.version_no, q]));
+    const lockRow = Array.isArray(row.dms_document_locks) ? row.dms_document_locks[0] : row.dms_document_locks;
+    const names = await namesFor([
+      row.created_by,
+      lockRow?.locked_by,
+      ...(versions || []).map((v: any) => v.uploaded_by),
+      ...(qc || []).map((q: any) => q.decided_by),
+    ]);
+
+    return {
+      success: true,
+      document: summarize(row, rights, actor.id, names),
+      folderName: folder?.name || "",
+      versions: (versions || []).map((v: any) => {
+        const q: any = qcByVersion.get(v.version_no);
+        return {
+          id: v.id,
+          versionNo: v.version_no,
+          fileName: v.file_name,
+          fileSizeBytes: Number(v.file_size_bytes || 0),
+          mimeType: v.mime_type,
+          changeNote: v.change_note,
+          uploadedByName: names.get(v.uploaded_by) || "",
+          uploadedByMe: v.uploaded_by === actor.id,
+          createdAt: v.created_at,
+          qcStatus: q?.status || null,
+          qcComment: q?.decision_comment || null,
+          qcByName: q?.decided_by ? names.get(q.decided_by) || null : null,
+        };
+      }),
+      fields: (values || [])
+        .filter((v: any) => !hidden.has(v.field_definition_id))
+        .map((v: any) => {
+          const def = Array.isArray(v.dms_field_definitions) ? v.dms_field_definitions[0] : v.dms_field_definitions;
+          const value =
+            v.text_value ?? (v.number_value !== null ? String(v.number_value) : null) ?? v.date_value ?? (v.json_value !== null ? (v.json_value ? "Yes" : "No") : "");
+          return { id: v.field_definition_id, label: def?.field_label || "Field", value: String(value ?? "") };
+        }),
+      activity: (activity || []).map((a: any) => ({ action: a.action, actorEmail: a.actor_email, details: a.details || {}, createdAt: a.created_at })),
+    };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not load the document.") };
+  }
+}
+
 export async function fetchDocTypesAndFieldsAction(workspaceId?: string): Promise<{
   success: boolean;
   docTypes?: DmsDocTypeItem[];
   error?: string;
 }> {
   try {
-    await requireDesign("any");
-
-    let fetchedDocTypes: any[] = [];
-    try {
-      const { data: docTypes, error: dtErr } = await supabaseAdmin
-        .from("dms_doc_types")
-        .select(`
-          id,
-          code,
-          name,
-          description
-        `)
-        .eq("is_active", true)
-        .is("deleted_at", null)
-        .order("name", { ascending: true });
-
-      if (!dtErr && docTypes && docTypes.length > 0) {
-        fetchedDocTypes = docTypes;
-      }
-    } catch (err) {
-      console.warn("DB doc types fetch failed:", err);
-    }
-
-    // Fetch field definitions
-    let mappedFields: DmsFieldDefinitionItem[] = [];
-    try {
-      const { data: fields } = await supabaseAdmin
+    const actor = await dmsActor();
+    const wsId = await resolveWorkspaceId(workspaceId);
+    const [{ data: types, error }, { data: fields }, hidden] = await Promise.all([
+      supabaseAdmin.from("dms_doc_types").select("id, code, name, description").eq("is_active", true).is("deleted_at", null).order("name"),
+      supabaseAdmin
         .from("dms_field_definitions")
-        .select(`
-          id,
-          field_key,
-          field_label,
-          data_type,
-          is_required,
-          default_value,
-          dropdown_options
-        `)
-        .is("deleted_at", null);
-
-      if (fields) {
-        mappedFields = fields.map((f: any) => ({
-          id: f.id,
-          fieldKey: f.field_key,
-          fieldLabel: f.field_label,
-          dataType: f.data_type,
-          isRequired: !!f.is_required,
-          defaultValue: f.default_value,
-          dropdownOptions: Array.isArray(f.dropdown_options) ? f.dropdown_options : [],
-        }));
-      }
-    } catch {}
-
-    // Combine DB doc types with any dynamically created in-memory doc types
-    const dbIds = new Set(fetchedDocTypes.map((dt) => dt.id));
-    const memoryExtra = IN_MEMORY_DOC_TYPES.filter((m) => !dbIds.has(m.id));
-
-    const allTypes = [...fetchedDocTypes, ...memoryExtra];
-
-    const result: DmsDocTypeItem[] = allTypes.map((dt: any) => ({
-      id: dt.id,
-      code: dt.code,
-      name: dt.name,
-      description: dt.description,
-      fieldDefinitions: mappedFields,
-    }));
-
-    return { success: true, docTypes: result.length > 0 ? result : IN_MEMORY_DOC_TYPES };
+        .select("id, field_key, field_label, data_type, is_required, default_value, dropdown_options")
+        .is("deleted_at", null)
+        .order("field_label"),
+      wsId ? hiddenFieldIds(actor, wsId) : Promise.resolve(new Set<string>()),
+    ]);
+    if (error) throw error;
+    const defs: DmsFieldDefinitionItem[] = (fields || [])
+      .filter((f: any) => !hidden.has(f.id))
+      .map((f: any) => ({
+        id: f.id,
+        fieldKey: f.field_key,
+        fieldLabel: f.field_label,
+        dataType: String(f.data_type || "TEXT").toUpperCase() as DmsFieldDefinitionItem["dataType"],
+        isRequired: !!f.is_required,
+        defaultValue: f.default_value || undefined,
+        dropdownOptions: Array.isArray(f.dropdown_options) ? f.dropdown_options : [],
+      }));
+    return {
+      success: true,
+      docTypes: (types || []).map((t: any) => ({ id: t.id, code: t.code, name: t.name, description: t.description, fieldDefinitions: defs })),
+    };
   } catch (err: any) {
-    console.error("[fetchDocTypesAndFieldsAction] Error, returning fallback:", err);
-    return { success: true, docTypes: IN_MEMORY_DOC_TYPES };
+    return { success: false, error: dmsError(err, "Could not load document types."), docTypes: [] };
   }
 }
 
-/**
- * Create a new Document Type Master (Doc Set)
- */
 export async function createDocTypeAction(params: {
   name: string;
   code?: string;
   description?: string;
   workspaceId?: string;
-}): Promise<{
-  success: boolean;
-  docType?: DmsDocTypeItem;
-  error?: string;
-}> {
+}): Promise<{ success: boolean; docType?: DmsDocTypeItem; error?: string }> {
   try {
-    await requireDesign("masters");
-    const cleanName = params.name.trim();
-    if (!cleanName) {
-      return { success: false, error: "Document Type name is required" };
-    }
-
-    const cleanCode = (params.code && params.code.trim())
-      ? params.code.trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_")
-      : cleanName.toUpperCase().replace(/[^A-Z0-9_]/g, "_").slice(0, 32);
-
-    const desc = params.description?.trim() || "";
-
-    let createdItem: DmsDocTypeItem | null = null;
-
-    try {
-      const { data, error } = await supabaseAdmin
-        .from("dms_doc_types")
-        .insert({
-          name: cleanName,
-          code: cleanCode,
-          description: desc,
-          is_active: true
-        })
-        .select()
-        .single();
-
-      if (!error && data) {
-        createdItem = {
-          id: data.id,
-          code: data.code,
-          name: data.name,
-          description: data.description,
-          fieldDefinitions: []
-        };
-      }
-    } catch (dbErr) {
-      console.warn("DB insert for doc type fallback to in-memory:", dbErr);
-    }
-
-    if (!createdItem) {
-      createdItem = {
-        id: `dt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
-        code: cleanCode,
-        name: cleanName,
-        description: desc,
-        fieldDefinitions: []
-      };
-    }
-
-    // Always push to in-memory array so it reflects immediately everywhere
-    if (!IN_MEMORY_DOC_TYPES.some((d) => d.id === createdItem!.id || d.code === createdItem!.code)) {
-      IN_MEMORY_DOC_TYPES.push(createdItem);
-    }
-
-    return { success: true, docType: createdItem };
-  } catch (err: any) {
-    console.error("[createDocTypeAction] Error:", err);
-    return { success: false, error: err.message || "Failed to create document type" };
-  }
-}
-
-/**
- * Upload DMS Document File to Supabase Storage
- */
-export async function uploadDmsDocumentFileAction(formData: FormData): Promise<{
-  success: boolean;
-  storageUrl?: string;
-  fileName?: string;
-  fileSizeBytes?: number;
-  mimeType?: string;
-  checksumSha256?: string;
-  error?: string;
-}> {
-  try {
-    await requireDesign("drawings");
-    const file = formData.get("file") as File | null;
-    if (!file) return { success: false, error: "No file provided" };
-
-    const workspaceId = safeStorageSegment(formData.get("workspaceId") as string, "CHANDAK_CORP");
-    const folderId = safeStorageSegment(formData.get("folderId") as string, "general");
-
-    const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const timestamp = Date.now();
-    const storagePath = `dms/${workspaceId}/${folderId}/${timestamp}_${cleanFileName}`;
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const mimeType = file.type || "application/pdf";
-    const checksumSha256 = createHash("sha256").update(buffer).digest("hex");
-
-    let bucket = "ticket-attachments";
-    let { error: upErr } = await supabaseAdmin.storage
-      .from(bucket)
-      .upload(storagePath, buffer, {
-        contentType: mimeType,
-        upsert: false
-      });
-
-    if (upErr) {
-      bucket = "design-drawings";
-      const { error: fallbackErr } = await supabaseAdmin.storage
-        .from(bucket)
-        .upload(storagePath, buffer, {
-          contentType: mimeType,
-          upsert: false
-        });
-
-      if (fallbackErr) {
-        // Never store the file itself in the database: report the failure instead.
-        console.error("Storage upload failed:", fallbackErr);
-        return { success: false, error: "Could not store the file. Please try again." };
-      }
-    }
-
-    const storageUrl = `storage:${bucket}:${storagePath}`;
-
-    return {
-      success: true,
-      storageUrl,
-      fileName: file.name,
-      fileSizeBytes: file.size,
-      mimeType,
-      checksumSha256
-    };
-  } catch (err: any) {
-    console.error("[uploadDmsDocumentFileAction] Error:", err);
-    return { success: false, error: err?.message || "Failed to upload document file" };
-  }
-}
-
-/**
- * Save Document with Split-Screen Indexing Metadata
- */
-export async function saveDocumentWithIndexingAction(params: {
-  workspaceId: string;
-  folderId: string;
-  docTypeId: string;
-  title: string;
-  originalFileName: string;
-  storageKey: string;
-  fileSizeBytes: number;
-  checksumSha256: string;
-  mimeType: string;
-  ocrText?: string;
-  fieldValues?: Record<string, any>;
-  masterTags?: { masterTableId: string; masterRecordId: string }[];
-  requiresQc?: boolean;
-}): Promise<{ success: boolean; documentId?: string; error?: string }> {
-  try {
-    await requireDesign("drawings");
-    const supabase = await getSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return { success: false, error: "Unauthorized: Authentication required to index documents" };
-    }
-    const userId: string = user.id;
-
-    // 1. Resolve workspace UUID
-    let targetWsId = params.workspaceId;
-    if (!targetWsId || !/^[0-9a-fA-F-]{36}$/.test(targetWsId)) {
-      targetWsId = CHANDAK_WORKSPACE_UUID;
-    }
-
-    // 2. Resolve folder UUID
-    let targetFolderId = params.folderId;
-    if (!targetFolderId || !/^[0-9a-fA-F-]{36}$/.test(targetFolderId)) {
-      targetFolderId = CHANDAK_ROOT_FOLDER_UUID;
-    }
-
-    // 3. Resolve doc type UUID
-    let targetDocTypeId = params.docTypeId;
-    if (!targetDocTypeId || !/^[0-9a-fA-F-]{36}$/.test(targetDocTypeId)) {
-      const codeMap: Record<string, string> = {
-        "ARCH_DWG": "7f8b4fc0-8158-4fdc-8cf1-448d15bd9ad8",
-        "dt-arch-01": "7f8b4fc0-8158-4fdc-8cf1-448d15bd9ad8",
-        "STR_CALC": "d980d902-547a-4940-860b-335fde4631f1",
-        "dt-str-02": "d980d902-547a-4940-860b-335fde4631f1",
-        "MEP_SPEC": "ea15a12c-4981-41ae-b191-a953fc26407c",
-        "dt-mep-03": "ea15a12c-4981-41ae-b191-a953fc26407c",
-        "STAT_NOC": "cbc61dca-381f-4ce0-aceb-eaaaab5b13a2",
-        "dt-stat-04": "cbc61dca-381f-4ce0-aceb-eaaaab5b13a2",
-        "GFC_TRANS": "cbb19570-2ec2-4c5a-b6e4-883e0743b925",
-        "dt-gfc-05": "cbb19570-2ec2-4c5a-b6e4-883e0743b925"
-      };
-      targetDocTypeId = codeMap[targetDocTypeId] || "7f8b4fc0-8158-4fdc-8cf1-448d15bd9ad8";
-    }
-
-    // 4. Insert Document Header via admin client (valid schema columns only)
-    const docPayload: any = {
-      workspace_id: targetWsId,
-      folder_id: targetFolderId,
-      doc_type_id: targetDocTypeId,
-      title: params.title.trim() || params.originalFileName.trim(),
-      original_file_name: params.originalFileName.trim(),
-      current_version_no: 1,
-      approval_status: params.requiresQc ? "PENDING" : "APPROVED"
-    };
-    if (userId) docPayload.created_by = userId;
-
-    const { data: doc, error: docErr } = await supabaseAdmin
-      .from("dms_documents")
-      .insert(docPayload)
-      .select()
+    const actor = await dmsActor();
+    if (!actor.base.masters) return { success: false, error: "Your Design access doesn't allow you to manage Design masters." };
+    const name = params.name.trim();
+    if (!name) return { success: false, error: "Document type name is required." };
+    const code = (params.code?.trim() || name).toUpperCase().replace(/[^A-Z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 32);
+    if (!code) return { success: false, error: "Give the document type a code using letters or numbers." };
+    const { data, error } = await supabaseAdmin
+      .from("dms_doc_types")
+      .insert({ name, code, description: params.description?.trim() || null, is_active: true })
+      .select("id, code, name, description")
       .single();
-
-    if (docErr || !doc) {
-      console.error("[saveDocumentWithIndexingAction] docErr:", docErr);
-      return { success: false, error: docErr?.message || "Failed to create document record" };
+    if (error) {
+      if (error.code === "23505") return { success: false, error: `A document type with code ${code} already exists.` };
+      throw error;
     }
-
-    const finalDocId = doc.id;
-
-    // 5. Insert Version 1 with Storage Metadata and Search Indexing
-    const versionPayload: any = {
-      document_id: finalDocId,
-      version_no: 1,
-      storage_key: params.storageKey,
-      file_name: params.originalFileName,
-      file_size_bytes: params.fileSizeBytes,
-      checksum_sha256: params.checksumSha256 || `sha256-${Date.now()}`,
-      mime_type: params.mimeType,
-      ocr_extracted_text: params.ocrText || null
-    };
-    if (userId) versionPayload.uploaded_by = userId;
-
-    const { error: verErr } = await supabaseAdmin
-      .from("dms_document_versions")
-      .insert(versionPayload);
-
-    if (verErr) {
-      console.error("[saveDocumentWithIndexingAction] verErr:", verErr);
-      await supabaseAdmin.from("dms_documents").delete().eq("id", finalDocId);
-      return { success: false, error: verErr.message || "Failed to save document version" };
-    }
-
-    // 6. Save Custom EAV Field Values (safe try)
-    if (params.fieldValues && Object.keys(params.fieldValues).length > 0) {
-      try {
-        const fieldInserts = Object.entries(params.fieldValues)
-          .filter(([fieldDefId]) => /^[0-9a-fA-F-]{36}$/.test(fieldDefId))
-          .map(([fieldDefId, val]) => ({
-            document_id: finalDocId,
-            field_definition_id: fieldDefId,
-            text_value: typeof val === "string" ? val : null,
-            number_value: typeof val === "number" ? val : null,
-            date_value: val instanceof Date ? val.toISOString().slice(0, 10) : typeof val === "string" && /^\d{4}-\d{2}-\d{2}$/.test(val) ? val : null,
-            json_value: typeof val === "object" ? val : null,
-          }));
-        if (fieldInserts.length > 0) {
-          await supabaseAdmin.from("dms_field_values").insert(fieldInserts);
-        }
-      } catch {}
-    }
-
-    // 7. Save Master Record Tags (safe try)
-    if (params.masterTags && params.masterTags.length > 0) {
-      try {
-        const tagInserts = params.masterTags
-          .filter(mt => /^[0-9a-fA-F-]{36}$/.test(mt.masterTableId) && /^[0-9a-fA-F-]{36}$/.test(mt.masterRecordId))
-          .map((mt) => ({
-            document_id: finalDocId,
-            master_table_id: mt.masterTableId,
-            master_record_id: mt.masterRecordId,
-          }));
-        if (tagInserts.length > 0) {
-          await supabaseAdmin.from("dms_document_master_tags").insert(tagInserts);
-        }
-      } catch {}
-    }
-
-    // 8. Initialize QC Gate
-    if (params.requiresQc) {
-      try {
-        await supabaseAdmin.from("dms_qc_approvals").insert({
-          document_id: finalDocId,
-          version_no: 1,
-          status: "UNAPPROVED",
-        });
-      } catch {}
-    }
-
-    // 9. Sync in-memory summary for instant UI response
-    const matchingDocType = IN_MEMORY_DOC_TYPES.find((d) => d.id === targetDocTypeId);
-    const inMemoryItem: DmsDocumentSummary = {
-      id: finalDocId,
-      folderId: targetFolderId,
-      docTypeId: targetDocTypeId,
-      docTypeCode: matchingDocType?.code || "DOC",
-      docTypeName: matchingDocType?.name || "Document",
-      title: params.title.trim(),
-      originalFileName: params.originalFileName.trim(),
-      currentVersionNo: 1,
-      approvalStatus: params.requiresQc ? "PENDING" : "APPROVED",
-      fileSizeBytes: params.fileSizeBytes,
-      mimeType: params.mimeType,
-      storageKey: params.storageKey,
-      isLocked: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      fieldValues: params.fieldValues
-    };
-    IN_MEMORY_DOCUMENTS.unshift(inMemoryItem);
-
-    return { success: true, documentId: finalDocId };
+    await supabaseAdmin.rpc("fn_dms_audit", {
+      p_actor: actor.id,
+      p_action: "DOC_TYPE_CREATED",
+      p_entity_type: "DOC_TYPE",
+      p_entity_id: data.id,
+      p_details: { code, name },
+    });
+    return { success: true, docType: { ...data, fieldDefinitions: [] } };
   } catch (err: any) {
-    console.error("[saveDocumentWithIndexingAction] Error:", err);
-    return { success: false, error: err.message || "Failed to index document" };
+    return { success: false, error: dmsError(err, "Could not create the document type.") };
   }
 }
 
-
 /**
- * Check Out / Lock / Unlock Document
+ * Upload a file and index it as a new document in one step, so the stored file and the record
+ * can't drift apart (and nobody can point a record at a file they didn't upload).
+ * FormData: file, folderId, docTypeId, title, fieldValues (JSON, keyed by field definition id),
+ * masterRecordIds (JSON array, optional), ocrText (optional).
  */
+export async function addDmsDocumentAction(formData: FormData): Promise<Result<{ documentId: string; approvalStatus: string }>> {
+  let storedKey: string | null = null;
+  try {
+    const actor = await dmsActor();
+    const folderId = String(formData.get("folderId") || "");
+    const docTypeId = String(formData.get("docTypeId") || "");
+    if (!isUuid(folderId)) return { success: false, error: "Choose a folder." };
+    if (!isUuid(docTypeId)) return { success: false, error: "Choose a document type." };
+
+    const fr = await folderRights(actor, folderId);
+    if (!fr.upload) return { success: false, error: "You cannot add documents to this folder." };
+    const { data: folder } = await supabaseAdmin.from("dms_folders").select("workspace_id").eq("id", folderId).single();
+
+    let fieldValues: Record<string, unknown> = {};
+    let masterRecordIds: string[] = [];
+    try {
+      fieldValues = JSON.parse(String(formData.get("fieldValues") || "{}")) || {};
+      masterRecordIds = (JSON.parse(String(formData.get("masterRecordIds") || "[]")) || []).filter(isUuid);
+    } catch {
+      return { success: false, error: "The index fields could not be read." };
+    }
+
+    const file = formData.get("file") as File | null;
+    const stored = await storeDmsFile(file as File, folder!.workspace_id, folderId, `new-${Date.now()}`);
+    storedKey = stored.storageKey;
+
+    const { data: documentId, error } = await supabaseAdmin.rpc("fn_dms_create_document", {
+      p_actor: actor.id,
+      p_base: actor.base,
+      p_folder: folderId,
+      p_doc_type: docTypeId,
+      p_title: String(formData.get("title") || ""),
+      p_storage_key: stored.storageKey,
+      p_file_name: stored.fileName,
+      p_size: stored.size,
+      p_checksum: stored.checksum,
+      p_mime: stored.mimeType,
+      p_ocr_text: String(formData.get("ocrText") || "") || null,
+      p_field_values: fieldValues,
+      p_master_record_ids: masterRecordIds,
+    });
+    if (error) throw error;
+    storedKey = null;
+    const { data: doc } = await supabaseAdmin.from("dms_documents").select("approval_status").eq("id", documentId).single();
+    return { success: true, documentId: documentId as string, approvalStatus: doc?.approval_status || "PENDING" };
+  } catch (err: any) {
+    if (storedKey) await removeStoredFiles([storedKey]);
+    return { success: false, error: dmsError(err, "Could not add the document.") };
+  }
+}
+
+export async function updateDocumentAction(params: { documentId: string; title?: string; fieldValues?: Record<string, unknown> }): Promise<Result> {
+  try {
+    const actor = await dmsActor();
+    const { error } = await supabaseAdmin.rpc("fn_dms_update_document", {
+      p_actor: actor.id,
+      p_base: actor.base,
+      p_document: params.documentId,
+      p_title: params.title ?? null,
+      p_field_values: params.fieldValues ?? null,
+    });
+    if (error) throw error;
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not save the document.") };
+  }
+}
+
+/** Check out (LOCK) or release (UNLOCK) a document. */
 export async function lockUnlockDocumentAction(params: {
   documentId: string;
   action: "LOCK" | "UNLOCK";
   durationHours?: number;
-}): Promise<{ success: boolean; error?: string }> {
+}): Promise<{ success: boolean; error?: string; lockedUntil?: string }> {
   try {
-    await requireDesign("drawings");
-    const supabase = await getSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return { success: false, error: "Unauthorized: Authentication required to lock or unlock documents" };
+    const actor = await dmsActor();
+    if (params.action === "LOCK") {
+      const { data, error } = await supabaseAdmin.rpc("fn_dms_checkout", {
+        p_actor: actor.id,
+        p_base: actor.base,
+        p_document: params.documentId,
+        p_hours: params.durationHours || 8,
+      });
+      if (error) throw error;
+      return { success: true, lockedUntil: data as string };
     }
-    const userId: string = user.id;
-
-    const { data: currentLock } = await supabaseAdmin
-      .from("dms_document_locks")
-      .select("locked_by, expires_at")
-      .eq("document_id", params.documentId)
-      .maybeSingle();
-    const lockActive = !!currentLock && (!currentLock.expires_at || new Date(currentLock.expires_at).getTime() > Date.now());
-    const lockedBySomeoneElse = lockActive && !!currentLock?.locked_by && currentLock.locked_by !== userId;
-
-    if (params.action === "UNLOCK") {
-      // Only the person holding the lock (or a Design administrator) can release an active lock.
-      if (lockedBySomeoneElse) {
-        try {
-          await requireDesign("admin");
-        } catch {
-          return { success: false, error: "This document is checked out by someone else." };
-        }
-      }
-      await supabaseAdmin.from("dms_document_locks").delete().eq("document_id", params.documentId);
-    } else {
-      if (lockedBySomeoneElse) {
-        return { success: false, error: "This document is already checked out by someone else." };
-      }
-      const hours = params.durationHours || 4;
-      const expiresAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
-
-      const lockPayload: any = {
-        document_id: params.documentId,
-        locked_at: new Date().toISOString(),
-        expires_at: expiresAt,
-      };
-      if (userId) lockPayload.locked_by = userId;
-
-      await supabaseAdmin.from("dms_document_locks").upsert(lockPayload);
-    }
-
+    const { error } = await supabaseAdmin.rpc("fn_dms_release_lock", { p_actor: actor.id, p_base: actor.base, p_document: params.documentId });
+    if (error) throw error;
     return { success: true };
   } catch (err: any) {
-    console.error("[lockUnlockDocumentAction] Error:", err);
-    return { success: false, error: err?.message || "Failed to toggle document lock" };
+    return { success: false, error: dmsError(err, "Could not change the check-out.") };
   }
 }
 
-/**
- * Record QC Approval Decision
- */
+/** Check in a new version. FormData: documentId, file, changeNote. */
+export async function uploadDocumentVersionAction(formData: FormData): Promise<Result<{ versionNo: number }>> {
+  let storedKey: string | null = null;
+  try {
+    const actor = await dmsActor();
+    const documentId = String(formData.get("documentId") || "");
+    if (!isUuid(documentId)) return { success: false, error: "Document not found." };
+    const changeNote = String(formData.get("changeNote") || "").trim();
+    if (!changeNote) return { success: false, error: "Say what changed in this version." };
+    const rights = await documentRights(actor, documentId);
+    if (!rights.edit && !rights.upload) return { success: false, error: "You cannot add a version to this document." };
+
+    const { data: doc } = await supabaseAdmin.from("dms_documents").select("workspace_id, folder_id").eq("id", documentId).single();
+    const stored = await storeDmsFile(formData.get("file") as File, doc!.workspace_id, doc!.folder_id, documentId);
+    storedKey = stored.storageKey;
+    const { data: versionNo, error } = await supabaseAdmin.rpc("fn_dms_add_version", {
+      p_actor: actor.id,
+      p_base: actor.base,
+      p_document: documentId,
+      p_storage_key: stored.storageKey,
+      p_file_name: stored.fileName,
+      p_size: stored.size,
+      p_checksum: stored.checksum,
+      p_mime: stored.mimeType,
+      p_change_note: changeNote,
+      p_ocr_text: null,
+    });
+    if (error) throw error;
+    storedKey = null;
+    return { success: true, versionNo: versionNo as number };
+  } catch (err: any) {
+    if (storedKey) await removeStoredFiles([storedKey]);
+    return { success: false, error: dmsError(err, "Could not upload the new version.") };
+  }
+}
+
+// ---------- recycle bin ----------
+
+export async function deleteDocumentAction(documentId: string): Promise<Result> {
+  try {
+    const actor = await dmsActor();
+    const { error } = await supabaseAdmin.rpc("fn_dms_delete_document", { p_actor: actor.id, p_base: actor.base, p_document: documentId });
+    if (error) throw error;
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not delete the document.") };
+  }
+}
+
+export async function fetchRecycleBinAction(workspaceId?: string): Promise<Result<{ items: DmsRecycleItem[] }>> {
+  try {
+    const actor = await dmsActor();
+    const wsId = await resolveWorkspaceId(workspaceId);
+    if (!wsId) return { success: true, items: [] };
+    const { data: rows, error } = await supabaseAdmin
+      .from("dms_documents")
+      .select("id, title, original_file_name, folder_id, deleted_at, deleted_by, dms_folders ( name )")
+      .eq("workspace_id", wsId)
+      .not("deleted_at", "is", null)
+      .is("purged_at", null)
+      .order("deleted_at", { ascending: false })
+      .limit(500);
+    if (error) throw error;
+    const rights = await documentRightsMany(actor, (rows || []).map((r: any) => r.id));
+    const visible = (rows || []).filter((r: any) => rights.get(r.id)?.restore || rights.get(r.id)?.purge);
+    const names = await namesFor(visible.map((r: any) => r.deleted_by));
+    return {
+      success: true,
+      items: visible.map((r: any) => {
+        const f = Array.isArray(r.dms_folders) ? r.dms_folders[0] : r.dms_folders;
+        return {
+          documentId: r.id,
+          title: r.title,
+          fileName: r.original_file_name,
+          folderName: f?.name || "",
+          deletedAt: r.deleted_at,
+          deletedByName: names.get(r.deleted_by) || "",
+          canRestore: !!rights.get(r.id)?.restore,
+          canPurge: !!rights.get(r.id)?.purge,
+        };
+      }),
+    };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not load the recycle bin.") };
+  }
+}
+
+export async function restoreDocumentAction(documentId: string): Promise<Result> {
+  try {
+    const actor = await dmsActor();
+    const { error } = await supabaseAdmin.rpc("fn_dms_restore_document", { p_actor: actor.id, p_base: actor.base, p_document: documentId });
+    if (error) throw error;
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not restore the document.") };
+  }
+}
+
+export async function purgeDocumentAction(documentId: string, reason: string): Promise<Result> {
+  try {
+    const actor = await dmsActor();
+    const { data: keys, error } = await supabaseAdmin.rpc("fn_dms_purge_document", {
+      p_actor: actor.id,
+      p_base: actor.base,
+      p_document: documentId,
+      p_reason: reason,
+    });
+    if (error) throw error;
+    await removeStoredFiles((keys as string[]) || []);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not purge the document.") };
+  }
+}
+
+// ---------- QC ----------
+
+export async function fetchQcQueueAction(workspaceId?: string): Promise<Result<{ items: DmsQcItem[] }>> {
+  try {
+    const actor = await dmsActor();
+    if (!actor.base.qc) return { success: true, items: [] };
+    const wsId = await resolveWorkspaceId(workspaceId);
+    const { data: rows, error } = await supabaseAdmin
+      .from("dms_documents")
+      .select("id, title, folder_id, current_version_no, workspace_id, dms_folders ( name )")
+      .eq("workspace_id", wsId)
+      .eq("approval_status", "PENDING")
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: true })
+      .limit(500);
+    if (error) throw error;
+    const rights = await documentRightsMany(actor, (rows || []).map((r: any) => r.id));
+    const mine = (rows || []).filter((r: any) => rights.get(r.id)?.qc);
+    const { data: versions } = await supabaseAdmin
+      .from("dms_document_versions")
+      .select("document_id, version_no, uploaded_by, created_at")
+      .in("document_id", mine.map((r: any) => r.id).concat(["00000000-0000-0000-0000-000000000000"]));
+    const current = new Map(
+      (versions || [])
+        .filter((v: any) => mine.some((r: any) => r.id === v.document_id && r.current_version_no === v.version_no))
+        .map((v: any) => [v.document_id, v])
+    );
+    const names = await namesFor([...current.values()].map((v: any) => v.uploaded_by));
+    return {
+      success: true,
+      items: mine.map((r: any) => {
+        const v: any = current.get(r.id);
+        const f = Array.isArray(r.dms_folders) ? r.dms_folders[0] : r.dms_folders;
+        return {
+          documentId: r.id,
+          title: r.title,
+          folderId: r.folder_id,
+          folderName: f?.name || "",
+          versionNo: r.current_version_no,
+          uploadedByName: names.get(v?.uploaded_by) || "",
+          uploadedAt: v?.created_at || "",
+          ownUpload: v?.uploaded_by === actor.id,
+        };
+      }),
+    };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not load the QC queue.") };
+  }
+}
+
 export async function submitQcDecisionAction(params: {
   documentId: string;
   versionNo: number;
@@ -1035,141 +875,70 @@ export async function submitQcDecisionAction(params: {
   decisionComment?: string;
 }): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireDesign("gfc");
-    const supabase = await getSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return { success: false, error: "Unauthorized: Authentication required to submit QC decisions" };
-    }
-    const userId: string = user.id;
-
-    if (params.status === "REJECTED" && !params.decisionComment?.trim()) {
-      return { success: false, error: "A comment is required when rejecting a document." };
-    }
-
-    const updatePayload: any = {
-      status: params.status,
-      decided_at: new Date().toISOString(),
-      decision_comment: params.decisionComment || null,
-    };
-    if (userId) updatePayload.decided_by = userId;
-
-    const { data: qcRecord } = await supabaseAdmin
-      .from("dms_qc_approvals")
-      .update(updatePayload)
-      .eq("document_id", params.documentId)
-      .eq("version_no", params.versionNo)
-      .select()
-      .maybeSingle();
-
-    // Log QC Event
-    if (qcRecord) {
-      const eventPayload: any = {
-        qc_approval_id: qcRecord.id,
-        action: params.status,
-        remarks: params.decisionComment || "QC evaluation completed",
-      };
-      if (userId) eventPayload.actor_id = userId;
-      await supabaseAdmin.from("dms_qc_events").insert(eventPayload);
-    }
-
-    // Update document approval status
-    await supabaseAdmin
-      .from("dms_documents")
-      .update({ approval_status: params.status })
-      .eq("id", params.documentId);
-
+    const actor = await dmsActor();
+    const { error } = await supabaseAdmin.rpc("fn_dms_qc_decide", {
+      p_actor: actor.id,
+      p_base: actor.base,
+      p_document: params.documentId,
+      p_version: params.versionNo,
+      p_status: params.status,
+      p_comment: params.decisionComment || null,
+    });
+    if (error) throw error;
     return { success: true };
   } catch (err: any) {
-    console.error("[submitQcDecisionAction] Error:", err);
-    return { success: false, error: err?.message || "Failed to record QC decision" };
+    return { success: false, error: dmsError(err, "Could not record the QC decision.") };
   }
 }
 
-// In-memory fallback permissions store to guarantee zero schema cache errors
-const IN_MEMORY_FOLDER_PERMISSIONS: Map<string, { inheritPermissions: boolean; permissions: DmsFolderPermissionItem[] }> = new Map();
-
-// ==============================================================================
-// 10. Folder-Level Granular Permissions (View, Upload, Download, Delete, Manage)
-// ==============================================================================
+// ---------- folder access ----------
 
 export async function fetchFolderPermissionsAction(folderId: string): Promise<{
   success: boolean;
   inheritPermissions?: boolean;
+  canManage?: boolean;
   permissions?: DmsFolderPermissionItem[];
+  groups?: { id: string; name: string }[];
   error?: string;
 }> {
   try {
-    await requireDesign("any");
-
-    // Check in-memory store first
-    const cached = IN_MEMORY_FOLDER_PERMISSIONS.get(folderId);
-
-    // Try reading folder inherit_permissions flag from database
-    let dbInherit = cached ? cached.inheritPermissions : true;
-    try {
-      const { data: folderData } = await supabaseAdmin
-        .from("dms_folders")
-        .select("id, inherit_permissions")
-        .eq("id", folderId)
-        .maybeSingle();
-      if (folderData) {
-        dbInherit = folderData.inherit_permissions ?? true;
-      }
-    } catch {
-      // Ignore folder query error
-    }
-
-    try {
-      const { data: permsData, error: permsErr } = await supabaseAdmin
-        .from("dms_folder_permissions")
-        .select("*")
-        .eq("folder_id", folderId)
-        .order("created_at", { ascending: true });
-
-      if (!permsErr && permsData && permsData.length > 0) {
-        const permissions: DmsFolderPermissionItem[] = permsData.map((p: any) => ({
-          id: p.id,
-          folderId: p.folder_id,
-          userId: p.user_id,
-          userEmail: p.user_email,
-          userName: p.user_name,
-          roleCode: p.role_code,
-          canView: !!p.can_view,
-          canUpload: !!p.can_upload,
-          canDownload: !!p.can_download,
-          canDelete: !!p.can_delete,
-          canManage: !!p.can_manage
-        }));
-
-        IN_MEMORY_FOLDER_PERMISSIONS.set(folderId, {
-          inheritPermissions: dbInherit,
-          permissions
-        });
-
-        return {
-          success: true,
-          inheritPermissions: dbInherit,
-          permissions
-        };
-      }
-    } catch (queryErr) {
-      console.warn("dms_folder_permissions schema cache warming fallback:", queryErr);
-    }
-
+    const actor = await dmsActor();
+    if (!isUuid(folderId)) return { success: false, error: "Folder not found." };
+    const fr = await folderRights(actor, folderId);
+    if (!fr.view) return { success: false, error: "You don't have access to this folder." };
+    const [{ data: folder }, { data: perms, error }] = await Promise.all([
+      supabaseAdmin.from("dms_folders").select("inherit_permissions, workspace_id").eq("id", folderId).single(),
+      supabaseAdmin.from("dms_folder_permissions").select("*").eq("folder_id", folderId).order("created_at", { ascending: true }),
+    ]);
+    if (error) throw error;
+    const { data: groups } = await supabaseAdmin
+      .from("dms_groups")
+      .select("id, name")
+      .eq("workspace_id", folder?.workspace_id)
+      .is("deleted_at", null)
+      .order("name");
     return {
       success: true,
-      inheritPermissions: cached?.inheritPermissions ?? dbInherit,
-      permissions: cached?.permissions ?? []
+      inheritPermissions: folder?.inherit_permissions !== false,
+      canManage: !!(fr.admin || fr.manage),
+      groups: groups || [],
+      permissions: (perms || []).map((p: any) => ({
+        id: p.id,
+        folderId: p.folder_id,
+        userId: p.user_id,
+        groupId: p.group_id,
+        userEmail: p.user_email || undefined,
+        userName: p.user_name || undefined,
+        roleCode: p.role_code,
+        canView: !!p.can_view,
+        canUpload: !!p.can_upload,
+        canDownload: !!p.can_download,
+        canDelete: !!p.can_delete,
+        canManage: !!p.can_manage,
+      })),
     };
   } catch (err: any) {
-    console.error("[fetchFolderPermissionsAction] Error:", err);
-    const cached = IN_MEMORY_FOLDER_PERMISSIONS.get(folderId);
-    return {
-      success: true,
-      inheritPermissions: cached?.inheritPermissions ?? true,
-      permissions: cached?.permissions ?? []
-    };
+    return { success: false, error: dmsError(err, "Could not load folder access.") };
   }
 }
 
@@ -1179,6 +948,7 @@ export async function saveFolderPermissionsAction(params: {
   permissions: Array<{
     id?: string;
     userId?: string | null;
+    groupId?: string | null;
     userEmail?: string;
     userName?: string;
     roleCode?: string | null;
@@ -1190,102 +960,30 @@ export async function saveFolderPermissionsAction(params: {
   }>;
 }): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireDesign("admin");
-    const supabase = await getSupabase();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return { success: false, error: "Unauthorized: Authentication required to manage folder permissions" };
-    }
-
-    const formattedPermissions: DmsFolderPermissionItem[] = (params.permissions || []).map((p, idx) => ({
-      id: p.id || `perm-${params.folderId}-${idx}-${Date.now()}`,
-      folderId: params.folderId,
-      userId: p.userId || null,
-      userEmail: p.userEmail,
-      userName: p.userName,
-      roleCode: p.roleCode || null,
-      canView: p.canView,
-      canUpload: p.canUpload,
-      canDownload: p.canDownload,
-      canDelete: p.canDelete,
-      canManage: p.canManage
+    const actor = await dmsActor();
+    const grants = (params.permissions || []).map((p) => ({
+      user_id: isUuid(p.userId) ? p.userId : null,
+      group_id: isUuid(p.groupId) ? p.groupId : null,
+      user_email: p.userEmail || null,
+      user_name: p.userName || null,
+      // A role row only applies when it names no person or group
+      role_code: !isUuid(p.userId) && !isUuid(p.groupId) && !p.userEmail ? p.roleCode || null : null,
+      can_view: !!p.canView,
+      can_upload: !!p.canUpload,
+      can_download: !!p.canDownload,
+      can_delete: !!p.canDelete,
+      can_manage: !!p.canManage,
     }));
-
-    // 1. Immediately store in in-memory map for instantaneous and zero-failure UI state
-    IN_MEMORY_FOLDER_PERMISSIONS.set(params.folderId, {
-      inheritPermissions: params.inheritPermissions,
-      permissions: formattedPermissions
+    const { error } = await supabaseAdmin.rpc("fn_dms_set_folder_permissions", {
+      p_actor: actor.id,
+      p_base: actor.base,
+      p_folder: params.folderId,
+      p_inherit: params.inheritPermissions,
+      p_grants: grants,
     });
-
-    // 2. Update folder inherit_permissions flag in database (safe try)
-    try {
-      await supabaseAdmin
-        .from("dms_folders")
-        .update({
-          inherit_permissions: params.inheritPermissions,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", params.folderId);
-    } catch (fErr) {
-      console.warn("dms_folders inherit_permissions update warning:", fErr);
-    }
-
-    // 3. Persist to dms_folder_permissions table if available in database
-    try {
-      await supabaseAdmin
-        .from("dms_folder_permissions")
-        .delete()
-        .eq("folder_id", params.folderId);
-
-      if (formattedPermissions.length > 0) {
-        const rowsToInsert = formattedPermissions.map(p => ({
-          folder_id: params.folderId,
-          user_id: p.userId || null,
-          user_email: p.userEmail || null,
-          user_name: p.userName || null,
-          role_code: p.roleCode || null,
-          can_view: p.canView,
-          can_upload: p.canUpload,
-          can_download: p.canDownload,
-          can_delete: p.canDelete,
-          can_manage: p.canManage,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }));
-
-        await supabaseAdmin
-          .from("dms_folder_permissions")
-          .insert(rowsToInsert);
-      }
-    } catch (dbErr) {
-      console.warn("dms_folder_permissions database persistence warning (persisted to in-memory store):", dbErr);
-    }
-
-    // 4. Log Audit Event (safe try)
-    try {
-      await supabaseAdmin.from("dms_audit_logs").insert({
-        actor_id: user?.id || null,
-        actor_email: user?.email || "system",
-        action: "UPDATE_FOLDER_PERMISSIONS",
-        entity_type: "FOLDER",
-        entity_id: params.folderId,
-        details: {
-          inheritPermissions: params.inheritPermissions,
-          assignedCount: formattedPermissions.length,
-          timestamp: new Date().toISOString()
-        }
-      });
-    } catch {
-      // Non-blocking audit log
-    }
-
+    if (error) throw error;
     return { success: true };
   } catch (err: any) {
-    console.error("[saveFolderPermissionsAction] Error:", err);
-    return { success: false, error: err.message || "Failed to save folder permissions" };
+    return { success: false, error: dmsError(err, "Could not save folder access.") };
   }
 }
-
-

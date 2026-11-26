@@ -30,10 +30,9 @@ import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/componen
 import {
   DmsDocTypeItem,
   DmsFolderNode,
-  saveDocumentWithIndexingAction,
+  addDmsDocumentAction,
   fetchDocTypesAndFieldsAction,
-  createDocTypeAction,
-  uploadDmsDocumentFileAction
+  createDocTypeAction
 } from "@/lib/actions/dms-core";
 import { toast } from "react-toastify";
 
@@ -81,7 +80,6 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
   // Dynamic Metadata Form State
   const [docTitle, setDocTitle] = useState<string>("");
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
-  const [requiresQc, setRequiresQc] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [previewZoom, setPreviewZoom] = useState<number>(1);
 
@@ -209,32 +207,14 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
 
     setIsSubmitting(true);
     try {
-      // 1. Upload actual file to storage pipeline
+      // Upload and index in one step: the file and its record are saved together or not at all
       const formData = new FormData();
       formData.append("file", activeStagedFile.file);
-      formData.append("workspaceId", workspaceId);
       formData.append("folderId", targetFolder.id);
-
-      const uploadRes = await uploadDmsDocumentFileAction(formData);
-      const storageKey =
-        uploadRes.storageUrl ||
-        `storage:ticket-attachments:dms/${workspaceId}/${targetFolder.id}/${activeStagedFile.file.name}`;
-      const checksum = uploadRes.checksumSha256 || `sha256-${Date.now()}`;
-
-      // 2. Save document record and index metadata
-      const res = await saveDocumentWithIndexingAction({
-        workspaceId,
-        folderId: targetFolder.id,
-        docTypeId: selectedDocTypeId,
-        title: docTitle.trim(),
-        originalFileName: activeStagedFile.file.name,
-        storageKey,
-        fileSizeBytes: activeStagedFile.file.size,
-        checksumSha256: checksum,
-        mimeType: activeStagedFile.file.type || "application/pdf",
-        fieldValues: customFieldValues,
-        requiresQc,
-      });
+      formData.append("docTypeId", selectedDocTypeId);
+      formData.append("title", docTitle.trim());
+      formData.append("fieldValues", JSON.stringify(customFieldValues));
+      const res = await addDmsDocumentAction(formData);
 
       if (res.success) {
         // If in batch mode, move to next file or complete
@@ -249,8 +229,11 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
           if (onDocumentIndexed) onDocumentIndexed();
           onClose();
         }
+        toast.success(
+          res.approvalStatus === "PENDING" ? "Document added. It is waiting for QC approval." : "Document added."
+        );
       } else {
-        toast.info(res.error || "Failed to index document");
+        toast.error(res.error || "Failed to index document");
       }
     } catch (err: any) {
       console.error("Indexing error:", err);
@@ -561,20 +544,14 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                 </div>
               )}
 
-              {/* Quality Control Approval Gate */}
-              <div className="pt-3 border-t border-border flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-semibold text-foreground">Require QC verification gate</div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Document will remain unapproved until verified by Quality Control Lead.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={requiresQc}
-                  onChange={(e) => setRequiresQc(e.target.checked)}
-                  className="h-4 w-4 rounded-sm border-border text-primary focus:ring-ring"
-                />
+              {/* Quality Control gate: set on the folder, not by the uploader */}
+              <div className="pt-3 border-t border-border">
+                <div className="text-xs font-semibold text-foreground">QC approval</div>
+                <p className="text-[11px] text-muted-foreground">
+                  {targetFolder?.approvalRequired
+                    ? "This folder needs QC approval. Until a QC approver signs off, only you and QC approvers can see the document."
+                    : "This folder does not need QC approval. The document is available as soon as it is added."}
+                </p>
               </div>
             </div>
           </div>
