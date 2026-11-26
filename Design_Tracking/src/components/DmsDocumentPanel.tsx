@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Clock, Download, History, Lock, Trash2, Unlock, Upload, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Download, History, Link2, Lock, Trash2, Unlock, Upload, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import {
   deleteDocumentAction,
@@ -14,6 +14,7 @@ import {
   type DmsVersionItem,
 } from "@/lib/actions/dms-core";
 import { DmsDocumentTags } from "./DmsMastersView";
+import { DmsDocumentShares, DmsShareDialog } from "./DmsShares";
 
 export function formatBytes(n: number) {
   if (!n) return "0 B";
@@ -58,6 +59,8 @@ export function DmsDocumentPanel({ documentId, onChanged }: Props) {
   const [changeNote, setChangeNote] = useState("");
   const [qcComment, setQcComment] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [sharesKey, setSharesKey] = useState(0);
 
   const load = useCallback(async () => {
     const res = await fetchDocumentDetailAction(documentId);
@@ -170,6 +173,16 @@ export function DmsDocumentPanel({ documentId, onChanged }: Props) {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold disabled:opacity-50"
             >
               <Unlock className="h-3.5 w-3.5" /> {doc.lockedByMe ? "Release check-out" : "Force release"}
+            </button>
+          )}
+          {r.email && doc.approvalStatus === "APPROVED" && (
+            <button
+              type="button"
+              onClick={() => setSharing(true)}
+              title="Send a secure link to someone outside the company"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold"
+            >
+              <Link2 className="h-3.5 w-3.5" /> Share
             </button>
           )}
           {r.delete && !lockedByOther && (
@@ -294,6 +307,14 @@ export function DmsDocumentPanel({ documentId, onChanged }: Props) {
         )}
       </div>
 
+      {sharing && (
+        <DmsShareDialog
+          documents={[{ id: doc.id, title: doc.title }]}
+          onClose={() => setSharing(false)}
+          onCreated={() => setSharesKey((k) => k + 1)}
+        />
+      )}
+
       {/* Tabs */}
       <div className="flex border-b border-border">
         {(["details", "versions", "activity"] as const).map((t) => (
@@ -310,6 +331,7 @@ export function DmsDocumentPanel({ documentId, onChanged }: Props) {
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {tab === "details" && <DmsDocumentTags documentId={doc.id} />}
+        {tab === "details" && <DmsDocumentShares documentId={doc.id} refreshKey={sharesKey} />}
         {tab === "details" && (
           <dl className="space-y-1.5">
             {[

@@ -1,34 +1,44 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
-import { cookies, headers } from "next/headers";
-import crypto from "crypto";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { escapeHtml, hmac, maskEmail, newOtp, newSessionToken, safeEqualHex, shareConfigured, verifySharePassword } from "@/lib/dms/share-crypto";
+import {
+  clientInfo,
+  endShareSession,
+  hasShareSession,
+  loadShareByToken,
+  loadShareFiles,
+  logShareAttempt,
+  mailFrame,
+  queueShareEmail,
+  shareState,
+  startShareSession,
+  watermarkLine,
+  type ShareRow,
+} from "@/lib/dms/share-session";
 
-const SERVER_SALT = process.env.SHARE_SECRET_SALT || "chandak-enterprise-dms-secure-salt-2026";
+/**
+ * Public share page (/share/[token]). No sign-in: the recipient proves who they are with
+ * their email address, a one-time code sent to it, and the link password when there is one.
+ * All checks run here with the service role; counters and lock-outs are atomic in
+ * fn_dms_share_register_failure (supabase/migrations/20261126140000_dms_sharing.sql).
+ */
 
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return createClient(cookieStore);
-}
-
-function hashToken(rawToken: string): string {
-  return crypto.createHash("sha256").update(`${rawToken}:${SERVER_SALT}`).digest("hex");
-}
-
-function hashOtp(otp: string, shareId: string): string {
-  return crypto.createHmac("sha256", SERVER_SALT).update(`${otp}:${shareId}`).digest("hex");
-}
+const OTP_MINUTES = 10;
+const OTP_MAX_PER_15_MIN = 5;
+const OTP_MIN_GAP_SECONDS = 30;
 
 export interface SharePublicMetadata {
   isValid: boolean;
   isExpired: boolean;
   isLocked: boolean;
   workspaceName?: string;
-  projectName?: string;
+  title?: string;
+  sharedByName?: string;
+  message?: string;
   recipientEmailMasked?: string;
-  allowView: boolean;
-  allowComment: boolean;
-  allowUploadRevision: boolean;
+  requiresPassword?: boolean;
+  hasSession?: boolean;
   allowDownload: boolean;
   expiresAt?: string;
   errorMessage?: string;
@@ -36,7 +46,7 @@ export interface SharePublicMetadata {
 
 export interface SharedItemDetail {
   id: string;
-  itemType: "DRAWING_REVISION" | "DOCUMENT";
+  itemType: "DOCUMENT";
   title: string;
   codeOrNumber: string;
   disciplineOrType: string;
@@ -44,446 +54,269 @@ export interface SharedItemDetail {
   fileName: string;
   fileSizeBytes: number;
   mimeType: string;
-  previewUrl?: string;
+  /** "image" previews carry a burned-in watermark; "pdf" is shown inline; "none" has no preview */
+  preview: "image" | "pdf" | "none";
+  viewUrl: string;
   downloadUrl?: string;
-  isGfc?: boolean;
-  commentsCount?: number;
 }
 
-/**
- * Step 1: Safe Landing Fetch (Safe Links Immune - Consumes 0 attempts, unlocks nothing)
- */
+export interface ShareContent {
+  items: SharedItemDetail[];
+  watermarkText: string;
+  recipientEmail: string;
+  permissions: { allowView: boolean; allowDownload: boolean; allowPrint: boolean };
+  downloadsLeft: number | null;
+  expiresAt: string;
+}
+
+const CLOSED: SharePublicMetadata = { isValid: false, isExpired: false, isLocked: false, allowDownload: false };
+
+function previewKind(mime: string, fileName: string): SharedItemDetail["preview"] {
+  const ext = fileName.split(".").pop()?.toLowerCase() || "";
+  if (mime.startsWith("image/") && mime !== "image/svg+xml") return "image";
+  if (["png", "jpg", "jpeg", "webp", "tif", "tiff", "gif"].includes(ext)) return "image";
+  if (mime === "application/pdf" || ext === "pdf") return "pdf";
+  return "none";
+}
+
+async function sharerName(id: string | null): Promise<string> {
+  if (!id) return "Chandak Group";
+  const { data } = await supabaseAdmin.from("user_master").select("full_name, email").eq("id", id).maybeSingle();
+  return data?.full_name || data?.email || "Chandak Group";
+}
+
+async function contentFor(rawToken: string, share: ShareRow): Promise<ShareContent> {
+  const files = await loadShareFiles(share.id);
+  const { ip } = await clientInfo();
+  const base = `/api/share/${encodeURIComponent(rawToken)}/file`;
+  return {
+    items: files.map((f) => ({
+      id: f.itemId,
+      itemType: "DOCUMENT",
+      title: f.title,
+      codeOrNumber: f.docTypeCode,
+      disciplineOrType: f.docTypeName,
+      versionOrRev: `v${f.versionNo}`,
+      fileName: f.fileName,
+      fileSizeBytes: f.fileSizeBytes,
+      mimeType: f.mimeType,
+      preview: previewKind(f.mimeType, f.fileName),
+      viewUrl: `${base}/${f.itemId}`,
+      downloadUrl: share.allow_download ? `${base}/${f.itemId}?download=1` : undefined,
+    })),
+    watermarkText: watermarkLine(share.recipient_email, ip),
+    recipientEmail: share.recipient_email,
+    permissions: { allowView: true, allowDownload: !!share.allow_download, allowPrint: !!share.allow_print },
+    downloadsLeft: share.allow_download && share.max_downloads ? Math.max(share.max_downloads - (share.download_count || 0), 0) : null,
+    expiresAt: share.expires_at,
+  };
+}
+
+/** Wrong address entered: count it, and when that locks the link tell the person who shared it. */
+async function wrongEmail(share: ShareRow, entered: string): Promise<string> {
+  await logShareAttempt(share.id, "EMAIL_MISMATCH", false, entered);
+  const { data } = await supabaseAdmin.rpc("fn_dms_share_register_failure", { p_share: share.id, p_kind: "EMAIL" });
+  const row = Array.isArray(data) ? data[0] : data;
+  if (row?.locked) {
+    if (share.created_by) {
+      const { data: u } = await supabaseAdmin.from("user_master").select("email").eq("id", share.created_by).maybeSingle();
+      if (u?.email) {
+        const { ip } = await clientInfo();
+        await queueShareEmail(
+          u.email,
+          "A link you shared was locked",
+          mailFrame(
+            "A link you shared was locked",
+            `<p>Someone opened the link you shared with <b>${escapeHtml(share.recipient_email)}</b>${share.title ? ` (“${escapeHtml(share.title)}”)` : ""} and entered a different email address: <b>${escapeHtml(entered)}</b>, from IP ${escapeHtml(ip)}.</p>
+<p>The link and its password have been switched off. If this was a mistake, create a new share from the document.</p>`
+          )
+        ).catch(() => {});
+      }
+    }
+    return "That email address does not match. For safety this link is now locked and the sender has been told.";
+  }
+  return "That email address does not match the person this was shared with. Another wrong address will lock the link.";
+}
+
+async function registerFailure(share: ShareRow, kind: "OTP" | "PASSWORD"): Promise<string> {
+  const { data } = await supabaseAdmin.rpc("fn_dms_share_register_failure", { p_share: share.id, p_kind: kind });
+  const row = Array.isArray(data) ? data[0] : data;
+  if (row?.locked) return "Too many wrong attempts. This link is now locked. Ask the sender for a new one.";
+  return kind === "PASSWORD" ? "The password is not right." : "That code is wrong or has expired.";
+}
+
 export async function fetchSharePublicMetadataAction(rawToken: string): Promise<SharePublicMetadata> {
   try {
-    const supabase = await getSupabase();
-    const tokenHash = hashToken(rawToken);
+    if (!shareConfigured()) return { ...CLOSED, errorMessage: "Document sharing is not available right now." };
+    const share = await loadShareByToken(rawToken);
+    const state = shareState(share);
+    if (state === "missing") return { ...CLOSED, errorMessage: "This link is not valid." };
+    if (state === "revoked") return { ...CLOSED, isLocked: true, errorMessage: "This link has been switched off by the sender or locked after failed attempts." };
+    if (state === "expired") return { ...CLOSED, isExpired: true, errorMessage: "This link has expired." };
 
-    const { data: share, error } = await supabase
-      .from("dms_shares")
-      .select(`
-        id,
-        recipient_email,
-        failed_otp_attempts,
-        failed_password_attempts,
-        expires_at,
-        is_revoked,
-        revoked_reason,
-        allow_view,
-        allow_comment,
-        allow_upload_revision,
-        allow_download,
-        dms_workspaces (
-          name
-        )
-      `)
-      .eq("token_hash", tokenHash)
-      .single();
-
-    if (error || !share) {
-      return {
-        isValid: false,
-        isExpired: false,
-        isLocked: false,
-        allowView: false,
-        allowComment: false,
-        allowUploadRevision: false,
-        allowDownload: false,
-        errorMessage: "Secure link is invalid or has expired.",
-      };
-    }
-
-    const isExpired = new Date(share.expires_at) < new Date();
-    const isLocked =
-      share.is_revoked ||
-      (share.failed_otp_attempts || 0) >= 5 ||
-      (share.failed_password_attempts || 0) >= 5;
-
-    if (isLocked) {
-      return {
-        isValid: false,
-        isExpired,
-        isLocked: true,
-        allowView: false,
-        allowComment: false,
-        allowUploadRevision: false,
-        allowDownload: false,
-        errorMessage: "This link has been locked due to excessive failed attempts or administrative revocation.",
-      };
-    }
-
-    if (isExpired) {
-      return {
-        isValid: false,
-        isExpired: true,
-        isLocked: false,
-        allowView: false,
-        allowComment: false,
-        allowUploadRevision: false,
-        allowDownload: false,
-        errorMessage: "This secure link has expired.",
-      };
-    }
-
-    // Mask recipient email e.g. a***e@consultant.com
-    const emailParts = share.recipient_email.split("@");
-    const maskedUser =
-      emailParts[0].length > 2
-        ? `${emailParts[0][0]}***${emailParts[0][emailParts[0].length - 1]}`
-        : `${emailParts[0][0]}*`;
-    const maskedEmail = `${maskedUser}@${emailParts[1] || "domain.com"}`;
-
+    const s = share!;
+    const { data: ws } = await supabaseAdmin.from("dms_workspaces").select("name").eq("id", s.workspace_id).maybeSingle();
     return {
       isValid: true,
       isExpired: false,
       isLocked: false,
-      workspaceName: (share.dms_workspaces as any)?.name || "Chandak Group Corporate",
-      recipientEmailMasked: maskedEmail,
-      allowView: !!share.allow_view,
-      allowComment: !!share.allow_comment,
-      allowUploadRevision: !!share.allow_upload_revision,
-      allowDownload: !!share.allow_download,
-      expiresAt: share.expires_at,
+      workspaceName: ws?.name || "Chandak Group",
+      title: s.title || undefined,
+      sharedByName: await sharerName(s.created_by),
+      message: s.message || undefined,
+      recipientEmailMasked: maskEmail(s.recipient_email),
+      requiresPassword: !!s.password_hash,
+      hasSession: await hasShareSession(rawToken, s),
+      allowDownload: !!s.allow_download,
+      expiresAt: s.expires_at,
     };
-  } catch (err: any) {
-    console.error("[fetchSharePublicMetadataAction] Error:", err);
-    return {
-      isValid: false,
-      isExpired: false,
-      isLocked: false,
-      allowView: false,
-      allowComment: false,
-      allowUploadRevision: false,
-      allowDownload: false,
-      errorMessage: "Could not establish secure connection.",
-    };
+  } catch (err) {
+    console.error("[share] metadata failed", err);
+    return { ...CLOSED, errorMessage: "Could not open this link. Try again in a moment." };
   }
 }
 
-/**
- * Step 2: Request 6-digit Out-of-Band OTP
- */
-export async function requestShareOtpAction(params: {
-  rawToken: string;
-  email: string;
-}): Promise<{ success: boolean; error?: string }> {
+export async function requestShareOtpAction(params: { rawToken: string; email: string }): Promise<{ success: boolean; error?: string; locked?: boolean }> {
   try {
-    const supabase = await getSupabase();
-    const tokenHash = hashToken(params.rawToken);
-    const normalizedEmail = params.email.toLowerCase().trim();
-
-    const { data: share, error } = await supabase
-      .from("dms_shares")
-      .select("id, recipient_email, is_revoked, expires_at, failed_otp_attempts")
-      .eq("token_hash", tokenHash)
-      .single();
-
-    if (error || !share) {
-      return { success: false, error: "Invalid link or link has expired." };
+    const share = await loadShareByToken(params.rawToken);
+    if (shareState(share) !== "ok") return { success: false, locked: true, error: "This link is no longer active." };
+    const s = share!;
+    const email = String(params.email || "").toLowerCase().trim().slice(0, 255);
+    if (!email) return { success: false, error: "Enter your email address." };
+    if (email !== s.recipient_email) {
+      const error = await wrongEmail(s, email);
+      return { success: false, error, locked: error.includes("now locked") };
     }
 
-    if (share.is_revoked || (share.failed_otp_attempts || 0) >= 5) {
-      return { success: false, error: "Link is locked." };
+    const since = new Date(Date.now() - 15 * 60_000).toISOString();
+    const { data: recent } = await supabaseAdmin
+      .from("dms_share_otps")
+      .select("created_at")
+      .eq("share_id", s.id)
+      .gte("created_at", since)
+      .order("created_at", { ascending: false });
+    if ((recent?.length || 0) >= OTP_MAX_PER_15_MIN) return { success: false, error: "Too many codes requested. Wait 15 minutes and try again." };
+    if (recent?.[0] && Date.now() - new Date(recent[0].created_at).getTime() < OTP_MIN_GAP_SECONDS * 1000) {
+      return { success: false, error: "A code was just sent. Wait half a minute before asking for another." };
     }
 
-    if (share.recipient_email.toLowerCase().trim() !== normalizedEmail) {
-      return { success: false, error: "Entered email does not match authorized recipient." };
-    }
-
-    // Generate random 6-digit OTP
-    const rawOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpHashValue = hashOtp(rawOtp, share.id);
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
-
-    // Invalidate old OTPs
-    await supabase.from("dms_share_otps").update({ is_used: true }).eq("share_id", share.id);
-
-    // Insert new OTP record
-    await supabase.from("dms_share_otps").insert({
-      share_id: share.id,
-      recipient_email: normalizedEmail,
-      otp_hash: otpHashValue,
-      expires_at: expiresAt,
+    const otp = newOtp();
+    await supabaseAdmin.from("dms_share_otps").update({ is_used: true }).eq("share_id", s.id).eq("is_used", false);
+    const { error } = await supabaseAdmin.from("dms_share_otps").insert({
+      share_id: s.id,
+      recipient_email: email,
+      otp_hash: hmac("otp", `${s.id}:${otp}`),
+      expires_at: new Date(Date.now() + OTP_MINUTES * 60_000).toISOString(),
       is_used: false,
+      attempt_count: 0,
     });
+    if (error) throw error;
 
-    // Enqueue email in queue
-    await supabase.from("dmac_email_queue").insert({
-      recipient_email: normalizedEmail,
-      subject: "Your Chandak Group Secure Document Access Code",
-      html_body: `
-        <div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
-          <h2>Chandak Group • Secure Document Portal</h2>
-          <p>You requested access to shared project documents.</p>
-          <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px; padding: 12px 24px; background: #f1f5f9; border-radius: 8px; display: inline-block; margin: 16px 0;">
-            ${rawOtp}
-          </div>
-          <p style="font-size: 12px; color: #64748b;">This one-time passcode expires in 10 minutes. If you did not initiate this request, please contact Chandak Group IT security.</p>
-        </div>
-      `,
-    });
-
+    await queueShareEmail(
+      email,
+      `${otp} is your Chandak Group document code`,
+      mailFrame(
+        "Your one-time code",
+        `<p>Use this code to open the documents shared with you:</p>
+<p style="font-size:28px;font-weight:bold;letter-spacing:6px;background:#f1f5f9;border-radius:8px;display:inline-block;padding:10px 20px">${otp}</p>
+<p style="font-size:12px;color:#64748b">It works once and expires in ${OTP_MINUTES} minutes. Chandak Group will never ask you for this code.</p>`
+      )
+    );
+    await logShareAttempt(s.id, "OTP_SENT", true, email);
     return { success: true };
-  } catch (err: any) {
-    console.error("[requestShareOtpAction] Error:", err);
-    return { success: false, error: "Failed to dispatch one-time passcode." };
+  } catch (err) {
+    console.error("[share] otp failed", err);
+    return { success: false, error: "Could not send the code. Try again in a moment." };
   }
 }
 
-/**
- * Step 3: Verify Dual Challenge (Password + OTP) & Bind Session Token
- */
 export async function verifyShareAccessAction(params: {
   rawToken: string;
   email: string;
   password?: string;
   otp: string;
-  deviceFingerprint: string;
-}): Promise<{
-  success: boolean;
-  sessionToken?: string;
-  items?: SharedItemDetail[];
-  watermarkText?: string;
-  permissions?: {
-    allowView: boolean;
-    allowComment: boolean;
-    allowUploadRevision: boolean;
-    allowDownload: boolean;
-  };
-  error?: string;
-}> {
+}): Promise<{ success: boolean; error?: string; locked?: boolean; content?: ShareContent }> {
   try {
-    const supabase = await getSupabase();
-    const tokenHash = hashToken(params.rawToken);
-    const normalizedEmail = params.email.toLowerCase().trim();
-    const headerList = await headers();
-    const clientIp = headerList.get("x-forwarded-for") || headerList.get("x-real-ip") || "127.0.0.1";
-
-    const { data: share, error } = await supabase
-      .from("dms_shares")
-      .select(`
-        id,
-        recipient_email,
-        password_hash,
-        failed_otp_attempts,
-        failed_password_attempts,
-        expires_at,
-        is_revoked,
-        allow_view,
-        allow_comment,
-        allow_upload_revision,
-        allow_download
-      `)
-      .eq("token_hash", tokenHash)
-      .single();
-
-    if (error || !share) {
-      return { success: false, error: "Link is invalid or expired." };
+    const share = await loadShareByToken(params.rawToken);
+    if (shareState(share) !== "ok") return { success: false, locked: true, error: "This link is no longer active." };
+    const s = share!;
+    const email = String(params.email || "").toLowerCase().trim().slice(0, 255);
+    if (email !== s.recipient_email) {
+      const error = await wrongEmail(s, email);
+      return { success: false, error, locked: error.includes("now locked") };
     }
 
-    // 1. Lockout Gate
-    if (share.is_revoked || (share.failed_otp_attempts || 0) >= 5 || (share.failed_password_attempts || 0) >= 5) {
-      return { success: false, error: "Access has been locked due to excessive failed attempts." };
+    if (s.password_hash && !verifySharePassword(String(params.password || ""), s.password_hash)) {
+      await logShareAttempt(s.id, "WRONG_PASSWORD", false, email);
+      const error = await registerFailure(s, "PASSWORD");
+      return { success: false, error, locked: error.includes("now locked") };
     }
 
-    // 2. Email Match
-    if (share.recipient_email.toLowerCase().trim() !== normalizedEmail) {
-      await logAccessAttempt(share.id, "EMAIL_MISMATCH", normalizedEmail, clientIp, false);
-      return { success: false, error: "Email does not match authorized recipient." };
-    }
-
-    // 3. Password Verification (If link is password-protected)
-    if (share.password_hash) {
-      const inputPassHash = crypto.createHash("sha256").update(`${params.password || ""}:${SERVER_SALT}`).digest("hex");
-      if (inputPassHash !== share.password_hash) {
-        const newFailedCount = (share.failed_password_attempts || 0) + 1;
-        await supabase
-          .from("dms_shares")
-          .update({
-            failed_password_attempts: newFailedCount,
-            is_revoked: newFailedCount >= 5,
-            revoked_reason: newFailedCount >= 5 ? "EXCEEDED_MAX_FAILED_PASSWORD_ATTEMPTS" : null,
-          })
-          .eq("id", share.id);
-
-        await logAccessAttempt(share.id, "WRONG_PASSWORD", normalizedEmail, clientIp, false);
-
-        if (newFailedCount >= 5) {
-          return { success: false, error: "Account locked: 5 invalid password attempts exceeded." };
-        }
-        return { success: false, error: `Invalid password. ${5 - newFailedCount} attempts remaining.` };
-      }
-    }
-
-    // 4. OTP Verification
-    const inputOtpHash = hashOtp(params.otp.trim(), share.id);
-    const { data: otpRecord } = await supabase
+    const { data: otpRow } = await supabaseAdmin
       .from("dms_share_otps")
-      .select("id, expires_at, is_used")
-      .eq("share_id", share.id)
-      .eq("otp_hash", inputOtpHash)
+      .select("id, otp_hash, attempt_count")
+      .eq("share_id", s.id)
       .eq("is_used", false)
       .gt("expires_at", new Date().toISOString())
-      .single();
-
-    if (!otpRecord) {
-      const newOtpFailed = (share.failed_otp_attempts || 0) + 1;
-      await supabase
-        .from("dms_shares")
-        .update({
-          failed_otp_attempts: newOtpFailed,
-          is_revoked: newOtpFailed >= 5,
-          revoked_reason: newOtpFailed >= 5 ? "EXCEEDED_MAX_FAILED_OTP_ATTEMPTS" : null,
-        })
-        .eq("id", share.id);
-
-      await logAccessAttempt(share.id, "WRONG_OTP", normalizedEmail, clientIp, false);
-
-      if (newOtpFailed >= 5) {
-        return { success: false, error: "Account locked: 5 invalid OTP attempts exceeded." };
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const code = String(params.otp || "").replace(/\D/g, "").slice(0, 6);
+    if (!otpRow || code.length !== 6 || !safeEqualHex(otpRow.otp_hash, hmac("otp", `${s.id}:${code}`))) {
+      if (otpRow) {
+        // A code survives three wrong tries, then a new one is needed
+        const tries = (otpRow.attempt_count || 0) + 1;
+        await supabaseAdmin.from("dms_share_otps").update({ attempt_count: tries, is_used: tries >= 3 }).eq("id", otpRow.id);
       }
-      return { success: false, error: `Invalid or expired OTP. ${5 - newOtpFailed} attempts remaining.` };
+      await logShareAttempt(s.id, "WRONG_OTP", false, email);
+      const error = await registerFailure(s, "OTP");
+      return { success: false, error, locked: error.includes("now locked") };
     }
 
-    // Mark OTP used
-    await supabase.from("dms_share_otps").update({ is_used: true }).eq("id", otpRecord.id);
+    // Use the code once; a parallel request that loses this race gets nothing
+    const { data: used } = await supabaseAdmin
+      .from("dms_share_otps")
+      .update({ is_used: true })
+      .eq("id", otpRow.id)
+      .eq("is_used", false)
+      .select("id");
+    if (!used?.length) return { success: false, error: "That code has already been used. Ask for a new one." };
 
-    // Reset failed attempt counters on successful login
-    await supabase
-      .from("dms_shares")
-      .update({ failed_otp_attempts: 0, failed_password_attempts: 0 })
-      .eq("id", share.id);
-
-    // 5. Generate Session Token & Bind Device
-    const rawSessionToken = crypto.randomBytes(32).toString("hex");
-    const sessionTokenHash = crypto.createHash("sha256").update(rawSessionToken).digest("hex");
-    const fpHash = crypto.createHash("sha256").update(params.deviceFingerprint || "unknown").digest("hex");
-    const sessionExpiresAt = new Date(Date.now() + 24 * 3600 * 1000).toISOString(); // 24 hours
-
-    await supabase.from("dms_share_devices").insert({
-      share_id: share.id,
-      device_fingerprint_hash: fpHash,
-      session_token_hash: sessionTokenHash,
-      expires_at: sessionExpiresAt,
+    await supabaseAdmin.from("dms_shares").update({ failed_otp_attempts: 0, failed_password_attempts: 0, last_access_at: new Date().toISOString() }).eq("id", s.id);
+    await startShareSession(params.rawToken, s, newSessionToken());
+    await logShareAttempt(s.id, "SUCCESSFUL_LOGIN", true, email);
+    await supabaseAdmin.rpc("fn_dms_audit", {
+      p_actor: null,
+      p_action: "SHARE_OPENED",
+      p_entity_type: "SHARE",
+      p_entity_id: s.id,
+      p_details: { recipient: email, ip: (await clientInfo()).ip },
     });
-
-    await logAccessAttempt(share.id, "SUCCESSFUL_LOGIN", normalizedEmail, clientIp, true);
-
-    // 6. Fetch Shared Items
-    const { data: shareItems } = await supabase
-      .from("dms_share_items")
-      .select(`
-        id,
-        document_id,
-        drawing_revision_id,
-        dms_documents (
-          id,
-          title,
-          original_file_name,
-          current_version_no,
-          dms_doc_types (code, name),
-          dms_document_versions (
-            id,
-            version_no,
-            storage_key,
-            file_name,
-            file_size_bytes,
-            mime_type
-          )
-        ),
-        dmac_drawing_revisions (
-          id,
-          rev_no,
-          is_gfc,
-          dmac_drawings (
-            id,
-            drawing_number,
-            title,
-            dmac_departments (code, name)
-          ),
-          dmac_revision_files (
-            id,
-            file_role,
-            storage_key,
-            file_name,
-            file_size_bytes
-          )
-        )
-      `)
-      .eq("share_id", share.id);
-
-    const items: SharedItemDetail[] = (shareItems || []).map((si: any) => {
-      if (si.drawing_revision_id && si.dmac_drawing_revisions) {
-        const rev = si.dmac_drawing_revisions;
-        const drawing = rev.dmac_drawings;
-        const primFile = (rev.dmac_revision_files || [])[0] || {};
-        return {
-          id: rev.id,
-          itemType: "DRAWING_REVISION",
-          title: drawing?.title || "Drawing Sheet",
-          codeOrNumber: drawing?.drawing_number || "DWG-001",
-          disciplineOrType: drawing?.dmac_departments?.name || "Architecture",
-          versionOrRev: `Rev R${rev.rev_no}`,
-          fileName: primFile.file_name || `${drawing?.drawing_number}.pdf`,
-          fileSizeBytes: primFile.file_size_bytes || 1024 * 1024,
-          mimeType: "application/pdf",
-          isGfc: !!rev.is_gfc,
-        };
-      } else if (si.document_id && si.dms_documents) {
-        const doc = si.dms_documents;
-        const ver = (doc.dms_document_versions || [])[0] || {};
-        return {
-          id: doc.id,
-          itemType: "DOCUMENT",
-          title: doc.title,
-          codeOrNumber: doc.dms_doc_types?.code || "DOC",
-          disciplineOrType: doc.dms_doc_types?.name || "Document",
-          versionOrRev: `v${doc.current_version_no}`,
-          fileName: doc.original_file_name,
-          fileSizeBytes: ver.file_size_bytes || 512 * 1024,
-          mimeType: ver.mime_type || "application/pdf",
-        };
-      }
-      return null as any;
-    }).filter(Boolean);
-
-    const timestampIST = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
-    const watermarkText = `${normalizedEmail} • IP: ${clientIp} • ${timestampIST} • CONFIDENTIAL CHANDAK GROUP`;
-
-    return {
-      success: true,
-      sessionToken: rawSessionToken,
-      items,
-      watermarkText,
-      permissions: {
-        allowView: !!share.allow_view,
-        allowComment: !!share.allow_comment,
-        allowUploadRevision: !!share.allow_upload_revision,
-        allowDownload: !!share.allow_download,
-      },
-    };
-  } catch (err: any) {
-    console.error("[verifyShareAccessAction] Error:", err);
-    return { success: false, error: "Authentication failed. Please try again." };
+    return { success: true, content: await contentFor(params.rawToken, s) };
+  } catch (err) {
+    console.error("[share] verify failed", err);
+    return { success: false, error: "Could not check your details. Try again in a moment." };
   }
 }
 
-async function logAccessAttempt(
-  shareId: string,
-  attemptType: string,
-  email: string,
-  ip: string,
-  isSuccessful: boolean
-) {
+/** Reopen the documents in a browser that already passed the checks (page reload). */
+export async function fetchShareContentAction(rawToken: string): Promise<{ success: boolean; error?: string; content?: ShareContent }> {
   try {
-    const supabase = await getSupabase();
-    await supabase.from("dms_share_access_attempts").insert({
-      share_id: shareId,
-      attempt_type: attemptType,
-      email_entered: email,
-      ip_address: ip,
-      is_successful: isSuccessful,
-    });
+    const share = await loadShareByToken(rawToken);
+    if (shareState(share) !== "ok") return { success: false, error: "This link is no longer active." };
+    if (!(await hasShareSession(rawToken, share!))) return { success: false, error: "Please verify your email again." };
+    return { success: true, content: await contentFor(rawToken, share!) };
   } catch (err) {
-    console.warn("Could not log share access attempt:", err);
+    console.error("[share] content failed", err);
+    return { success: false, error: "Could not load the documents." };
   }
+}
+
+export async function endShareSessionAction(rawToken: string): Promise<{ success: boolean }> {
+  try {
+    await endShareSession(rawToken, await loadShareByToken(rawToken));
+  } catch {
+    /* signing out never fails visibly */
+  }
+  return { success: true };
 }

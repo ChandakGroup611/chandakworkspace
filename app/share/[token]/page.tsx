@@ -1,497 +1,317 @@
-// TODO(ui-v2): migrate to tokens
 "use client";
 
-import { formatDate } from "@/components/ui/data";
-import React, { useState, useEffect, use } from "react";
+import React, { use, useEffect, useState } from "react";
+import { AlertCircle, ArrowRight, Clock, Download, FileText, Info, Key, Lock, LogOut, Mail, ShieldAlert, ShieldCheck } from "lucide-react";
 import {
-  ShieldCheck,
-  ShieldAlert,
-  Lock,
-  Unlock,
-  Key,
-  Mail,
-  FileText,
-  Download,
-  Eye,
-  CheckCircle2,
-  AlertCircle,
-  AlertTriangle,
-  Clock,
-  Send,
-  Layers,
-  Sparkles,
-  ArrowRight,
-  Info,
-  Building2,
-  RotateCcw
-} from "lucide-react";
-import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
-import { AppButton } from "@/components/ui/AppButton";
-import {
+  endShareSessionAction,
+  fetchShareContentAction,
   fetchSharePublicMetadataAction,
   requestShareOtpAction,
   verifyShareAccessAction,
-  SharePublicMetadata,
-  SharedItemDetail
+  type ShareContent,
+  type SharePublicMetadata,
 } from "@/lib/actions/dms-share-portal";
 
-interface SharePageProps {
-  params: Promise<{ token: string }>;
-}
+/**
+ * Public page for documents shared outside the company. Opening the link costs nothing (mail
+ * scanners can fetch it safely); the recipient then enters their email, gets a one-time code
+ * there, and enters it (plus the link password, when there is one). All checks run on the server.
+ */
 
-export default function SecureSharePortalPage({ params }: SharePageProps) {
-  const resolvedParams = use(params);
-  const token = resolvedParams.token;
+const fmtDate = (iso?: string) =>
+  iso ? new Date(iso).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }) : "";
+const fmtSize = (n: number) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
-  // Metadata State (Safe Links immune)
+export default function SharePortalPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = use(params);
+
   const [meta, setMeta] = useState<SharePublicMetadata | null>(null);
-  const [isLoadingMeta, setIsLoadingMeta] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
+  const [step, setStep] = useState<"EMAIL" | "CODE" | "OPEN">("EMAIL");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [content, setContent] = useState<ShareContent | null>(null);
+  const [selectedId, setSelectedId] = useState("");
 
-  // Challenge State
-  const [step, setStep] = useState<"EMAIL" | "CHALLENGE" | "UNLOCKED">("EMAIL");
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [otp, setOtp] = useState<string>("");
-  const [isSendingOtp, setIsSendingOtp] = useState<boolean>(false);
-  const [isVerifying, setIsVerifying] = useState<boolean>(false);
-  const [challengeError, setChallengeError] = useState<string>("");
+  const lock = (message: string) => setMeta((m) => ({ ...(m || { allowDownload: false }), isValid: false, isExpired: false, isLocked: true, errorMessage: message }));
 
-  // Unlocked State
-  const [sessionToken, setSessionToken] = useState<string>("");
-  const [sharedItems, setSharedItems] = useState<SharedItemDetail[]>([]);
-  const [selectedItemId, setSelectedItemId] = useState<string>("");
-  const [watermarkText, setWatermarkText] = useState<string>("");
-  const [permissions, setPermissions] = useState<{
-    allowView: boolean;
-    allowComment: boolean;
-    allowUploadRevision: boolean;
-    allowDownload: boolean;
-  }>({
-    allowView: true,
-    allowComment: false,
-    allowUploadRevision: false,
-    allowDownload: false,
-  });
-
-  // Step 1: Fetch safe public metadata
   useEffect(() => {
-    const loadMetadata = async () => {
-      setIsLoadingMeta(true);
-      try {
-        const data = await fetchSharePublicMetadataAction(token);
-        setMeta(data);
-      } catch (err) {
-        console.error("Failed to load share metadata:", err);
-      } finally {
-        setIsLoadingMeta(false);
+    (async () => {
+      setLoading(true);
+      const m = await fetchSharePublicMetadataAction(token);
+      setMeta(m);
+      if (m.isValid && m.hasSession) {
+        const r = await fetchShareContentAction(token);
+        if (r.success && r.content) {
+          setContent(r.content);
+          setSelectedId(r.content.items[0]?.id || "");
+          setStep("OPEN");
+        }
       }
-    };
-    loadMetadata();
+      setLoading(false);
+    })();
   }, [token]);
 
-  // Request OTP
-  const handleRequestOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const requestCode = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!email.trim()) return;
-
-    setIsSendingOtp(true);
-    setChallengeError("");
-    try {
-      const res = await requestShareOtpAction({
-        rawToken: token,
-        email: email.trim(),
-      });
-      if (res.success) {
-        setStep("CHALLENGE");
-      } else {
-        setChallengeError(res.error || "Could not send verification code.");
-      }
-    } catch (err: any) {
-      setChallengeError(err.message || "Failed to dispatch verification code.");
-    } finally {
-      setIsSendingOtp(false);
-    }
+    setBusy(true);
+    setError("");
+    const r = await requestShareOtpAction({ rawToken: token, email });
+    setBusy(false);
+    if (r.success) setStep("CODE");
+    else if (r.locked) lock(r.error || "This link is locked.");
+    else setError(r.error || "Could not send the code.");
   };
 
-  // Verify Credentials & Unlock
-  const handleVerifyChallenge = async (e: React.FormEvent) => {
+  const verify = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp.trim()) return;
-
-    setIsVerifying(true);
-    setChallengeError("");
-    try {
-      const res = await verifyShareAccessAction({
-        rawToken: token,
-        email: email.trim(),
-        password: password.trim(),
-        otp: otp.trim(),
-        deviceFingerprint: typeof navigator !== "undefined" ? navigator.userAgent : "browser",
-      });
-
-      if (res.success && res.sessionToken) {
-        setSessionToken(res.sessionToken);
-        setSharedItems(res.items || []);
-        if (res.items && res.items.length > 0) {
-          setSelectedItemId(res.items[0].id);
-        }
-        if (res.watermarkText) setWatermarkText(res.watermarkText);
-        if (res.permissions) setPermissions(res.permissions);
-        setStep("UNLOCKED");
-      } else {
-        setChallengeError(res.error || "Verification failed.");
-      }
-    } catch (err: any) {
-      setChallengeError(err.message || "Authentication error.");
-    } finally {
-      setIsVerifying(false);
-    }
+    setBusy(true);
+    setError("");
+    const r = await verifyShareAccessAction({ rawToken: token, email, password, otp });
+    setBusy(false);
+    if (r.success && r.content) {
+      setContent(r.content);
+      setSelectedId(r.content.items[0]?.id || "");
+      setStep("OPEN");
+    } else if (r.locked) lock(r.error || "This link is locked.");
+    else setError(r.error || "Could not verify.");
   };
 
-  const selectedItem = sharedItems.find((item) => item.id === selectedItemId) || sharedItems[0];
-  const hasDwgFile = sharedItems.some((i) => i.fileName.toLowerCase().endsWith(".dwg"));
+  const signOut = async () => {
+    await endShareSessionAction(token);
+    setContent(null);
+    setOtp("");
+    setPassword("");
+    setStep("EMAIL");
+  };
+
+  const selected = content?.items.find((i) => i.id === selectedId) || content?.items[0];
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col antialiased">
-      {/* 1. TOP SECURE BANNER */}
-      <header className="h-14 border-b border-border bg-surface px-6 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-accent-soft border border-border-active flex items-center justify-center text-primary font-semibold">
-            C
-          </div>
-          <div>
-            <span className="text-xs font-semibold text-foreground block">
-              CHANDAK GROUP • SECURE DOCUMENT PORTAL
-            </span>
-            <span className="text-[11px] text-muted-foreground font-mono">
-              Protected by 6-layer RBAC & end-to-end watermarking
+      <header className="h-14 border-b border-border bg-surface px-4 sm:px-6 flex items-center justify-between shrink-0 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="h-8 w-8 rounded-lg bg-accent-soft border border-border-active flex items-center justify-center text-primary font-semibold shrink-0">C</div>
+          <div className="min-w-0">
+            <span className="text-xs font-semibold block truncate">Chandak Group · Shared documents</span>
+            <span className="text-[11px] text-muted-foreground block truncate">
+              {step === "OPEN" && content ? `Signed in as ${content.recipientEmail}` : "Verification required"}
             </span>
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          {step === "UNLOCKED" ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-success-soft text-success-text border border-success-border">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>Session authenticated</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-warning-soft text-warning-text border border-warning-border">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Identity verification required</span>
-            </span>
-          )}
-        </div>
+        {step === "OPEN" && (
+          <button onClick={signOut} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-border hover:bg-sunken">
+            <LogOut className="h-3.5 w-3.5" /> Sign out
+          </button>
+        )}
       </header>
 
-      {/* 2. BODY VIEWPORT */}
       <main className="flex-1 flex items-center justify-center p-4">
-        {isLoadingMeta ? (
-          <div className="text-center py-12 text-muted-foreground space-y-3 animate-pulse">
-            <ShieldCheck className="h-10 w-10 mx-auto text-primary stroke-1" />
-            <p className="text-xs font-semibold">Establishing encrypted handshake…</p>
+        {loading ? (
+          <div className="text-center text-muted-foreground space-y-2">
+            <ShieldCheck className="h-9 w-9 mx-auto text-primary stroke-1 animate-pulse" />
+            <p className="text-xs">Checking the link…</p>
           </div>
         ) : !meta?.isValid ? (
-          /* INVALID / EXPIRED / LOCKED CARD */
           <div className="max-w-md w-full bg-surface border border-border rounded-lg p-6 shadow-lg text-center space-y-4">
             <div className="h-12 w-12 rounded-full bg-danger-soft text-danger-text border border-danger-border flex items-center justify-center mx-auto">
               {meta?.isLocked ? <ShieldAlert className="h-6 w-6" /> : <Clock className="h-6 w-6" />}
             </div>
             <div>
-              <h3 className="text-base font-semibold text-foreground">
-                {meta?.isLocked ? "Access Locked" : "Link Expired or Invalid"}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                {meta?.errorMessage || "This secure document link is no longer accessible."}
-              </p>
+              <h1 className="text-base font-semibold">{meta?.isLocked ? "This link is locked" : meta?.isExpired ? "This link has expired" : "This link does not work"}</h1>
+              <p className="text-xs text-muted-foreground mt-1.5">{meta?.errorMessage}</p>
             </div>
-            <p className="text-[11px] text-muted-foreground pt-2 border-t border-border">
-              Contact the issuing Chandak Group Engineering or Design Lead to request a revised access invitation.
-            </p>
+            <p className="text-[11px] text-muted-foreground pt-2 border-t border-border">Ask the person at Chandak Group who sent it for a new link.</p>
           </div>
-        ) : step === "EMAIL" ? (
-          /* STEP 1: EMAIL IDENTIFICATION CARD */
+        ) : step !== "OPEN" ? (
           <div className="max-w-md w-full bg-surface border border-border rounded-lg p-6 shadow-lg space-y-5">
             <div className="text-center space-y-1.5">
               <div className="h-11 w-11 rounded-full bg-accent-soft text-primary border border-border-active flex items-center justify-center mx-auto">
-                <Lock className="h-5 w-5" />
+                {step === "EMAIL" ? <Lock className="h-5 w-5" /> : <Key className="h-5 w-5" />}
               </div>
-              <h2 className="text-base font-semibold text-foreground">Authorised consultant access</h2>
+              <h1 className="text-base font-semibold">{meta.title || "Documents shared with you"}</h1>
               <p className="text-xs text-muted-foreground">
-                Documents for <strong className="font-semibold text-foreground">{meta.workspaceName}</strong>
+                From <strong className="text-foreground">{meta.sharedByName}</strong> · available until {fmtDate(meta.expiresAt)}
               </p>
             </div>
 
-            {meta.recipientEmailMasked && (
-              <div className="p-3 bg-surface border border-border rounded-lg text-xs text-muted-foreground text-center">
-                This document dossier was shared with:{" "}
-                <strong className="font-mono text-foreground">{meta.recipientEmailMasked}</strong>
-              </div>
+            {meta.message && step === "EMAIL" && (
+              <p className="text-xs whitespace-pre-wrap border-l-2 border-border pl-3 text-muted-foreground">{meta.message}</p>
             )}
 
-            {challengeError && (
+            {error && (
               <div className="p-3 bg-danger-soft border border-danger-border rounded-lg flex items-start gap-2 text-xs text-danger-text">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                <span>{challengeError}</span>
+                <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleRequestOtp} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                  Your work email address *
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@consultant.com"
-                    required
-                    className="w-full text-xs rounded-lg bg-surface border border-border pl-9 pr-3 py-2.5 text-foreground focus:ring-1 focus:ring-ring"
-                    autoFocus
-                  />
+            {step === "EMAIL" ? (
+              <form onSubmit={requestCode} className="space-y-4">
+                <div className="p-3 bg-sunken border border-border rounded-lg text-xs text-muted-foreground text-center">
+                  Shared with <strong className="font-mono text-foreground">{meta.recipientEmailMasked}</strong>
                 </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSendingOtp || !email.trim()}
-                className="w-full py-2.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <span>{isSendingOtp ? "Dispatching Code..." : "Send Verification Passcode"}</span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </form>
-
-            <div className="text-[11px] text-center text-muted-foreground">
-              A 6-digit one-time code will be dispatched to verify your identity.
-            </div>
-          </div>
-        ) : step === "CHALLENGE" ? (
-          /* STEP 2: PASSWORD + OTP CHALLENGE CARD */
-          <div className="max-w-md w-full bg-surface border border-border rounded-lg p-6 shadow-lg space-y-5">
-            <div className="text-center space-y-1.5">
-              <div className="h-11 w-11 rounded-full bg-accent-soft text-primary border border-border-active flex items-center justify-center mx-auto">
-                <Key className="h-5 w-5" />
-              </div>
-              <h2 className="text-base font-semibold text-foreground">Dual-challenge authentication</h2>
-              <p className="text-xs text-muted-foreground">
-                Code sent to <strong className="font-semibold text-foreground">{email}</strong>
-              </p>
-            </div>
-
-            {challengeError && (
-              <div className="p-3 bg-danger-soft border border-danger-border rounded-lg flex items-start gap-2 text-xs text-danger-text">
-                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                <span>{challengeError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleVerifyChallenge} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                  Link access password
+                <label className="block">
+                  <span className="text-xs font-semibold text-muted-foreground block mb-1">Your email address</span>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@company.com"
+                      required
+                      autoFocus
+                      autoComplete="email"
+                      className="w-full text-sm rounded-lg bg-surface border border-border pl-9 pr-3 py-2.5 focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter link password if provided…"
-                  className="w-full text-xs rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-ring"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                  6-Digit one-time passcode *
-                </label>
-                <input
-                  type="text"
-                  maxLength={6}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  placeholder="123456"
-                  required
-                  className="w-full text-center text-lg font-mono font-semibold tracking-widest rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-ring"
-                  autoFocus
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isVerifying || otp.length < 6}
-                className="w-full py-2.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                <span>{isVerifying ? "Verifying Credentials..." : "Unlock Shared Workspace"}</span>
-              </button>
-            </form>
-
-            <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
-              <button
-                type="button"
-                onClick={() => setStep("EMAIL")}
-                className="hover:underline"
-              >
-                &larr; change email
-              </button>
-              <button
-                type="button"
-                onClick={handleRequestOtp}
-                disabled={isSendingOtp}
-                className="hover:underline text-primary font-semibold"
-              >
-                Resend code
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* STEP 3: UNLOCKED CONSULTANT WORKSPACE */
-          <div className="w-full max-w-7xl h-[calc(100vh-6rem)] flex flex-col md:flex-row gap-4">
-            {/* LEFT PANEL: SHARED ITEMS LIST */}
-            <aside className="w-full md:w-80 bg-surface border border-border rounded-lg p-4 flex flex-col shrink-0 shadow-xs">
-              <div className="pb-3 border-b border-border">
-                <span className="text-xs font-semibold text-muted-foreground block">
-                  Shared dossier items ({sharedItems.length})
-                </span>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Click an item to render watermarked preview.
+                <p className="text-[11px] text-muted-foreground">
+                  Type the address this was sent to. For safety, a different address locks the link.
                 </p>
+                <button
+                  type="submit"
+                  disabled={busy || !email.trim()}
+                  className="w-full py-2.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {busy ? "Sending…" : "Email me a code"} <ArrowRight className="h-4 w-4" />
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={verify} className="space-y-4">
+                <p className="text-xs text-muted-foreground text-center">
+                  We sent a 6-digit code to <strong className="text-foreground">{email}</strong>. It expires in 10 minutes.
+                </p>
+                {meta.requiresPassword && (
+                  <label className="block">
+                    <span className="text-xs font-semibold text-muted-foreground block mb-1">Password from the sender</span>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoComplete="off"
+                      className="w-full text-sm rounded-lg bg-surface border border-border p-2.5 focus:ring-1 focus:ring-ring"
+                    />
+                  </label>
+                )}
+                <label className="block">
+                  <span className="text-xs font-semibold text-muted-foreground block mb-1">Code</span>
+                  <input
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    placeholder="123456"
+                    required
+                    autoFocus
+                    className="w-full text-center text-lg font-mono font-semibold tracking-widest rounded-lg bg-surface border border-border p-2.5 focus:ring-1 focus:ring-ring"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={busy || otp.length < 6 || (meta.requiresPassword && !password)}
+                  className="w-full py-2.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <ShieldCheck className="h-4 w-4" /> {busy ? "Checking…" : "Open documents"}
+                </button>
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
+                  <button type="button" onClick={() => { setStep("EMAIL"); setError(""); }} className="hover:underline">
+                    Change email
+                  </button>
+                  <button type="button" onClick={() => requestCode()} disabled={busy} className="hover:underline text-primary font-semibold">
+                    Send a new code
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        ) : content ? (
+          <div className="w-full max-w-7xl h-[calc(100vh-6rem)] flex flex-col md:flex-row gap-4">
+            <aside className="w-full md:w-80 bg-surface border border-border rounded-lg p-3 flex flex-col shrink-0 max-h-60 md:max-h-none">
+              <div className="pb-2 border-b border-border text-xs">
+                <span className="font-semibold">{content.items.length} document{content.items.length === 1 ? "" : "s"}</span>
+                <span className="text-muted-foreground"> · until {fmtDate(content.expiresAt)}</span>
+                {content.downloadsLeft !== null && (
+                  <span className="block text-[11px] text-muted-foreground mt-0.5">{content.downloadsLeft} download{content.downloadsLeft === 1 ? "" : "s"} left</span>
+                )}
               </div>
-
-              <div className="flex-1 overflow-y-auto space-y-2 mt-3 pr-1">
-                {sharedItems.map((item) => {
-                  const isSelected = selectedItemId === item.id;
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => setSelectedItemId(item.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
-                      className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-accent-soft border-primary ring-1 ring-ring"
-                          : "bg-surface hover:bg-surface border-border"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="font-mono text-xs font-semibold text-foreground truncate">
-                          {item.codeOrNumber}
-                        </span>
-                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-accent-soft text-primary">
-                          {item.versionOrRev}
-                        </span>
-                      </div>
-                      <p className="text-xs font-medium text-foreground mt-1 truncate">
-                        {item.title}
-                      </p>
-                      <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-2">
-                        <span>{item.disciplineOrType}</span>
-                        <span>{(item.fileSizeBytes / (1024 * 1024)).toFixed(1)} MB</span>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="flex-1 overflow-y-auto space-y-1.5 mt-2">
+                {content.items.length === 0 && <p className="text-xs text-muted-foreground p-2">The documents in this share have been withdrawn.</p>}
+                {content.items.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setSelectedId(item.id)}
+                    className={`w-full text-left p-2.5 rounded-lg border ${item.id === selected?.id ? "bg-accent-soft border-primary" : "border-border hover:bg-sunken"}`}
+                  >
+                    <span className="text-xs font-medium block truncate">{item.title}</span>
+                    <span className="text-[11px] text-muted-foreground flex justify-between mt-0.5">
+                      <span className="truncate">{item.disciplineOrType} · {item.versionOrRev}</span>
+                      <span>{fmtSize(item.fileSizeBytes)}</span>
+                    </span>
+                  </button>
+                ))}
               </div>
             </aside>
 
-            {/* MAIN STAGE: WATERMARKED PREVIEW & ACTIONS */}
-            <main className="flex-1 bg-surface border border-border rounded-lg flex flex-col overflow-hidden shadow-xs">
-              {/* Top Viewport Header */}
-              <div className="h-12 border-b border-border px-5 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileText className="h-4 w-4 text-primary shrink-0" />
-                  <div className="min-w-0">
-                    <span className="text-xs font-semibold text-foreground truncate block">
-                      {selectedItem?.title || "Document Preview"}
-                    </span>
-                    <span className="text-[11px] font-mono text-muted-foreground">
-                      {selectedItem?.fileName} • {selectedItem?.versionOrRev}
-                    </span>
+            <section className="flex-1 bg-surface border border-border rounded-lg flex flex-col overflow-hidden min-h-[60vh]">
+              {selected ? (
+                <>
+                  <div className="h-12 border-b border-border px-4 flex items-center justify-between gap-3 shrink-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="h-4 w-4 text-primary shrink-0" />
+                      <span className="text-xs font-semibold truncate">{selected.fileName}</span>
+                    </div>
+                    {selected.downloadUrl && content.downloadsLeft !== 0 ? (
+                      <a href={selected.downloadUrl} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shrink-0">
+                        <Download className="h-3.5 w-3.5" /> Download
+                      </a>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground px-2 py-1 border border-border rounded-md shrink-0">View only</span>
+                    )}
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {permissions.allowDownload ? (
-                    <a
-                      href={`/api/proxy-attachment/${selectedItem?.id}`}
-                      download
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      <span>Download raw file</span>
-                    </a>
-                  ) : (
-                    <span className="text-[11px] font-medium text-muted-foreground px-2 py-1 bg-surface border border-border rounded-md">
-                      View-only protected
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* DWG WATERMARK TECHNICAL DISCLAIMER (FR-268) */}
-              {hasDwgFile && (
-                <div className="p-2.5 bg-warning-soft border-b border-warning-border px-5 flex items-center gap-2 text-xs text-warning-text shrink-0">
-                  <Info className="h-4 w-4 shrink-0" />
-                  <span>
-                    <strong>Technical Notice:</strong> Raw DWG CAD files cannot carry dynamic visual watermarks. Dynamic vector watermarking applies to rendered PDF/raster sheets.
-                  </span>
-                </div>
-              )}
-
-              {/* WATERMARKED PREVIEW STAGE */}
-              <div className="flex-1 overflow-auto p-6 flex items-center justify-center relative bg-surface/50">
-                {/* Dynamic Visual Watermark Overlay */}
-                {watermarkText && (
-                  <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-around p-8 select-none overflow-hidden opacity-25">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="text-xs sm:text-sm font-mono font-semibold tracking-widest text-foreground -rotate-12 whitespace-nowrap"
-                      >
-                        {watermarkText}
+                  <div className="relative flex-1 overflow-auto bg-sunken" onContextMenu={(e) => e.preventDefault()}>
+                    {selected.preview === "image" ? (
+                      // Watermark is burned into the image on the server
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={selected.viewUrl} alt={selected.title} className="max-w-full mx-auto select-none" draggable={false} />
+                    ) : selected.preview === "pdf" ? (
+                      <>
+                        <iframe key={selected.id} src={`${selected.viewUrl}#toolbar=0&navpanes=0`} title={selected.title} className="w-full h-full min-h-[60vh] border-0" />
+                        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden flex flex-col justify-around opacity-20">
+                          {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="text-sm font-mono font-semibold whitespace-nowrap -rotate-12">
+                              {content.watermarkText}
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="h-full flex items-center justify-center p-6 text-center">
+                        <div className="space-y-2 max-w-sm">
+                          <Info className="h-8 w-8 mx-auto text-muted-foreground stroke-1" />
+                          <p className="text-xs text-muted-foreground">
+                            This file type cannot be shown in the browser.{" "}
+                            {selected.downloadUrl ? "Use Download to open it on your computer." : "Ask the sender for a PDF copy."}
+                          </p>
+                        </div>
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-
-                {/* Simulated / Real PDF Viewer Stage */}
-                <div className="bg-surface rounded-lg shadow-lg border border-border w-[800px] h-[950px] p-8 flex flex-col justify-between text-foreground relative z-10">
-                  <div className="flex justify-between items-start border-b border-border pb-3">
-                    <div>
-                      <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                        CHANDAK GROUP • ENGINEERING
-                      </h3>
-                      <p className="text-xs font-semibold text-subtle">
-                        {selectedItem?.title} • {selectedItem?.versionOrRev}
-                      </p>
-                    </div>
-                    <span className="text-xs font-mono font-semibold text-muted">
-                      {selectedItem?.codeOrNumber}
-                    </span>
-                  </div>
-
-                  <div className="flex-1 my-6 border border-border rounded-lg flex items-center justify-center bg-sunken text-center p-6 space-y-2">
-                    <div>
-                      <Layers className="h-12 w-12 text-muted mx-auto stroke-1" />
-                      <p className="text-xs font-semibold text-subtle mt-2">
-                        Watermarked document preview stage
-                      </p>
-                      <p className="text-[11px] text-muted max-w-sm">
-                        Rendered with verified session binding for {email}. All access actions are logged in the immutable audit register.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-border pt-3 flex justify-between text-[11px] font-mono text-muted">
-                    <div>CONFIDENTIAL • RECIPIENT: {email}</div>
-                    <div>Date: {formatDate(new Date())}</div>
-                  </div>
-                </div>
-              </div>
-            </main>
+                  <div className="px-4 py-2 border-t border-border text-[11px] text-muted-foreground font-mono truncate">{content.watermarkText}</div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">Nothing to show.</div>
+              )}
+            </section>
           </div>
-        )}
+        ) : null}
       </main>
     </div>
   );
