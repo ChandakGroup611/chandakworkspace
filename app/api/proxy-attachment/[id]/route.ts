@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 import { requireDesign } from '@/lib/permissions/design-guard';
+import { dmsActor, documentRights } from '@/lib/dms/access';
 
 function isDesignStorageUrl(url: string | null | undefined): boolean {
   if (!url || !url.startsWith('storage:')) return false;
@@ -110,6 +111,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
     let attachment: { file_name: string; file_url: string; file_type?: string | null } | null = null;
     let designFile = false;
+    let dmsDocumentId: string | null = null;
     
     // Direct storage URL or query param resolution
     const directStorageUrl = searchParams.get('storage_url') || (id.startsWith('storage%3A') || id.startsWith('storage:') ? decodeURIComponent(id) : null);
@@ -134,6 +136,20 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         file_url: directStorageUrl,
         file_type: searchParams.get('file_type') || null
       };
+
+      // A DMS file asked for by its storage path still goes through that document's access rules
+      const directPath = directStorageUrl.split(':').slice(2).join(':');
+      if (bucketName === 'dms-documents' || directPath.startsWith('dms/')) {
+        const { data: ver } = await supabaseAdmin
+          .from('dms_document_versions')
+          .select('document_id, file_name, mime_type')
+          .eq('storage_key', directStorageUrl)
+          .maybeSingle();
+        if (!ver) return new NextResponse('Attachment Not Found', { status: 404 });
+        dmsDocumentId = ver.document_id;
+        designFile = true;
+        attachment = { file_name: ver.file_name, file_url: directStorageUrl, file_type: ver.mime_type };
+      }
     }
 
     // 1. Check unified attachments table first
@@ -209,6 +225,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
           .maybeSingle();
 
         if (dmsVer) {
+          dmsDocumentId = dmsVer.document_id;
           dmsDoc = {
             id: dmsVer.id,
             title: dmsVer.file_name,
@@ -225,12 +242,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
             .maybeSingle();
 
           if (rootDoc) {
+            dmsDocumentId = rootDoc.id;
             const { data: latestVer } = await supabaseAdmin
               .from('dms_document_versions')
               .select('id, file_name, mime_type, storage_key')
               .eq('document_id', rootDoc.id)
-              .order('version_no', { ascending: false })
-              .limit(1)
+              .eq('version_no', rootDoc.current_version_no)
               .maybeSingle();
 
             if (latestVer) {
@@ -245,7 +262,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
           }
         }
 
-        if (dmsDoc && dmsDoc.storage_key) {
+        if (dmsDoc && dmsDoc.storage_key && String(dmsDoc.storage_key).startsWith('storage:')) {
           designFile = true;
           attachment = {
             file_name: dmsDoc.original_file_name || dmsDoc.title || 'dms_document.pdf',
@@ -370,6 +387,25 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         await requireDesign('any');
       } catch {
         return new NextResponse('Forbidden: Design Tracking access required', { status: 403 });
+      }
+    }
+
+    // DMS documents: the folder, document type, private-view and QC rules decide (view to open, download to save)
+    if (dmsDocumentId) {
+      try {
+        const rights = await documentRights(await dmsActor(), dmsDocumentId);
+        if (!rights.view || (isDownload && !rights.download)) {
+          return new NextResponse(isDownload ? 'Forbidden: you cannot download this document' : 'Forbidden: you cannot open this document', { status: 403 });
+        }
+        void supabaseAdmin.rpc('fn_dms_audit', {
+          p_actor: user.id,
+          p_action: isDownload ? 'DOCUMENT_DOWNLOADED' : 'DOCUMENT_VIEWED',
+          p_entity_type: 'DOCUMENT',
+          p_entity_id: dmsDocumentId,
+          p_details: { file_name: attachment.file_name },
+        }).then(({ error }) => { if (error) console.warn('DMS view audit not written:', error.message); });
+      } catch {
+        return new NextResponse('Forbidden', { status: 403 });
       }
     }
 

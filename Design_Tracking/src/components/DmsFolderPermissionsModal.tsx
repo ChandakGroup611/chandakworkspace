@@ -59,6 +59,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [canManage, setCanManage] = useState<boolean>(false);
 
   // Multi-select user picker state
   const [isUserPickerOpen, setIsUserPickerOpen] = useState<boolean>(false);
@@ -91,6 +92,9 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
         if (permsRes.success) {
           setInheritPermissions(permsRes.inheritPermissions ?? true);
           setAssignedPermissions(permsRes.permissions || []);
+          setCanManage(!!permsRes.canManage);
+        } else {
+          setErrorMessage(permsRes.error || "Failed to load permissions");
         }
       } catch (err: any) {
         if (isMounted) {
@@ -724,7 +728,8 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
             <button
               type="button"
               onClick={handleSaveChanges}
-              disabled={isSaving}
+              disabled={isSaving || !canManage}
+              title={!canManage ? "Only folder managers and Design administrators can change access" : undefined}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm cursor-pointer"
             >
               <Check className="h-4 w-4" />

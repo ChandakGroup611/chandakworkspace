@@ -29,7 +29,8 @@ import {
   ExternalLink,
   ZoomIn,
   ZoomOut,
-  Maximize2
+  Maximize2,
+  Trash2
 } from "lucide-react";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
@@ -39,10 +40,13 @@ import {
   fetchFolderTreeAction,
   fetchFolderDocumentsAction,
   createFolderAction,
-  lockUnlockDocumentAction,
-  submitQcDecisionAction
+  updateFolderAction,
+  deleteFolderAction,
+  type DmsRights
 } from "@/lib/actions/dms-core";
 import { DmsSplitIndexingWizard } from "./DmsSplitIndexingWizard";
+import { DmsDocumentPanel, formatBytes } from "./DmsDocumentPanel";
+import { DmsQcQueueView, DmsRecycleBinView } from "./DmsBinAndQcViews";
 import { DmsFolderPermissionsModal } from "./DmsFolderPermissionsModal";
 import { toast } from "react-toastify";
 
@@ -88,6 +92,12 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [selectedDoc, setSelectedDoc] = useState<DmsDocumentSummary | null>(null);
   const [docViewerZoom, setDocViewerZoom] = useState<number>(1);
 
+  // Which list the main area shows, and what the person may do in the open folder
+  const [view, setView] = useState<"FOLDER" | "QC" | "BIN">("FOLDER");
+  const [folderRights, setFolderRights] = useState<DmsRights | null>(null);
+  const [docsError, setDocsError] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null);
+
   // Load Folder Hierarchy on mount
   const loadFolderTree = useCallback(async () => {
     try {
@@ -95,9 +105,20 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
       if (res.success && res.folders) {
         setFolders(res.folders);
         if (res.folders.length > 0 && !selectedFolder) {
-          setSelectedFolder(res.folders[0]);
-          setExpandedFolderIds(new Set([res.folders[0].id]));
+          const firstOpen = (nodes: DmsFolderNode[]): DmsFolderNode | null => {
+            for (const n of nodes) {
+              if (n.canOpen !== false) return n;
+              const c = firstOpen(n.children || []);
+              if (c) return c;
+            }
+            return null;
+          };
+          const first = firstOpen(res.folders);
+          if (first) setSelectedFolder(first);
+          setExpandedFolderIds(new Set(res.folders.map((f) => f.id)));
         }
+      } else if (!res.success) {
+        toast.error(res.error || "Could not load folders.");
       }
     } catch (err) {
       console.error("Failed to load folder tree:", err);
@@ -120,6 +141,12 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
       });
       if (res.success && res.documents) {
         setDocuments(res.documents);
+        setFolderRights(res.folderRights || null);
+        setDocsError(null);
+      } else {
+        setDocuments([]);
+        setFolderRights(null);
+        setDocsError(res.error || "Could not load documents.");
       }
     } catch (err) {
       console.error("Failed to load folder documents:", err);
@@ -179,40 +206,28 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
     }
   };
 
-  // Toggle Document Lock
-  const handleToggleLock = async (doc: DmsDocumentSummary) => {
-    try {
-      const action = doc.isLocked ? "UNLOCK" : "LOCK";
-      const res = await lockUnlockDocumentAction({
-        documentId: doc.id,
-        action,
-      });
-      if (res.success) {
-        setDocuments((prev) =>
-          prev.map((d) => (d.id === doc.id ? { ...d, isLocked: !d.isLocked } : d))
-        );
-      }
-    } catch (err) {
-      console.error("Toggle lock error:", err);
-    }
+  const handleRenameFolder = async (folder: DmsFolderNode, name: string) => {
+    const res = await updateFolderAction({ folderId: folder.id, name });
+    if (!res.success) return toast.error(res.error);
+    setRenaming(null);
+    setSelectedFolder({ ...folder, name });
+    await loadFolderTree();
   };
 
-  // Submit QC Decision
-  const handleQcDecision = async (doc: DmsDocumentSummary, status: "APPROVED" | "REJECTED") => {
-    try {
-      const res = await submitQcDecisionAction({
-        documentId: doc.id,
-        versionNo: doc.currentVersionNo,
-        status,
-      });
-      if (res.success) {
-        setDocuments((prev) =>
-          prev.map((d) => (d.id === doc.id ? { ...d, approvalStatus: status } : d))
-        );
-      }
-    } catch (err) {
-      console.error("QC decision error:", err);
-    }
+  const handleToggleFolderQc = async (folder: DmsFolderNode) => {
+    const res = await updateFolderAction({ folderId: folder.id, approvalRequired: !folder.approvalRequired });
+    if (!res.success) return toast.error(res.error);
+    setSelectedFolder({ ...folder, approvalRequired: !folder.approvalRequired });
+    toast.success(folder.approvalRequired ? "New uploads here no longer need QC." : "New uploads here now need QC approval.");
+    await loadFolderTree();
+  };
+
+  const handleDeleteFolder = async (folder: DmsFolderNode) => {
+    const res = await deleteFolderAction(folder.id);
+    if (!res.success) return toast.error(res.error);
+    toast.success(`Folder "${folder.name}" deleted.`);
+    setSelectedFolder(null);
+    await loadFolderTree();
   };
 
   // Recursive Tree Renderer
@@ -224,7 +239,11 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
     return (
       <div key={node.id} className="select-none group">
         <div
-          onClick={() => setSelectedFolder(node)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
+          onClick={() => {
+            if (node.canOpen === false) return;
+            setSelectedFolder(node);
+            setView("FOLDER");
+          }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}
           className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${
             isSelected
               ? "bg-accent-soft text-primary font-semibold border border-border-active"
@@ -254,7 +273,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                 isSelected ? "text-primary fill-theme-btn-primary/20" : "text-warning-text fill-warning"
               }`}
             />
-            <span className="truncate">{node.name}</span>
+            <span className={`truncate ${node.canOpen === false ? "text-muted-foreground italic" : ""}`}>{node.name}</span>
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
@@ -263,6 +282,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                 {node.documentCount}
               </span>
             )}
+            {node.rights?.create_folder && (
             <button aria-label="Add subfolder"
               type="button"
               onClick={(e) => {
@@ -275,6 +295,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             >
               <FolderPlus className="h-3.5 w-3.5" />
             </button>
+            )}
+            {node.canOpen !== false && (
             <button aria-label="Folder access & permissions"
               type="button"
               onClick={(e) => {
@@ -287,6 +309,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             >
               <ShieldCheck className="h-3.5 w-3.5" />
             </button>
+            )}
           </div>
         </div>
 
@@ -309,16 +332,28 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               <FolderTree className="h-5 w-5 text-primary" />
               <span>DMS folders</span>
             </h2>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-primary">
-              6-Layer RBAC
-            </span>
+
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Hierarchical folder architecture with dynamic doc-type EAV metadata, split-screen indexing & QC gate controls.
+            Folders, versions, check-out, QC approval and a recycle bin. You only see the folders and documents your access allows.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button"
+            onClick={() => setView(view === "QC" ? "FOLDER" : "QC")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border transition-colors cursor-pointer ${view === "QC" ? "bg-accent-soft text-primary" : "bg-surface text-foreground"}`}
+          >
+            <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+            <span>QC queue</span>
+          </button>
+          <button type="button"
+            onClick={() => setView(view === "BIN" ? "FOLDER" : "BIN")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border transition-colors cursor-pointer ${view === "BIN" ? "bg-accent-soft text-primary" : "bg-surface text-foreground"}`}
+          >
+            <Trash2 className="h-3.5 w-3.5 text-danger-text" />
+            <span>Recycle bin</span>
+          </button>
           <button type="button"
             onClick={() => {
               if (selectedFolder) {
@@ -334,20 +369,18 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             <span>Folder access</span>
           </button>
           <button type="button"
-            onClick={() => {
-              if (!selectedFolder && folders.length > 0) {
-                setSelectedFolder(folders[0]);
-              }
-              setShowCreateFolderModal(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-surface text-foreground transition-colors cursor-pointer"
+            onClick={() => setShowCreateFolderModal(true)}
+            disabled={!selectedFolder || !folderRights?.create_folder}
+            title={selectedFolder && !folderRights?.create_folder ? "You can't create folders here" : undefined}
+            className="disabled:opacity-50 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-surface text-foreground transition-colors cursor-pointer"
           >
             <FolderPlus className="h-3.5 w-3.5 text-warning-text" />
             <span>New folder</span>
           </button>
           <button type="button"
             onClick={() => setShowIndexingWizard(true)}
-            disabled={!selectedFolder}
+            disabled={!selectedFolder || !folderRights?.upload}
+            title={selectedFolder && !folderRights?.upload ? "You can't add documents to this folder" : undefined}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs transition-all disabled:opacity-50 cursor-pointer"
           >
             <Upload className="h-3.5 w-3.5" />
@@ -401,23 +434,96 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
         {/* MAIN STAGE: DOCUMENT REGISTER TABLE */}
         <main className="md:col-span-8 lg:col-span-9 bg-surface border border-border rounded-lg p-4 space-y-4 shadow-xs">
+          {view !== "FOLDER" ? (
+            <>
+              <div className="flex items-center justify-between pb-3 border-b border-border">
+                <h2 className="text-sm font-semibold text-foreground">{view === "QC" ? "Waiting for your QC decision" : "Recycle bin"}</h2>
+                <button type="button" onClick={() => setView("FOLDER")} className="text-xs text-primary font-semibold">
+                  Back to folders
+                </button>
+              </div>
+              {view === "QC" ? (
+                <DmsQcQueueView
+                  workspaceId={workspaceId}
+                  onOpen={(item) =>
+                    setSelectedDoc({
+                      id: item.documentId,
+                      folderId: item.folderId,
+                      docTypeId: "",
+                      docTypeCode: "",
+                      docTypeName: "",
+                      title: item.title,
+                      originalFileName: "",
+                      currentVersionNo: item.versionNo,
+                      approvalStatus: "PENDING",
+                      fileSizeBytes: 0,
+                      mimeType: "",
+                      storageKey: "",
+                      isLocked: false,
+                      createdAt: item.uploadedAt,
+                      updatedAt: item.uploadedAt,
+                    })
+                  }
+                />
+              ) : (
+                <DmsRecycleBinView
+                  workspaceId={workspaceId}
+                  onRestored={() => {
+                    loadFolderTree();
+                    loadFolderDocuments();
+                  }}
+                />
+              )}
+            </>
+          ) : (
+          <>
           {/* Active Folder Dossier Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Folder className="h-4 w-4 text-warning-text fill-warning" />
-                <h2 className="text-sm font-semibold text-foreground">
-                  {selectedFolder?.name || "Select a Folder"}
-                </h2>
+                {selectedFolder && renaming !== null ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (renaming.trim()) handleRenameFolder(selectedFolder, renaming.trim());
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    <input
+                      autoFocus
+                      aria-label="Folder name"
+                      value={renaming}
+                      onChange={(e) => setRenaming(e.target.value)}
+                      className="text-xs rounded-lg bg-surface border border-border px-2 py-1"
+                    />
+                    <button type="submit" className="text-[11px] font-semibold text-primary">Save</button>
+                    <button type="button" onClick={() => setRenaming(null)} className="text-[11px] text-muted-foreground">Cancel</button>
+                  </form>
+                ) : (
+                  <h2 className="text-sm font-semibold text-foreground">
+                    {selectedFolder?.name || "Select a folder"}
+                  </h2>
+                )}
                 {selectedFolder?.approvalRequired && (
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-warning-soft text-warning-text">
                     QC approval required
                   </span>
                 )}
               </div>
-              <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
-                Path: {selectedFolder?.path || "chandak.root"}
-              </p>
+              {selectedFolder && (folderRights?.admin || folderRights?.manage) && renaming === null && (
+                <div className="flex flex-wrap gap-3 mt-1 text-[11px] font-semibold">
+                  <button type="button" onClick={() => setRenaming(selectedFolder.name)} className="text-primary">Rename</button>
+                  <button type="button" onClick={() => handleToggleFolderQc(selectedFolder)} className="text-primary">
+                    {selectedFolder.approvalRequired ? "Stop requiring QC" : "Require QC"}
+                  </button>
+                  {selectedFolder.parentId && (
+                    <button type="button" onClick={() => handleDeleteFolder(selectedFolder)} className="text-danger-text">
+                      Delete folder
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Document Search & Filter */}
@@ -450,7 +556,11 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {isLoadingDocuments ? (
+                {docsError ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-muted-foreground">{docsError}</td>
+                  </tr>
+                ) : isLoadingDocuments ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-muted-foreground">
                       Loading folder documents…
@@ -461,12 +571,14 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                     <td colSpan={7} className="py-12 text-center text-muted-foreground space-y-2">
                       <FileText className="h-8 w-8 mx-auto opacity-40" />
                       <p className="font-medium text-xs">No documents in this folder.</p>
-                      <button type="button"
-                        onClick={() => setShowIndexingWizard(true)}
-                        className="text-[11px] text-primary font-semibold hover:underline"
-                      >
-                        Upload and index the first document &rarr;
-                      </button>
+                      {folderRights?.upload && (
+                        <button type="button"
+                          onClick={() => setShowIndexingWizard(true)}
+                          className="text-[11px] text-primary font-semibold hover:underline"
+                        >
+                          Upload and index the first document &rarr;
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ) : (
@@ -508,29 +620,22 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                               : "bg-info-soft text-info-text"
                           }`}
                         >
-                          {doc.approvalStatus}
+                          {doc.approvalStatus === "PENDING" ? "Waiting for QC" : doc.approvalStatus === "APPROVED" ? "Approved" : "Rejected"}
                         </span>
                       </td>
 
                       <td className="py-2.5 px-3">
-                        <button type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleLock(doc);
-                          }}
-                          className={`p-1 rounded-md transition-colors ${
-                            doc.isLocked
-                              ? "bg-warning-soft text-warning-text"
-                              : "hover:bg-surface text-muted-foreground"
-                          }`}
-                          title={doc.isLocked ? "Locked / checked out" : "Unlocked (Available)"}
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] ${doc.isLocked ? "text-warning-text" : "text-muted-foreground"}`}
+                          title={doc.isLocked ? `Checked out by ${doc.lockedByMe ? "you" : doc.lockedByName}` : "Available"}
                         >
                           {doc.isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-                        </button>
+                          {doc.isLocked ? (doc.lockedByMe ? "You" : doc.lockedByName) : ""}
+                        </span>
                       </td>
 
                       <td className="py-2.5 px-3 font-mono text-[11px] text-muted-foreground">
-                        {(doc.fileSizeBytes / 1024).toFixed(1)} KB
+                        {formatBytes(doc.fileSizeBytes)}
                       </td>
 
                       <td className="py-2.5 px-3 text-right">
@@ -543,14 +648,16 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                           >
                             <Eye className="h-3.5 w-3.5 text-primary" />
                           </button>
-                          <a
-                            href={doc.storageKey?.startsWith("data:") ? doc.storageKey : `/api/proxy-attachment/${doc.id}?download=1`}
-                            download={doc.originalFileName}
-                            className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
-                            title="Download document"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                          </a>
+                          {doc.rights?.download && (
+                            <a
+                              href={`/api/proxy-attachment/${doc.id}?download=1`}
+                              className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
+                              title="Download document"
+                              aria-label="Download document"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </a>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -559,6 +666,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               </tbody>
             </table>
           </div>
+          </>
+          )}
         </main>
       </div>
 
@@ -696,7 +805,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   </span>
                 </div>
                 <p className="text-[11px] font-mono text-muted-foreground truncate">
-                  {selectedDoc.originalFileName} &bull; {(selectedDoc.fileSizeBytes / 1024).toFixed(1)} KB
+                  {selectedDoc.originalFileName} &bull; {formatBytes(selectedDoc.fileSizeBytes)}
                 </p>
               </div>
             </div>
@@ -731,11 +840,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               </div>
 
               <a
-                href={
-                  selectedDoc.storageKey?.startsWith("data:")
-                    ? selectedDoc.storageKey
-                    : `/api/proxy-attachment/${selectedDoc.id}`
-                }
+                href={`/api/proxy-attachment/${selectedDoc.id}`}
                 target="_blank"
                 rel="noreferrer"
                 className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-surface/80 text-foreground inline-flex items-center gap-1.5 cursor-pointer"
@@ -745,19 +850,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                 <span>Open in tab</span>
               </a>
 
-              <a
-                href={
-                  selectedDoc.storageKey?.startsWith("data:")
-                    ? selectedDoc.storageKey
-                    : `/api/proxy-attachment/${selectedDoc.id}?download=1`
-                }
-                download={selectedDoc.originalFileName}
-                className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
-                title="Download original file"
-              >
-                <Download className="h-3.5 w-3.5" />
-                <span>Download</span>
-              </a>
+
 
               <button aria-label="Close viewer" type="button"
                 onClick={() => setSelectedDoc(null)}
@@ -769,12 +862,11 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             </div>
           </header>
 
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Viewer Stage */}
           <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-muted/10 relative">
             {(() => {
-              const fileSrc = selectedDoc.storageKey?.startsWith("data:")
-                ? selectedDoc.storageKey
-                : `/api/proxy-attachment/${selectedDoc.id}`;
+              const fileSrc = `/api/proxy-attachment/${selectedDoc.id}`;
               const isImage =
                 (selectedDoc.mimeType && selectedDoc.mimeType.startsWith("image/")) ||
                 /\.(jpe?g|png|webp|gif|svg|bmp)$/i.test(selectedDoc.originalFileName);
@@ -856,7 +948,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   <div>
                     <h3 className="text-base font-semibold text-foreground truncate">{selectedDoc.title}</h3>
                     <p className="text-xs font-mono text-muted-foreground mt-1">
-                      {selectedDoc.originalFileName} &bull; {(selectedDoc.fileSizeBytes / 1024).toFixed(1)} KB
+                      {selectedDoc.originalFileName} &bull; {formatBytes(selectedDoc.fileSizeBytes)}
                     </p>
                   </div>
                   <div className="p-3 bg-surface/50 border border-border rounded-lg text-left text-xs space-y-1.5">
@@ -895,6 +987,18 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                 </div>
               );
             })()}
+          </div>
+          <aside className="w-full lg:w-[360px] shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-surface overflow-y-auto">
+            <DmsDocumentPanel
+              documentId={selectedDoc.id}
+              onChanged={(updated) => {
+                loadFolderDocuments();
+                loadFolderTree();
+                if (updated) setSelectedDoc(updated);
+                else setSelectedDoc(null);
+              }}
+            />
+          </aside>
           </div>
         </div>
       )}
