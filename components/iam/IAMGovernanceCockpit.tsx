@@ -740,7 +740,7 @@ export default function IAMGovernanceCockpit({
                                           <AppTableCell key={act} className="text-center">
                                             {exists ? (
                                               <div className="flex justify-center">
-                                                <AppButton variant="secondary"
+                                                <button
                                                   type="button"
                                                   disabled={isSaving}
                                                   aria-label={`${act.charAt(0) + act.slice(1).toLowerCase()} – ${m.submodule}`}
@@ -755,13 +755,13 @@ export default function IAMGovernanceCockpit({
                                                   className={cn(
                                                     "relative h-5 w-5 rounded-md border flex items-center justify-center transition-all duration-300",
                                                     checked
-                                                      ? "bg-success-text border-success-text text-white shadow-sm"
+                                                      ? "bg-success border-success text-white shadow-sm"
                                                       : "bg-surface border-border",
-                                                    "cursor-pointer hover:border-primary"
+                                                    "cursor-pointer hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                                   )}
                                                 >
                                                   {checked && <span className="text-white text-[12px] font-semibold">✓</span>}
-                                                </AppButton>
+                                                </button>
                                               </div>
                                             ) : (
                                               <span className="text-xs text-subtle font-mono">-</span>

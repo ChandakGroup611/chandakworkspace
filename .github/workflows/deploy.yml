@@ -663,6 +663,32 @@ jobs:
 
           echo "=== VERIFICATION COMPLETE: COMMIT $EXPECTED_COMMIT IS 100% LIVE ==="
 
+      - name: Checkout for Browser Crash Check
+        uses: actions/checkout@v4
+
+      - name: Browser Crash Check (real browser, read-only, no sign-in)
+        timeout-minutes: 6
+        env:
+          OLD_TARGET: ${{ needs.deploy.outputs.old_target }}
+        run: |
+          # Added 26 Nov 2026: every page returned 200 but crashed in the browser, which the
+          # curl checks above cannot see. Fails only if the app's error screen is shown.
+          mkdir -p /tmp/browser-smoke && cp scripts/browser-smoke.mjs /tmp/browser-smoke/
+          cd /tmp/browser-smoke && npm init -y >/dev/null && npm i --no-audit --no-fund playwright@1.55.1
+          npx playwright install --with-deps chromium
+          if ! BASE_URL=https://chandakgroup.tech node browser-smoke.mjs; then
+            echo "::error::Pages crash in the browser after this deploy. Triggering rollback to $OLD_TARGET..."
+            DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
+            TS=$(date +%s)
+            SIG=$(printf "%s" "$TS" | openssl dgst -sha256 -hmac "$DEPLOY_KEY" | sed 's/^.* //')
+            curl -sS \
+              -H "X-Deploy-Key: ${DEPLOY_KEY}" \
+              -H "X-Deploy-Timestamp: ${TS}" \
+              -H "X-Deploy-Signature: ${SIG}" \
+              "https://chandakgroup.tech/sys-deploy-c7a8b9e1.php?action=rollback&old=${OLD_TARGET}" || echo "Rollback trigger call failed"
+            exit 1
+          fi
+
       - name: Checkout Repository for Smoke Check
         if: needs.pipeline_mode.outputs.is_express != 'true'
         uses: actions/checkout@v4

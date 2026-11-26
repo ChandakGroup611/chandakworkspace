@@ -114,8 +114,36 @@ export function contrastRatio(a: string, b: string) {
   const x = luminance(a), y = luminance(b);
   return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
 }
+/** Mixes a hex towards white (t > 0) or black (t < 0); t in -1..1. */
+function shade(hex: string, t: number) {
+  const n = hex.replace("#", "");
+  const target = t > 0 ? 255 : 0;
+  const k = Math.abs(t);
+  return "#" + [0, 2, 4].map((i) => {
+    const v = parseInt(n.slice(i, i + 2), 16);
+    return Math.round(v + (target - v) * k).toString(16).padStart(2, "0");
+  }).join("");
+}
+
+/**
+ * The accent is also used as link and selection text, so it must read on the page:
+ * at least 4.5:1 on the lightest dark surface in dark mode, and on white in light mode.
+ * A picked colour that is too dark for a dark theme (e.g. slate #334155, 1.7:1) is
+ * lightened just enough; one too light for a light theme is darkened.
+ */
+function readableAccent(hex: string, mode: ThemeMode) {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return hex;
+  const page = mode === "dark" ? "#17181b" : "#ffffff";
+  for (let i = 0; i <= 20; i++) {
+    const c = shade(hex, (mode === "dark" ? 1 : -1) * i * 0.05);
+    if (contrastRatio(c, page) >= 4.5) return c;
+  }
+  return mode === "dark" ? "#ffffff" : "#000000";
+}
+
 /** Returns CSS variables for a user-picked hex, with a text colour that passes 4.5:1. */
-export function customAccentVars(hex: string, mode: ThemeMode): Record<string, string> {
+export function customAccentVars(picked: string, mode: ThemeMode): Record<string, string> {
+  const hex = readableAccent(picked, mode);
   const onWhite = contrastRatio("#ffffff", hex);
   const onBlack = contrastRatio("#0b0b0b", hex);
   const fg = onWhite >= onBlack ? "#ffffff" : "#0b0b0b";

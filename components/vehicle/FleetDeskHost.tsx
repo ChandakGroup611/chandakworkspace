@@ -471,7 +471,7 @@ function TransactionFormLayout({
             </AppButton>
             {breadcrumbs.map((bc, idx) => (
               <React.Fragment key={idx}>
-                <span className="text-border text-xs">/</span>
+                <span className="text-muted text-xs" aria-hidden="true">/</span>
                 {bc.onClick ? (
                   <button
                     type="button"
@@ -676,7 +676,7 @@ function WorkingDocumentLayout({
             </AppButton>
             {breadcrumbs.map((bc, idx) => (
               <React.Fragment key={idx}>
-                <span className="text-border text-xs">/</span>
+                <span className="text-muted text-xs" aria-hidden="true">/</span>
                 {bc.onClick ? (
                   <button
                     type="button"
@@ -10367,7 +10367,7 @@ export default function FleetDeskHost({
                   <ArrowLeft className="h-4 w-4" />
                   <span>Back to fleet</span>
                 </AppButton>
-                <span className="text-border text-xs">/</span>
+                <span className="text-muted text-xs" aria-hidden="true">/</span>
                 <span className="text-xs text-muted-foreground font-medium">New registration</span>
               </div>
               <div className="flex items-center gap-3 pt-1">
@@ -28307,12 +28307,12 @@ export default function FleetDeskHost({
                     <span className="text-[11px] font-bold text-muted-foreground">VIN:</span>
                     <span className="text-foreground font-medium">{viewingVehicle.vin_chassis_number || "Not Recorded"}</span>
                   </span>
-                  <span className="text-border">•</span>
+                  <span className="text-muted" aria-hidden="true">•</span>
                   <span className="flex items-center gap-1">
                     <span className="text-[11px] font-bold text-muted-foreground">RTO:</span>
                     <span className="text-foreground">{viewingVehicle.rto_office || "State Transport"}</span>
                   </span>
-                  <span className="text-border">•</span>
+                  <span className="text-muted" aria-hidden="true">•</span>
                   <span className="flex items-center gap-1">
                     <span className="text-[11px] font-bold text-muted-foreground">Owner:</span>
                     <span className="text-foreground font-medium">{viewingVehicle.registered_owner || "Corporate Fleet"}</span>

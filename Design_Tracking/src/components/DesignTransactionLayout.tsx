@@ -64,7 +64,7 @@ export function TransactionFormLayout({
             </AppButton>
             {breadcrumbs.map((bc, idx) => (
               <React.Fragment key={idx}>
-                <span className="text-border text-xs">/</span>
+                <span className="text-muted text-xs" aria-hidden="true">/</span>
                 {bc.onClick ? (
                   <button
                     type="button"
@@ -258,7 +258,7 @@ export function WorkingDocumentLayout({
             </AppButton>
             {breadcrumbs.map((bc, idx) => (
               <React.Fragment key={idx}>
-                <span className="text-border text-xs">/</span>
+                <span className="text-muted text-xs" aria-hidden="true">/</span>
                 {bc.onClick ? (
                   <button
                     type="button"

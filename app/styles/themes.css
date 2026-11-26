@@ -16,12 +16,12 @@
   --text-primary: #141a26;
   --text-secondary: #3c4555;
   --text-muted: #5d6677;
-  --text-disabled: #9ea3ad;
+  --text-disabled: #8f95a1;
   --heading-text: #0d1220;
   --icon-color: #5d6677;
   --border-subtle: #e2e5eb;
   --border-active: #c3c8d2;
-  --border-input: #b9bfca;
+  --border-input: #8c93a1;
   --accent-primary: #702963;
   --accent-secondary: #5a1f4f;
   --accent-soft: #f4eef3;
@@ -164,12 +164,12 @@
   --text-primary: #1a1420;
   --text-secondary: #43394b;
   --text-muted: #665c6e;
-  --text-disabled: #a39da8;
+  --text-disabled: #99929e;
   --heading-text: #120c17;
   --icon-color: #665c6e;
   --border-subtle: #e4e0e7;
   --border-active: #c6c0cc;
-  --border-input: #bbb4c2;
+  --border-input: #9890a0;
   --accent-primary: #702963;
   --accent-secondary: #5a1f4f;
   --accent-soft: #f4eef3;
@@ -238,12 +238,12 @@
   --text-primary: #0f1a2e;
   --text-secondary: #36445c;
   --text-muted: #57667e;
-  --text-disabled: #9aa3b2;
+  --text-disabled: #8b96a7;
   --heading-text: #0a1324;
   --icon-color: #57667e;
   --border-subtle: #dde3ec;
   --border-active: #bec8d6;
-  --border-input: #b3bfd0;
+  --border-input: #8794a9;
   --accent-primary: #1d4ed8;
   --accent-secondary: #1a3fb0;
   --accent-soft: #edf1fc;
@@ -312,12 +312,12 @@
   --text-primary: #10201e;
   --text-secondary: #354844;
   --text-muted: #566a66;
-  --text-disabled: #9aa6a3;
+  --text-disabled: #8a9894;
   --heading-text: #0a1715;
   --icon-color: #566a66;
   --border-subtle: #dce5e3;
   --border-active: #bccbc8;
-  --border-input: #b0c1be;
+  --border-input: #859794;
   --accent-primary: #0f766e;
   --accent-secondary: #0b5f58;
   --accent-soft: #ecf4f3;
@@ -386,12 +386,12 @@
   --text-primary: #1c1814;
   --text-secondary: #463f37;
   --text-muted: #685f55;
-  --text-disabled: #a49f99;
+  --text-disabled: #99938d;
   --heading-text: #14110d;
   --icon-color: #685f55;
   --border-subtle: #e4e0d9;
   --border-active: #c9c2b7;
-  --border-input: #bdb5a8;
+  --border-input: #9a9286;
   --accent-primary: #b4410b;
   --accent-secondary: #953508;
   --accent-soft: #f9f0eb;
@@ -534,12 +534,12 @@
   --text-primary: #e9ebf1;
   --text-secondary: #bcc2ce;
   --text-muted: #959cab;
-  --text-disabled: #626774;
+  --text-disabled: #636875;
   --heading-text: #f5f6f9;
   --icon-color: #959cab;
   --border-subtle: #252a37;
   --border-active: #3a4152;
-  --border-input: #434b5e;
+  --border-input: #61697a;
   --accent-primary: #d38bc2;
   --accent-secondary: #e2a5d3;
   --accent-soft: #332a3b;
@@ -608,12 +608,12 @@
   --text-primary: #e8e9ec;
   --text-secondary: #b9bcc4;
   --text-muted: #9195a0;
-  --text-disabled: #60636b;
+  --text-disabled: #656871;
   --heading-text: #f4f5f7;
   --icon-color: #9195a0;
   --border-subtle: #26282d;
   --border-active: #3a3d44;
-  --border-input: #454953;
+  --border-input: #666a74;
   --accent-primary: #5b9bff;
   --accent-secondary: #7fb1ff;
   --accent-soft: #222d3f;
@@ -682,12 +682,12 @@
   --text-primary: #e2ebf5;
   --text-secondary: #aebdd0;
   --text-muted: #8597ad;
-  --text-disabled: #556375;
+  --text-disabled: #596779;
   --heading-text: #f0f6fc;
   --icon-color: #8597ad;
   --border-subtle: #1b2636;
   --border-active: #2c3c52;
-  --border-input: #36485f;
+  --border-input: #56687f;
   --accent-primary: #2cc4d9;
   --accent-secondary: #5ad5e6;
   --accent-soft: #13313e;
@@ -913,3 +913,17 @@
   filter: brightness(0) invert(1) !important;
 }
 
+
+/* ---------- Status fills in dark themes (26 Nov 2026) ----------
+   Dark themes use bright status colours (#34d399, #fbbf24, #f87171, #38bdf8), so the
+   white text many components put on them read 1.7–2.8:1. On those fills, text turns
+   near-black instead (6.6–10:1). Light themes keep white text on their deeper fills. */
+[data-mode="dark"] {
+  --on-status: #0b0f14;
+}
+[data-mode="dark"] :is([class~="bg-success"], [class~="bg-warning"], [class~="bg-danger"], [class~="bg-info"],
+  [class*=" bg-success/"], [class*=" bg-warning/"], [class*=" bg-danger/"], [class*=" bg-info/"],
+  [class^="bg-success/"], [class^="bg-warning/"], [class^="bg-danger/"], [class^="bg-info/"]):is([class~="text-white"], [class~="text-white/90"], [class~="text-white/80"]),
+[data-mode="dark"] :is([class~="bg-success"], [class~="bg-warning"], [class~="bg-danger"], [class~="bg-info"]) :is([class~="text-white"], [class~="text-white/90"], [class~="text-white/80"]) {
+  color: var(--on-status);
+}
