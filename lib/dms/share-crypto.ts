@@ -13,14 +13,54 @@ export class ShareNotConfiguredError extends Error {
   }
 }
 
+let cachedDbSecret: string | null = null;
+
 function secret(): string {
-  const s = process.env.SHARE_SECRET_SALT || "";
-  if (s.length < 32) throw new ShareNotConfiguredError();
-  return s;
+  const envVal = process.env.SHARE_SECRET_SALT || "";
+  if (envVal.length >= 32) return envVal;
+  if (cachedDbSecret && cachedDbSecret.length >= 32) return cachedDbSecret;
+  throw new ShareNotConfiguredError();
 }
 
 export function shareConfigured(): boolean {
-  return (process.env.SHARE_SECRET_SALT || "").length >= 32;
+  const envVal = process.env.SHARE_SECRET_SALT || "";
+  return envVal.length >= 32 || Boolean(cachedDbSecret && cachedDbSecret.length >= 32);
+}
+
+/**
+ * Ensures the share signing secret is loaded.
+ * Uses process.env.SHARE_SECRET_SALT first; if missing, auto-generates and stores
+ * a 64-character random salt in core_module_settings (server-only via supabaseAdmin).
+ */
+export async function ensureShareSecret(): Promise<boolean> {
+  if ((process.env.SHARE_SECRET_SALT || "").length >= 32) return true;
+  if (cachedDbSecret && cachedDbSecret.length >= 32) return true;
+  try {
+    const { supabaseAdmin } = await import("@/lib/supabase/service_role");
+    const { data } = await supabaseAdmin
+      .from("core_module_settings")
+      .select("value_json")
+      .eq("module_key", "dms")
+      .eq("key", "share_secret_salt")
+      .maybeSingle();
+    const existing = String((data?.value_json as any)?.salt || "");
+    if (existing.length >= 32) {
+      cachedDbSecret = existing;
+      return true;
+    }
+    const generated = crypto.randomBytes(32).toString("hex");
+    const { error } = await supabaseAdmin.from("core_module_settings").upsert(
+      { module_key: "dms", key: "share_secret_salt", value_json: { salt: generated }, updated_at: new Date().toISOString() },
+      { onConflict: "module_key,key" }
+    );
+    if (!error) {
+      cachedDbSecret = generated;
+      return true;
+    }
+  } catch {
+    // Fall back cleanly if DB is unreachable
+  }
+  return false;
 }
 
 export function hmac(kind: "token" | "otp" | "session" | "device" | "cookie", value: string): string {

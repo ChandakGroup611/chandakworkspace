@@ -1,7 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
-import { escapeHtml, hmac, maskEmail, newOtp, newSessionToken, safeEqualHex, shareConfigured, verifySharePassword } from "@/lib/dms/share-crypto";
+import { ensureShareSecret, escapeHtml, hmac, maskEmail, newOtp, newSessionToken, safeEqualHex, shareConfigured, verifySharePassword } from "@/lib/dms/share-crypto";
 import {
   clientInfo,
   endShareSession,
@@ -147,6 +147,7 @@ async function registerFailure(share: ShareRow, kind: "OTP" | "PASSWORD"): Promi
 
 export async function fetchSharePublicMetadataAction(rawToken: string): Promise<SharePublicMetadata> {
   try {
+    await ensureShareSecret();
     if (!shareConfigured()) return { ...CLOSED, errorMessage: "Document sharing is not available right now." };
     const share = await loadShareByToken(rawToken);
     const state = shareState(share);

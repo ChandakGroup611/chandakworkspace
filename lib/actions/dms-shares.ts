@@ -3,7 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { dmsActor, dmsError, isUuid, resolveWorkspaceId } from "@/lib/dms/access";
 import { namesFor } from "@/lib/dms/documents";
-import { escapeHtml, hashSharePassword, hmac, newLinkToken, newSharePassword, ShareNotConfiguredError, shareConfigured } from "@/lib/dms/share-crypto";
+import { ensureShareSecret, escapeHtml, hashSharePassword, hmac, newLinkToken, newSharePassword, ShareNotConfiguredError, shareConfigured } from "@/lib/dms/share-crypto";
 import { mailFrame, queueShareEmail, siteUrl } from "@/lib/dms/share-session";
 
 /**
@@ -86,6 +86,7 @@ export async function fetchSharePolicyAction(workspaceId?: string): Promise<Resu
     const actor = await dmsActor();
     const wsId = await resolveWorkspaceId(workspaceId);
     if (!wsId) return { success: false, error: "Workspace not found." };
+    await ensureShareSecret();
     return { success: true, policy: await policyFor(wsId), canEdit: actor.base.admin, configured: shareConfigured() };
   } catch (err) {
     return { success: false, error: dmsError(err, "Could not load the share policy.") };
@@ -132,6 +133,7 @@ export async function createShareAction(params: {
   workspaceId?: string;
 }): Promise<Result<{ shareId: string; url: string; password: string | null; expiresAt: string }>> {
   try {
+    await ensureShareSecret();
     if (!shareConfigured()) throw new ShareNotConfiguredError();
     const actor = await dmsActor();
     const wsId = await resolveWorkspaceId(params.workspaceId);

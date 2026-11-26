@@ -1,6 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
-import { hmac, safeEqualHex, sessionCookieName } from "@/lib/dms/share-crypto";
+import { ensureShareSecret, hmac, safeEqualHex, sessionCookieName } from "@/lib/dms/share-crypto";
 
 /** Server-side helpers shared by the public share page actions and the share file route. */
 
@@ -29,6 +29,7 @@ export const SESSION_HOURS = 8;
 
 export async function loadShareByToken(rawToken: string): Promise<ShareRow | null> {
   if (!rawToken || rawToken.length < 20 || rawToken.length > 100) return null;
+  await ensureShareSecret();
   const { data } = await supabaseAdmin.from("dms_shares").select(SHARE_COLUMNS).eq("token_hash", hmac("token", rawToken)).maybeSingle();
   return (data as ShareRow) || null;
 }
