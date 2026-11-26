@@ -1,7 +1,7 @@
 "use client";
 import { toast } from 'react-toastify';
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { TicketScopeSelector } from "./TicketScopeSelector";
 import { TicketFormInfra } from "./TicketFormInfra";
@@ -9,7 +9,7 @@ import { TicketFormERP } from "./TicketFormERP";
 import { TicketFormOthers } from "./TicketFormOthers";
 import { VoiceFieldBar } from "@/components/voice/VoiceFieldBar";
 import { VoiceReceiptCard, type VoiceReceiptData } from "@/components/voice/VoiceReceiptCard";
-import type { ParsedVoiceFields } from "@/lib/voice/field-parser";
+import { parseVoiceFields, type ParsedVoiceFields } from "@/lib/voice/field-parser";
 import { X, ChevronLeft, Loader2 } from "lucide-react";
 import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
 import { AppButton } from "@/components/ui/AppButton";
@@ -30,6 +30,28 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
   const [voiceFormKey, setVoiceFormKey] = useState(0);
   const [receiptData, setReceiptData] = useState<VoiceReceiptData | null>(null);
   const { isLight: isLightMode } = useTheme();
+
+  useEffect(() => {
+    try {
+      const draft = sessionStorage.getItem("chandak_voice_draft");
+      if (draft) {
+        sessionStorage.removeItem("chandak_voice_draft");
+        sessionStorage.removeItem("chandak_voice_ai_values");
+        const parsed = parseVoiceFields(draft);
+        const patch: Record<string, any> = {};
+        if (parsed.subject) patch.subject = parsed.subject;
+        if (parsed.description) {
+          patch.remark = parsed.description;
+          patch.requirement_description = parsed.description;
+        }
+        if (parsed.businessReason) patch.business_reason = parsed.businessReason;
+        if (Object.keys(patch).length > 0) {
+          setVoiceDraft((prev) => ({ ...prev, ...patch }));
+          setVoiceFormKey((k) => k + 1);
+        }
+      }
+    } catch {}
+  }, []);
 
   const handleVoiceApply = (fields: ParsedVoiceFields) => {
     const patch: Record<string, any> = {};

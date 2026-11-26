@@ -18,7 +18,7 @@ export interface ParsedVoiceFields {
   executors?: string;
   watchers?: string;
   businessReason?: string;
-  moduleHint?: "TASK" | "SUBTASK" | "TICKET" | "REQUIREMENT";
+  moduleHint?: "TASK" | "SUBTASK" | "TICKET" | "REQUIREMENT" | "VEHICLE" | "BUDGET" | "MEETING";
 }
 
 const SEP = `(?:\\s+(?:is|are|should\\s+be|will\\s+be|as|to)\\b[.,:\\s]*|[.:\\-]+\\s*)`;
@@ -188,10 +188,17 @@ export function parseVoiceFields(transcript: string): ParsedVoiceFields {
   if (!text) return {};
 
   const out: ParsedVoiceFields = {};
-  if (/\bsub-?task\b/i.test(text)) out.moduleHint = "SUBTASK";
-  else if (/\brequirement\b/i.test(text)) out.moduleHint = "REQUIREMENT";
-  else if (/\bticket\b/i.test(text)) out.moduleHint = "TICKET";
-  else if (/\btask\b/i.test(text)) out.moduleHint = "TASK";
+  const explicitIntent = text.match(
+    /\b(?:create|new|add|raise|log|open|make)\s+(?:a\s+|an\s+)?(sub-?task|ticket|requirement|vehicle|budget|meeting|task)\b/i
+  );
+  const intentWord = explicitIntent?.[1]?.toLowerCase().replace("-", "");
+  if (intentWord === "subtask" || /\bsub-?task\b/i.test(text)) out.moduleHint = "SUBTASK";
+  else if (intentWord === "requirement" || /\brequirement\b/i.test(text)) out.moduleHint = "REQUIREMENT";
+  else if (intentWord === "ticket" || /\bticket\b/i.test(text)) out.moduleHint = "TICKET";
+  else if (intentWord === "vehicle" || /\bvehicle\b/i.test(text)) out.moduleHint = "VEHICLE";
+  else if (intentWord === "budget" || /\bbudget\b/i.test(text)) out.moduleHint = "BUDGET";
+  else if (intentWord === "meeting" || /\bmeeting\b/i.test(text)) out.moduleHint = "MEETING";
+  else if (intentWord === "task" || /\btask\b/i.test(text)) out.moduleHint = "TASK";
 
   // Pass 1: match explicit separators (is/are/should be/as/to/./:/-) OR boundary-anchored space-only headers
   const matches: { key: keyof Omit<ParsedVoiceFields, "moduleHint">; start: number; valueStart: number }[] = [];
