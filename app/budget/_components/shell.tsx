@@ -2,6 +2,7 @@ import Link from "next/link";
 import { type Db, type Me, type Project, type Version, can, canApprove, canChangeDraft, chainOf, getSignoffLevels, getSignoffStatus, limitedToDepartments } from "@/lib/budget/data";
 import { dmy, formatBudgetPeriod, versionTitle } from "@/lib/budget/format";
 import { Selectors, SignoffActions } from "./forms";
+import { MoreMenu } from "./more-menu";
 
 export const TABS: [string, string][] = [
   ["start", "Get started"], ["create", "Create budget"], ["overview", "Overview"], ["budgets", "Budgets Registry"], ["entry", "Budget entry"], ["import", "Import from Excel"], ["summary", "Summary report"],
@@ -136,10 +137,21 @@ export function Shell({ me, projects, project, versions, version, tab, children 
               <div className="top-links">
                 <Link href="/budget/list" className="icon-link strong" aria-current={tab === "list" ? "page" : undefined} title="Every budget of every project, with filters">All budgets</Link>
                 {can(me, "project.create") || can(me, "version.open") ? <Link href="/budget/create" className="icon-link cta" aria-current={tab === "create" && !project ? "page" : undefined}>+ Create budget</Link> : null}
-                <Link href="/budget/approvals" className="icon-link" aria-current={tab === "approvals" ? "page" : undefined} title="Budget versions waiting for sign-off, across all projects">Approvals</Link>
-                <Link href={helpHref} className="icon-link" aria-current={area === "help" ? "page" : undefined} title="Workflow guide">? Guide</Link>
-                {can(me, "project.view") && <Link href="/budget/admin/masters" className="icon-link" aria-current={tab === "masters" ? "page" : undefined} title="Budget Masters: Projects, Towers, Building Types, Departments, Cost Heads, GST, Vendors">Masters</Link>}
-                {allowed.admin && <Link href={adminTabs.find((t) => t.id !== "masters")?.href ?? "/budget/admin/access"} className="icon-link" aria-current={area === "admin" && tab !== "masters" ? "page" : undefined} title="Administration: access and custom fields">Admin</Link>}
+                {/* less-used links live in "More" so the header has one main action; all are kept */}
+                <MoreMenu active={tab === "approvals" || area === "help" || area === "admin"}>
+                  <Link href="/budget/approvals" aria-current={tab === "approvals" ? "page" : undefined}>
+                    <span>Approvals</span><small>Versions waiting for sign-off, all projects</small>
+                  </Link>
+                  <Link href={helpHref} aria-current={area === "help" ? "page" : undefined}>
+                    <span>Guide</span><small>How the budget workflow runs</small>
+                  </Link>
+                  {can(me, "project.view") && <Link href="/budget/admin/masters" aria-current={tab === "masters" ? "page" : undefined}>
+                    <span>Masters</span><small>Projects, towers, departments, cost heads, GST, vendors</small>
+                  </Link>}
+                  {allowed.admin && <Link href={adminTabs.find((t) => t.id !== "masters")?.href ?? "/budget/admin/access"} aria-current={area === "admin" && tab !== "masters" ? "page" : undefined}>
+                    <span>Admin</span><small>Access, roles and custom fields</small>
+                  </Link>}
+                </MoreMenu>
               </div>
             </div>
           </div>

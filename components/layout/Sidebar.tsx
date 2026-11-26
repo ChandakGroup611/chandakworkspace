@@ -127,7 +127,7 @@ const taskNavGroups: NavGroup[] = [
       },
       { label: "Organization Budget", href: "/budget", icon: Wallet },
       { label: "Users", href: "/users", icon: Users, permission: "USERS_VIEW" },
-      { label: "RBAC access policies", href: "/rbac", icon: Key, permission: "USERS_VIEW" },
+      { label: "Access policies", href: "/rbac", icon: Key, permission: "USERS_VIEW" },
       { label: "IAM controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
       { label: "Learning hub", href: "/learning", icon: BookOpen },
     ]
@@ -194,7 +194,7 @@ const vehicleNavGroups: NavGroup[] = [
       { label: "Fleet reports", href: "/vehicle/reports", icon: LineChart, fleetModule: "REPORTS" },
       { label: "My assigned vehicles", href: "/vehicle/my-garage", icon: LifeBuoy, fleetModule: "MY_GARAGE" },
       { label: "Fleet guidelines and SOPs", href: "/vehicle/learning", icon: BookOpen, fleetModule: "LEARNING" },
-      { label: "RBAC access policies", href: "/vehicle/rbac", icon: Key, fleetModule: "RBAC" },
+      { label: "Access policies", href: "/vehicle/rbac", icon: Key, fleetModule: "RBAC" },
       { label: "Fleet settings", href: "/vehicle/settings", icon: Settings, fleetModule: "SETTINGS" },
     ]
   }
@@ -214,7 +214,7 @@ const dashboardsNavGroups: NavGroup[] = [
       { label: "Sales (Salesforce)", href: "/dashboards/sfdc", icon: LineChart, permission: "DASH_SFDC_VIEW" },
       { label: "Workspace admin", href: "/dashboards/cws", icon: LineChart, permission: "DASH_CWS_VIEW" },
       { label: "Organization Budget", href: "/budget", icon: Wallet },
-      { label: "RBAC access policies", href: "/rbac?module=DASHBOARDS", icon: Key, permission: "DASH_ADM_VIEW" },
+      { label: "Access policies", href: "/rbac?module=DASHBOARDS", icon: Key, permission: "DASH_ADM_VIEW" },
     ]
   }
 ];
@@ -248,7 +248,7 @@ const designNavGroups: NavGroup[] = [
       { label: "Learning and lifecycle guide", href: "/design/learning", icon: BookOpen },
       { label: "Consultant directory", href: "/design/consultants", icon: Users },
       { label: "Design analytics", href: "/design/reports", icon: LineChart },
-      { label: "RBAC access policies", href: "/design/rbac", icon: Key, permission: "USERS_VIEW" },
+      { label: "Access policies", href: "/design/rbac", icon: Key, permission: "USERS_VIEW" },
       { 
         label: "Masters setup", 
         href: "/design/masters", 
@@ -659,7 +659,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                       }}
                       className={cn(
                         "group relative flex min-w-0 items-center rounded-md text-[13.5px] transition-colors",
-                        compact ? "mx-auto h-10 w-10 justify-center" : "h-9 flex-1 gap-3 pl-3 pr-9",
+                        compact ? "mx-auto h-10 w-10 justify-center" : "min-h-9 py-1.5 flex-1 gap-3 pl-3 pr-9",
                         showSelf
                           ? "bg-sidebar-active font-semibold text-sidebar-active-foreground"
                           : childActive
@@ -669,7 +669,8 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                     >
                       {showSelf && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-sidebar-indicator" aria-hidden />}
                       <Icon className={cn("h-4 w-4 shrink-0", showSelf || childActive ? "opacity-100" : "opacity-75")} aria-hidden />
-                      {!compact && <span className="truncate">{item.label}</span>}
+                      {/* long names wrap to a second line instead of being cut off ("Building section ma…") */}
+                      {!compact && <span className="line-clamp-2 leading-snug" title={item.label}>{item.label}</span>}
                       {!compact && item.badge && (
                         <span className="ml-auto rounded px-1.5 text-[11px] font-medium leading-5 bg-sidebar-hover text-sidebar-muted tabular">{item.badge}</span>
                       )}
@@ -699,12 +700,12 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                               aria-current={on ? "page" : undefined}
                               onClick={() => onCloseMobile?.()}
                               className={cn(
-                                "relative flex h-8 items-center rounded-md px-2.5 text-[13px] transition-colors",
+                                "relative flex min-h-8 py-1 items-center rounded-md px-2.5 text-[13px] transition-colors",
                                 on ? "bg-sidebar-active font-semibold text-sidebar-active-foreground" : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
                               )}
                             >
                               {on && <span className="absolute -left-[9px] top-1.5 bottom-1.5 w-[2px] rounded bg-sidebar-indicator" aria-hidden />}
-                              <span className="truncate">{sub.label}</span>
+                              <span className="line-clamp-2 leading-snug" title={sub.label}>{sub.label}</span>
                             </Link>
                           </li>
                         );

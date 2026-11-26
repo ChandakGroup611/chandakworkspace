@@ -2168,3 +2168,53 @@ html:not([data-mode="dark"]):not(.dark) .budget-app { --bg: #f3f5f9; }
 .budget-app .wz-sheet-total em { color: var(--muted); font-style: normal; font-size: 13px; }
 .budget-app .wz-sheet .wz-sec { padding-bottom: 22px; margin-bottom: 22px; border-bottom: 2px solid var(--line); scroll-margin-top: 80px; }
 .budget-app .wz-sheet .wz-sec:last-of-type { border-bottom: 0; }
+
+/* ---------- Round 2 refresh (26 Nov 2026): same look as the rest of Chandak Workspace ----------
+   Visual only. Every link, tab and step is still there; less-used links sit in "More". */
+.budget-app .top-outer { border-top: 0; }
+.budget-app .top { box-shadow: none; border-bottom: 1px solid var(--line); background: var(--surface); }
+.budget-app .crumbs .crumb-project { color: var(--ink); font-size: 20px; font-weight: 600; letter-spacing: -.01em; }
+.budget-app .crumbs .crumb-project:hover { color: var(--accent); }
+.budget-app .icon-link { min-height: 36px; padding: 0 12px; border-radius: var(--radius-button, 6px); border: 1px solid var(--line-strong); color: var(--ink); background: var(--surface); font-size: 13.5px; font-weight: 600; }
+.budget-app .icon-link:hover { color: var(--ink); border-color: var(--line-strong); background: var(--row-sub); }
+.budget-app .icon-link.strong { border-color: var(--line-strong); color: var(--ink); }
+.budget-app .icon-link.cta { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.budget-app .icon-link.cta:hover { background: var(--accent); opacity: .92; color: var(--accent-ink); }
+
+/* "More" menu */
+.budget-app .more-menu { position: relative; }
+.budget-app .more-menu > summary { list-style: none; cursor: pointer; border-color: transparent; background: transparent; color: var(--ink); }
+.budget-app .more-menu > summary::-webkit-details-marker { display: none; }
+.budget-app .more-menu[open] > summary, .budget-app .more-menu.has-current > summary { background: var(--row-sub); border-color: var(--line); }
+.budget-app .more-menu-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; min-width: 280px; padding: 6px; display: flex; flex-direction: column; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card, 10px); box-shadow: var(--elevation-lg, 0 16px 40px rgba(16,24,40,.16)); }
+.budget-app .more-menu-list a { display: flex; flex-direction: column; gap: 2px; padding: 9px 10px; border-radius: 6px; color: var(--ink); text-decoration: none; }
+.budget-app .more-menu-list a span { font-size: 14px; font-weight: 600; }
+.budget-app .more-menu-list a small { font-size: 12.5px; color: var(--muted); font-weight: 400; }
+.budget-app .more-menu-list a:hover { background: var(--row-sub); }
+.budget-app .more-menu-list a[aria-current=page] { background: var(--b-accent-soft); }
+.budget-app .more-menu-list a[aria-current=page] span { color: var(--accent); }
+
+/* Section tabs: plain underline, one accent */
+.budget-app .areas a { color: var(--muted); font-weight: 500; font-size: 14px; padding: 10px 2px; margin-right: 22px; }
+.budget-app .areas a:hover { color: var(--ink); }
+.budget-app .areas a[aria-current=page] { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+
+/* Sub-views: one segmented control */
+.budget-app .subtabs-row { border-top: 0; padding-block: 10px 12px; }
+.budget-app .subtabs-row .tabs { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; background: var(--row-group); border-radius: 8px; }
+.budget-app .subtabs-row .tabs a { padding: 6px 14px; font-size: 13.5px; font-weight: 500; color: var(--ink); border: 0; border-radius: 6px; background: transparent; }
+.budget-app .subtabs-row .tabs a:hover { background: color-mix(in srgb, var(--surface) 60%, transparent); }
+.budget-app .subtabs-row .tabs a[aria-current=page] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(16,24,40,.08); border: 0; }
+
+/* Progress steps: quiet, green when done */
+.budget-app .stepper { gap: 6px; font-size: 12.5px; font-weight: 500; }
+.budget-app .stepper li.done { color: var(--good); font-weight: 600; }
+.budget-app .stepper li.current { color: var(--ink); font-weight: 600; }
+.budget-app .stepper li.done .dot { border-color: transparent; background: var(--good-soft); color: var(--good); }
+.budget-app .stepper li.current .dot { border-color: var(--accent); color: var(--accent); }
+.budget-app .stepper li + li::before { background: color-mix(in srgb, var(--good) 35%, var(--line)); width: 14px; }
+
+/* Cards and tables: same radius, border and header as the core app */
+.budget-app .panel { border-radius: var(--radius-card, 10px); box-shadow: none; }
+.budget-app th { background: var(--row-sub); color: var(--muted); font-size: 12px; font-weight: 600; }
+.budget-app tbody tr:hover > td { background: var(--row-sub); }

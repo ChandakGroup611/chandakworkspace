@@ -247,6 +247,35 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     return "MATRIX";
   }, [pathname, initialSlug]);
 
+  // Page heading = the screen's name, worded as in the side menu (was "Design & engineering tracking" on every screen)
+  const SCREEN_TITLE: Record<ActiveTabType, string> = {
+    MATRIX: "Tender design matrix",
+    BUILDING_MATRIX: "Building section matrix",
+    DMS: "DMS folders",
+    LOOK_AHEAD: "Look-ahead forecast",
+    LIAISONING: "Statutory liaisoning",
+    STAGES: "Design stages roadmap",
+    DRAWINGS: "Drawing register",
+    APPROVALS: "Design approvals",
+    REVISIONS: "Revision history",
+    GFC_HANDOVER: "GFC site handover",
+    TRANSMITTALS: "Transmittals and slips",
+    RFIS: "RFIs and site queries",
+    LEARNING: "Learning and lifecycle guide",
+    CONSULTANTS: "Consultant directory",
+    REPORTS: "Design analytics",
+    RBAC: "Access policies",
+    MASTERS: "Masters setup",
+    PROJECTS: "Projects",
+    SUB_PROJECTS: "Sub-projects",
+    PACKAGES: "Packages",
+    SUB_PACKAGES: "Sub-packages",
+    CATEGORIES: "Categories",
+    AUTHORITIES: "Authorities",
+    TEMPLATES: "Templates",
+  };
+  const screenTitle = SCREEN_TITLE[activeTab] ?? "Design and Drawing";
+
   const handleTabChange = (tab: ActiveTabType) => {
     const routeMap: Record<ActiveTabType, string> = {
       MATRIX: "/design/matrix",
@@ -426,9 +455,10 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
                 <Compass className="h-5 w-5" />
               </div>
               <div className="min-w-0">
+                <p className="text-[12.5px] text-muted mb-0.5">Design and Drawing</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">
-                    Design & engineering tracking
+                    {screenTitle}
                   </h1>
                   {isRestrictedProjectScope ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-sunken text-subtle">
@@ -438,7 +468,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
                   ) : (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-sunken text-subtle">
                       <ShieldCheck className="h-3 w-3" />
-                      <span>Global scope ({accessibleProjects.length} Projects)</span>
+                      <span>All {accessibleProjects.length} projects</span>
                     </span>
                   )}
                 </div>
