@@ -207,7 +207,8 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
         if (isExpiry && (userHydratedPayload.notification_summary || userHydratedPayload.description)) {
           subject = `${moduleName} Expiry: ${userHydratedPayload.notification_summary || userHydratedPayload.description}`;
         } else {
-          const itemLabel = userHydratedPayload.task_name || 
+          const itemLabel = userHydratedPayload.drawing_label ||
+                            userHydratedPayload.task_name || 
                             userHydratedPayload.task_code || 
                             userHydratedPayload.ticket_title || 
                             userHydratedPayload.ticket_code || 
@@ -279,7 +280,8 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     // 6.1 Real-Time In-App Notification Stream insertion (notification_queue & task_notifications)
     if (!payload._disableInApp && candidateUsers.length > 0) {
       try {
-        const itemLabel = autoHydratedPayload.task_name || 
+        const itemLabel = autoHydratedPayload.drawing_label ||
+                          autoHydratedPayload.task_name || 
                           autoHydratedPayload.task_code || 
                           autoHydratedPayload.ticket_title || 
                           autoHydratedPayload.ticket_code || 
@@ -832,6 +834,12 @@ function hydrateTemplate(text: string, data: any): string {
 // ---------------------------------------------------------------------------
 async function resolveRecipientType(type: string, moduleName: string, payload: any): Promise<string[]> {
   const ids: string[] = [];
+
+  // Design (DMAC drawing review): the event says who each role is (reviewers, designer, escalation)
+  if (moduleName === "Design") {
+    const list = payload?.design_recipients?.[type];
+    return Array.isArray(list) ? list.filter(Boolean) : [];
+  }
 
   // Chandak Meet: the event says who each role is (attendees, organiser, point owner…)
   if (moduleName === "Meet") {

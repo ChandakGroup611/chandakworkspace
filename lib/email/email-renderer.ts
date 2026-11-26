@@ -29,6 +29,8 @@ export interface EmailCardOptions {
 // Internal fields that should NOT be displayed in dynamic detail callouts
 const EXCLUDED_KEYS = new Set([
   'id',
+  'design_recipients',
+  'drawing_label',
   'entity_id',
   'triggering_user_id',
   'creator_id',
