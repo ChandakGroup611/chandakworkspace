@@ -570,6 +570,8 @@ export default function NotesClient({ initialNotes, masters, initialKind = "all"
                           )}
                           <button
                             onClick={() => handleDeleteBlock(block.id)}
+                            aria-label="Delete note"
+                            title="Delete note"
                             className="p-1 text-muted hover:text-danger-text rounded"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

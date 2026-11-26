@@ -201,7 +201,7 @@ export default function HolidayCalendar() {
 
   const LABEL = "mb-1.5 block text-[13px] font-medium text-subtle";
   const SELECT = "h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring";
-  const TAB = "-mb-px inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  const TAB = "rounded-none bg-transparent hover:bg-transparent -mb-px inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
   if (permsLoading) {
     return (
@@ -232,10 +232,10 @@ export default function HolidayCalendar() {
       />
 
       <div role="tablist" aria-label="Schedules" className="flex gap-1 overflow-x-auto border-b border-border hide-scrollbar">
-        <AppButton type="button" role="tab" aria-selected={activeTab === 'holidays'} onClick={() => setActiveTab("holidays")} className={`${TAB} ${activeTab === 'holidays' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}>
+        <AppButton variant="ghost" type="button" role="tab" aria-selected={activeTab === 'holidays'} onClick={() => setActiveTab("holidays")} className={`${TAB} ${activeTab === 'holidays' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}>
           <Calendar className="w-4 h-4" aria-hidden /> Holidays
         </AppButton>
-        <AppButton type="button" role="tab" aria-selected={activeTab === 'working_hours'} onClick={() => setActiveTab("working_hours")} className={`${TAB} ${activeTab === 'working_hours' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}>
+        <AppButton variant="ghost" type="button" role="tab" aria-selected={activeTab === 'working_hours'} onClick={() => setActiveTab("working_hours")} className={`${TAB} ${activeTab === 'working_hours' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}>
           <Clock className="w-4 h-4" aria-hidden /> Working hours
         </AppButton>
       </div>

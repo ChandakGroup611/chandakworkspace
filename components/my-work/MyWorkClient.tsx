@@ -106,7 +106,7 @@ export default function MyWorkClient({ initialItems }: MyWorkClientProps) {
             >
               <span>{label}</span>
               <span className={`px-1.5 py-0.2 rounded-full text-[11px] ${
-                selectedModule === mod ? "bg-background text-foreground" : "bg-muted text-muted-foreground"
+                selectedModule === mod ? "bg-background text-foreground" : "bg-sunken text-muted-foreground"
               }`}>
                 {count}
               </span>
@@ -155,7 +155,7 @@ export default function MyWorkClient({ initialItems }: MyWorkClientProps) {
                       </div>
                     </AppTableCell>
                     <AppTableCell>
-                      <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">
+                      <code className="text-xs bg-sunken px-1.5 py-0.5 rounded font-mono text-muted-foreground">
                         {item.code || item.id.substring(0, 8)}
                       </code>
                     </AppTableCell>

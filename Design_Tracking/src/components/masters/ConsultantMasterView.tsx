@@ -597,7 +597,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
                   selectedCategoryFilter === "ALL"
                     ? "bg-primary text-white font-semibold shadow-2xs"
-                    : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                    : "bg-sunken text-muted-foreground hover:text-foreground"
                 }`}
               >
                 All packages
@@ -613,7 +613,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 ${
                       selectedCategoryFilter === cat.name
                         ? "bg-primary text-white font-semibold shadow-2xs"
-                        : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                        : "bg-sunken text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     <span>{cat.icon || ""}</span>
@@ -628,7 +628,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
           {/* Consultants Cards Grid */}
           {filteredConsultants.length === 0 ? (
             <div className="p-8 rounded-lg border border-border bg-surface text-center space-y-3">
-              <div className="h-10 w-10 mx-auto rounded-lg bg-muted text-muted-foreground flex items-center justify-center">
+              <div className="h-10 w-10 mx-auto rounded-lg bg-sunken text-muted-foreground flex items-center justify-center">
                 <Users className="h-5 w-5" />
               </div>
               <div>

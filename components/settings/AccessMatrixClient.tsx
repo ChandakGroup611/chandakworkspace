@@ -215,7 +215,7 @@ export default function AccessMatrixClient({ moduleRoles, users }: AccessMatrixC
                       </AppTableCell>
                       <AppTableCell>
                         <div className="flex items-center gap-1.5">
-                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
+                          <code className="text-xs bg-sunken px-1.5 py-0.5 rounded font-mono">
                             {role.role_code}
                           </code>
                           {isStandard && (
@@ -367,7 +367,7 @@ export default function AccessMatrixClient({ moduleRoles, users }: AccessMatrixC
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <code className="text-xs bg-muted px-2 py-0.5 rounded font-mono font-semibold">
+                                  <code className="text-xs bg-sunken px-2 py-0.5 rounded font-mono font-semibold">
                                     {access.role_code}
                                   </code>
                                   <span className="text-xs text-muted-foreground font-mono">

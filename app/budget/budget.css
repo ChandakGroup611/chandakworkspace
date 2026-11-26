@@ -375,7 +375,8 @@
 .budget-app .crumbs a:hover { color: var(--ink); text-decoration: underline; }
 .budget-app .crumbs .crumb-project { color: var(--ink); font-size: 16px; font-weight: 600; }
 .budget-app .crumbs .crumb-current { color: var(--ink); font-weight: 600; }
-.budget-app .crumbs .crumb-sep { color: var(--line-strong); }
+.budget-app .crumbs .crumb-sep { color: var(--muted); }
+.budget-app .crumbs h1.crumb-current { display: inline; margin: 0; font-family: inherit; font-size: inherit; line-height: inherit; letter-spacing: inherit; }
 .budget-app .top-links { display: flex; align-items: center; gap: 6px; }
 .budget-app .icon-link { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); font-size: 12.5px; font-weight: 500; text-decoration: none; white-space: nowrap; }
 .budget-app .icon-link:hover { color: var(--ink); border-color: var(--line-strong); }
@@ -1157,6 +1158,8 @@
 .budget-app a {
   color: var(--accent);
 }
+/* Filled brand buttons that are links keep white text */
+.budget-app a.text-primary-foreground { color: var(--btn-primary-text); }
 
 .budget-app .busy {
   opacity: .6;

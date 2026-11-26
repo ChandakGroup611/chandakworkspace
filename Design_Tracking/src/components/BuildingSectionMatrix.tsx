@@ -347,7 +347,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
         };
       default:
         return {
-          bg: "bg-muted text-muted-foreground border-border",
+          bg: "bg-sunken text-muted-foreground border-border",
           label: "Not sent",
           fullLabel: "Not Submitted"
         };
@@ -371,9 +371,9 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
             <Building2 className="w-3.5 h-3.5" />
             DMAC · {projects.find(p => p.id === selectedProjectId)?.name || "Live Project"} · {towers.find(t => t.id === selectedTowerId)?.towerName || "All Wings"}
           </div>
-          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading mt-1">
+          <h2 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading mt-1">
             Building section heat matrix
-          </h1>
+          </h2>
           <p className="text-sm text-muted-foreground">
             Floor × Discipline operational grid, 2-sided SLA queues & real-time revision tracking.
           </p>
@@ -646,7 +646,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
                   <div className="mt-5 pt-3 border-t border-border flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                     <span className="font-semibold text-foreground text-[11px] font-mono">Legend:</span>
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded bg-muted border border-border" /> Not submitted
+                      <span className="w-3 h-3 rounded bg-sunken border border-border" /> Not submitted
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded bg-info-soft text-info-text border border-info-border" /> Under review
@@ -691,7 +691,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
                       <button type="button"
                         key={item.drawingId}
                         onClick={() => setSelectedCell(item)}
-                        className="w-full text-left p-2.5 rounded-md hover:bg-muted/40 transition-all flex items-center justify-between gap-3 border border-transparent hover:border-border"
+                        className="w-full text-left p-2.5 rounded-md hover:bg-surface-hover transition-all flex items-center justify-between gap-3 border border-transparent hover:border-border"
                       >
                         <div className="min-w-0">
                           <div className="text-xs font-mono font-semibold text-foreground truncate">
@@ -819,7 +819,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
               </div>
               <button aria-label="Close" type="button"
                 onClick={() => setSelectedCell(null)}
-                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                className="p-1.5 rounded-md hover:bg-surface-hover text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />
               </button>

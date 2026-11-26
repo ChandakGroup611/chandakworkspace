@@ -125,7 +125,7 @@ export default function ProviderDashboard() {
           <div key={prov.id || prov.priority_level} className="bg-card border border-border rounded-lg overflow-hidden shadow-sm">
             <div className={`p-4 border-b border-border flex items-center justify-between ${prov.priority_level === 1 ? 'bg-accent-soft' : 'bg-muted/30'}`}>
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${prov.priority_level === 1 ? 'bg-accent-soft' : 'bg-muted'}`}>
+                <div className={`p-2 rounded-lg ${prov.priority_level === 1 ? 'bg-accent-soft' : 'bg-sunken'}`}>
                   <Server className={`w-5 h-5 ${prov.priority_level === 1 ? 'text-accent-soft-text' : 'text-muted-foreground'}`} />
                 </div>
                 <div>

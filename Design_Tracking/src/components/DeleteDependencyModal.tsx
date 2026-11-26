@@ -142,7 +142,7 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
           <button aria-label="Close"
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            className="h-8 w-8 rounded-lg hover:bg-surface-hover text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
             <X className="h-4 w-4" />
           </button>
@@ -228,7 +228,7 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
           </div>
 
           {/* Security Notice */}
-          <div className="p-3 rounded-lg bg-muted/40 border border-border text-[11px] text-muted-foreground flex items-start gap-2">
+          <div className="p-3 rounded-lg bg-sunken border border-border text-[11px] text-muted-foreground flex items-start gap-2">
             <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
             <span>
               This operation is irreversible and will be logged under <strong>Revision history & audit logs</strong> with the before snapshot and list of cascaded foreign keys.
@@ -241,7 +241,7 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg border border-border bg-background text-foreground hover:bg-muted font-semibold cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-lg border border-border bg-background text-foreground hover:bg-surface-hover font-semibold cursor-pointer transition-colors"
             >
               Cancel
             </button>

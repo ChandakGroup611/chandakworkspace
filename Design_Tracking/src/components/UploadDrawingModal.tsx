@@ -435,7 +435,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                   <a
                     href="#"
                     onClick={(e) => { e.preventDefault(); onOpenFile(d); }}
-                    className="h-8 px-2.5 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                    className="h-8 px-2.5 rounded-lg border border-border bg-background hover:bg-surface-hover text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
                   >
                     <Eye className="h-3.5 w-3.5" />
                     <span>Open file</span>
@@ -491,7 +491,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                   <button
                     type="button"
                     onClick={handlePreviewFile}
-                    className="h-8 px-2.5 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="h-8 px-2.5 rounded-lg border border-border bg-background hover:bg-surface-hover text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                     title="View staged document in preview"
                   >
                     <Eye className="h-3.5 w-3.5" />
@@ -501,7 +501,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                   <button
                     type="button"
                     onClick={handleDownloadStagedFile}
-                    className="h-8 px-2.5 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="h-8 px-2.5 rounded-lg border border-border bg-background hover:bg-surface-hover text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                     title="Download staged document"
                   >
                     <Download className="h-3.5 w-3.5" />

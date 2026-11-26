@@ -178,10 +178,10 @@ function SortableWidgetItem({ item, onToggle, onSpanChange, onMoveUp, onMoveDown
         <GripVertical className="w-5 h-5" />
       </div>
       <div className="flex flex-col items-center justify-center gap-1 sm:hidden mr-2">
-        <button type="button" aria-label="Move widget up" onClick={onMoveUp} className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground">
+        <button type="button" aria-label="Move widget up" onClick={onMoveUp} className="p-1 hover:bg-surface-hover rounded text-muted-foreground hover:text-foreground">
           <ChevronUp className="w-4 h-4" />
         </button>
-        <button type="button" aria-label="Move widget down" onClick={onMoveDown} className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground">
+        <button type="button" aria-label="Move widget down" onClick={onMoveDown} className="p-1 hover:bg-surface-hover rounded text-muted-foreground hover:text-foreground">
           <ChevronDown className="w-4 h-4" />
         </button>
       </div>
@@ -219,7 +219,7 @@ function SortableWidgetItem({ item, onToggle, onSpanChange, onMoveUp, onMoveDown
           onClick={onToggle}
           className={cn(
             "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-            isActive ? "bg-primary" : "bg-muted"
+            isActive ? "bg-primary" : "bg-sunken"
           )}
         >
           <span className="sr-only">Toggle widget</span>

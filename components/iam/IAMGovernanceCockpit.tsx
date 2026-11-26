@@ -423,7 +423,7 @@ export default function IAMGovernanceCockpit({
           </div>
           <div>
             <h1 className={cn("text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading ", "")}>
-              IAM governance cockpit
+              Access control
             </h1>
           </div>
         </div>
@@ -743,6 +743,9 @@ export default function IAMGovernanceCockpit({
                                                 <AppButton variant="secondary"
                                                   type="button"
                                                   disabled={isSaving}
+                                                  aria-label={`${act.charAt(0) + act.slice(1).toLowerCase()} – ${m.submodule}`}
+                                                  aria-pressed={checked}
+                                                  title={`${act.charAt(0) + act.slice(1).toLowerCase()} – ${m.submodule}`}
                                                   onClick={() => {
                                                     const permId = getPermIdByAction(act);
                                                     if (permId) {
@@ -752,7 +755,7 @@ export default function IAMGovernanceCockpit({
                                                   className={cn(
                                                     "relative h-5 w-5 rounded-md border flex items-center justify-center transition-all duration-300",
                                                     checked
-                                                      ? "bg-success border-success-border text-white shadow-md"
+                                                      ? "bg-success-text border-success-text text-white shadow-sm"
                                                       : "bg-surface border-border",
                                                     "cursor-pointer hover:border-primary"
                                                   )}

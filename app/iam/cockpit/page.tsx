@@ -1,30 +1,20 @@
 import React from "react";
 import { Metadata } from "next";
 import IAMGovernanceCockpit from "@/components/iam/IAMGovernanceCockpit";
-import { fetchRoles, fetchPermissions } from "@/lib/actions/iam";
 
 export const metadata: Metadata = {
-  title: "IAM governance cockpit | Chandak Workspace",
+  title: "Access control · Chandak Workspace",
   description: "Identity and access overview",
 };
 
 export const dynamic = "force-dynamic";
 
-export default async function IAMCockpitPage() {
-  const [roles, permissions] = await Promise.all([
-    fetchRoles(),
-    fetchPermissions()
-  ]);
-
+// Same screen as /iam. The component loads its own roles and permissions.
+// (Passing an inline server function to this client component crashed the page.)
+export default function IAMCockpitPage() {
   return (
-    <div className="w-full space-y-6 animate-in fade-in-50 duration-150">
-      <IAMGovernanceCockpit
-        roles={roles}
-        permissions={permissions}
-        onRefresh={async () => {
-          // Refresh logic handled by server
-        }}
-      />
+    <div className="w-full space-y-6">
+      <IAMGovernanceCockpit />
     </div>
   );
 }

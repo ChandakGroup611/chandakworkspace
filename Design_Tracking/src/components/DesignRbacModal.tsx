@@ -251,7 +251,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
               activeModalTab === "USERS"
                 ? "bg-primary text-white shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
             }`}
           >
             <UserCheck className="h-3.5 w-3.5" />
@@ -264,7 +264,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
               activeModalTab === "ROLES"
                 ? "bg-primary text-white shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
             }`}
           >
             <ShieldCheck className="h-3.5 w-3.5" />
@@ -342,7 +342,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
 
               <div className="rounded-lg border border-border bg-surface overflow-hidden shadow-2xs">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-muted/40 border-b border-border text-[11px] font-semibold text-foreground">
+                  <thead className="bg-sunken border-b border-border text-[11px] font-semibold text-foreground">
                     <tr>
                       <th className="p-3 w-1/3">Module / resource area</th>
                       <th className="p-3 text-center">Create [C]</th>
@@ -379,7 +379,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               className={`h-7 w-7 rounded-lg font-semibold text-xs inline-flex items-center justify-center transition-all cursor-pointer ${
                                 policy.canCreate 
                                   ? "bg-success text-white shadow-xs" 
-                                  : "bg-muted text-muted-foreground border border-border"
+                                  : "bg-sunken text-muted-foreground border border-border"
                               } ${isSuper ? "opacity-75 cursor-not-allowed" : ""}`}
                               title="Toggle create permission"
                             >
@@ -396,7 +396,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               className={`h-7 w-7 rounded-lg font-semibold text-xs inline-flex items-center justify-center transition-all cursor-pointer ${
                                 policy.canRead 
                                   ? "bg-accent-soft text-accent-soft-text font-semibold" 
-                                  : "bg-muted text-muted-foreground border border-border"
+                                  : "bg-sunken text-muted-foreground border border-border"
                               } ${isSuper ? "opacity-75 cursor-not-allowed" : ""}`}
                               title="Toggle read permission"
                             >
@@ -413,7 +413,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               className={`h-7 w-7 rounded-lg font-semibold text-xs inline-flex items-center justify-center transition-all cursor-pointer ${
                                 policy.canUpdate 
                                   ? "bg-warning text-white shadow-xs" 
-                                  : "bg-muted text-muted-foreground border border-border"
+                                  : "bg-sunken text-muted-foreground border border-border"
                               } ${isSuper ? "opacity-75 cursor-not-allowed" : ""}`}
                               title="Toggle update permission"
                             >
@@ -430,7 +430,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               className={`h-7 w-7 rounded-lg font-semibold text-xs inline-flex items-center justify-center transition-all cursor-pointer ${
                                 policy.canDelete 
                                   ? "bg-danger-solid text-white shadow-xs" 
-                                  : "bg-muted text-muted-foreground border border-border"
+                                  : "bg-sunken text-muted-foreground border border-border"
                               } ${isSuper ? "opacity-75 cursor-not-allowed" : ""}`}
                               title="Toggle delete permission"
                             >
@@ -452,7 +452,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                               type="button"
                               disabled={isSuper}
                               onClick={() => handleRevokeAll(mod.code)}
-                              className="px-2 py-1 rounded-md text-[11px] font-semibold text-muted-foreground hover:bg-muted cursor-pointer disabled:opacity-50"
+                              className="px-2 py-1 rounded-md text-[11px] font-semibold text-muted-foreground hover:bg-surface-hover cursor-pointer disabled:opacity-50"
                             >
                               Revoke
                             </button>
@@ -470,7 +470,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
               <button
                 type="button"
                 onClick={handleResetDefaults}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors cursor-pointer"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span>Reset recommended defaults</span>
@@ -480,7 +480,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-lg border border-border bg-background text-foreground font-semibold hover:bg-muted transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-lg border border-border bg-background text-foreground font-semibold hover:bg-surface-hover transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

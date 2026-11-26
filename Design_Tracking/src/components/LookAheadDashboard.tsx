@@ -768,7 +768,7 @@ export const LookAheadDashboard: React.FC = () => {
                         className={`py-2.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                           newTimeframe === "30_DAYS"
                             ? "border-danger-border bg-danger-soft text-danger-text ring-1 ring-danger-border"
-                            : "border-border text-muted-foreground hover:bg-muted"
+                            : "border-border text-muted-foreground hover:bg-surface-hover"
                         }`}
                       >
                         In 30 days
@@ -779,7 +779,7 @@ export const LookAheadDashboard: React.FC = () => {
                         className={`py-2.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                           newTimeframe === "60_DAYS"
                             ? "border-warning-border bg-warning-soft text-warning-text ring-1 ring-warning-border"
-                            : "border-border text-muted-foreground hover:bg-muted"
+                            : "border-border text-muted-foreground hover:bg-surface-hover"
                         }`}
                       >
                         ⏳ In 60 days

@@ -1026,7 +1026,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       {activeCell.col.projectName} • Wing {activeCell.col.towerName} • <span className="text-success-text font-semibold">{activeCell.pkg.disciplineName}</span>
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 p-1 rounded-lg bg-muted/40 border border-border text-xs">
+                  <div className="flex items-center gap-1.5 p-1 rounded-lg bg-sunken border border-border text-xs">
                     <button
                       type="button"
                       onClick={() => setInspectorTab("EDIT")}
@@ -1073,7 +1073,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       className={`p-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "Received"
                           ? "border-success-border bg-success-soft text-success-text ring-1 ring-success-border shadow-2xs"
-                          : "border-border text-muted-foreground hover:bg-muted"
+                          : "border-border text-muted-foreground hover:bg-surface-hover"
                       }`}
                     >
                       <CheckCircle2 className="h-4 w-4 text-success-text" />
@@ -1085,7 +1085,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       className={`p-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "In progress"
                           ? "border-warning-border bg-warning-soft text-warning-text ring-1 ring-warning-border shadow-2xs"
-                          : "border-border text-muted-foreground hover:bg-muted"
+                          : "border-border text-muted-foreground hover:bg-surface-hover"
                       }`}
                     >
                       <Clock className="h-4 w-4 text-warning-text" />
@@ -1097,7 +1097,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       className={`p-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "Pending"
                           ? "border-danger-border bg-danger-soft text-danger-text ring-1 ring-danger-border shadow-2xs"
-                          : "border-border text-muted-foreground hover:bg-muted"
+                          : "border-border text-muted-foreground hover:bg-surface-hover"
                       }`}
                     >
                       <AlertTriangle className="h-4 w-4 text-danger-text" />
@@ -1109,7 +1109,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       className={`p-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "NA"
                           ? "border-border-active bg-sunken text-foreground ring-1 ring-border shadow-2xs"
-                          : "border-border text-muted-foreground hover:bg-muted"
+                          : "border-border text-muted-foreground hover:bg-surface-hover"
                       }`}
                     >
                       <span>Not applicable (NA)</span>
@@ -1360,7 +1360,7 @@ export const TenderDesignMatrix: React.FC = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-foreground text-sm">{log.projectName}</span>
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-muted text-foreground border border-border font-mono">
+                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-sunken text-foreground border border-border font-mono">
                           {log.towerName}
                         </span>
                         <span className="text-[11px] px-2 py-0.5 rounded-md bg-success-soft text-success-text font-semibold border border-success-border">
@@ -1612,7 +1612,7 @@ export const TenderDesignMatrix: React.FC = () => {
                             className={`p-2.5 rounded-lg border transition-all cursor-pointer flex items-center justify-between gap-3 select-none ${
                               isChecked 
                                 ? "bg-info-soft border-info-border text-foreground ring-1 ring-info-border shadow-2xs" 
-                                : "bg-surface border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                                : "bg-surface border-border text-muted-foreground hover:bg-surface-hover hover:text-foreground"
                             }`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
@@ -1630,7 +1630,7 @@ export const TenderDesignMatrix: React.FC = () => {
                                       {twr.subProjectName || "Sub-Project"}
                                     </span>
                                   )}
-                                  <span className="px-1.5 py-0.2 rounded text-[11px] font-medium bg-muted text-muted-foreground border border-border">
+                                  <span className="px-1.5 py-0.2 rounded text-[11px] font-medium bg-sunken text-muted-foreground border border-border">
                                     {twr.towerType || "Sale"}
                                   </span>
                                 </div>
@@ -1649,7 +1649,7 @@ export const TenderDesignMatrix: React.FC = () => {
                               <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md transition-colors ${
                                 isChecked 
                                   ? "bg-info-soft text-info-text border border-border" 
-                                  : "bg-muted text-muted-foreground border border-border"
+                                  : "bg-sunken text-muted-foreground border border-border"
                               }`}>
                                 {isChecked ? "Included" : "Excluded"}
                               </span>
@@ -1737,7 +1737,7 @@ export const TenderDesignMatrix: React.FC = () => {
                         className={`p-2 rounded-lg text-xs border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                           isSelected
                             ? st.activeClass
-                            : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                            : "border-border text-muted-foreground hover:text-foreground hover:bg-surface-hover"
                         }`}
                       >
                         <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: st.dotColor }} />

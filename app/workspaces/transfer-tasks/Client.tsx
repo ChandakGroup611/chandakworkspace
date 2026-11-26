@@ -247,7 +247,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
             </AppTableHeader>
             <AppTableBody className="divide-y divide-border bg-card">
               {filteredTasks.map((task: any) => (
-                <AppTableRow key={task.id} className="hover:bg-muted/50 transition-colors">
+                <AppTableRow key={task.id} className="hover:bg-surface-hover transition-colors">
                   <AppTableCell className="px-4 py-3">
                     <input 
                       type="checkbox" 
@@ -408,7 +408,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                       </div>
                       <div className="max-h-40 overflow-y-auto space-y-1 scrollbar-thin bg-background border border-border rounded-lg p-2">
                         {targetWorkspaceUsers.map((s: any) => (
-                          <label key={s.id} className="flex items-center gap-2 text-sm text-foreground p-1 hover:bg-muted rounded cursor-pointer">
+                          <label key={s.id} className="flex items-center gap-2 text-sm text-foreground p-1 hover:bg-surface-hover rounded cursor-pointer">
                             <input 
                               type="checkbox" 
                               checked={newExecutors.includes(s.id)}
@@ -440,7 +440,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                       </div>
                       <div className="max-h-40 overflow-y-auto space-y-1 scrollbar-thin bg-background border border-border rounded-lg p-2">
                         {targetWorkspaceUsers.map((s: any) => (
-                          <label key={s.id} className="flex items-center gap-2 text-sm text-foreground p-1 hover:bg-muted rounded cursor-pointer">
+                          <label key={s.id} className="flex items-center gap-2 text-sm text-foreground p-1 hover:bg-surface-hover rounded cursor-pointer">
                             <input 
                               type="checkbox" 
                               checked={newWatchers.includes(s.id)}

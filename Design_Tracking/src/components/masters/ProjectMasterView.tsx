@@ -477,7 +477,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
       {/* Projects Cards Grid */}
       {filteredProjects.length === 0 ? (
         <div className="p-8 rounded-lg border border-border bg-surface text-center space-y-3">
-          <div className="h-10 w-10 mx-auto rounded-lg bg-muted text-muted-foreground flex items-center justify-center">
+          <div className="h-10 w-10 mx-auto rounded-lg bg-sunken text-muted-foreground flex items-center justify-center">
             <Building2 className="h-5 w-5" />
           </div>
           <div>
@@ -709,7 +709,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                 className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
                   formTab === "SPECS"
                     ? "bg-success text-white shadow-xs"
-                    : "text-muted-foreground hover:text-foreground bg-muted/40"
+                    : "text-muted-foreground hover:text-foreground bg-sunken"
                 }`}
               >
                 <Building2 className="h-4 w-4" />
@@ -721,7 +721,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                 className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
                   formTab === "CONSULTANTS_CATEGORIES"
                     ? "bg-success text-white shadow-xs"
-                    : "text-muted-foreground hover:text-foreground bg-muted/40"
+                    : "text-muted-foreground hover:text-foreground bg-sunken"
                 }`}
               >
                 <Users className="h-4 w-4" />

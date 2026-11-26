@@ -107,20 +107,20 @@ export function Shell({ me, projects, project, versions, version, tab, children 
         <div className="top-outer">
           <div className="wrap top-bar">
             <nav className="crumbs" aria-label="You are here">
-              {area === "home" ? <span className="crumb-current">All projects</span> : <Link href="/budget">Projects</Link>}
+              {area === "home" ? <h1 className="crumb-current">All projects</h1> : <Link href="/budget">Projects</Link>}
               {area === "home" ? null : area === "admin" ? <>
                 <span className="crumb-sep" aria-hidden>›</span><span>Administration</span>
-                <span className="crumb-sep" aria-hidden>›</span><span className="crumb-current">{TAB_LABEL[tab]}</span>
+                <span className="crumb-sep" aria-hidden>›</span><h1 className="crumb-current">{TAB_LABEL[tab]}</h1>
               </> : project ? <>
                 <span className="crumb-sep" aria-hidden>›</span>
                 <Link href={href("view")} className="crumb-project">{project.name}</Link>
                 {version && <span className={`pill ${version.status}`}>R{version.number} · {version.status.replace("_", " ")}</span>}
                 {area !== "overview" && <><span className="crumb-sep" aria-hidden>›</span>
-                  {areaDef?.subs ? <><Link href={href(areaDef.first)}>{areaDef.label}</Link><span className="crumb-sep" aria-hidden>›</span><span className="crumb-current">{TAB_LABEL[tab] ?? tab}</span></>
-                    : <span className="crumb-current">{areaDef?.label ?? TAB_LABEL[tab] ?? tab}</span>}</>}
+                  {areaDef?.subs ? <><Link href={href(areaDef.first)}>{areaDef.label}</Link><span className="crumb-sep" aria-hidden>›</span><h1 className="crumb-current">{TAB_LABEL[tab] ?? tab}</h1></>
+                    : <h1 className="crumb-current">{areaDef?.label ?? TAB_LABEL[tab] ?? tab}</h1>}</>}
               </> : <>
                 {/* a budget page that is not tied to one project, such as the Create budget menu */}
-                <span className="crumb-sep" aria-hidden>›</span><span className="crumb-current">{TAB_LABEL[tab] ?? tab}</span>
+                <span className="crumb-sep" aria-hidden>›</span><h1 className="crumb-current">{TAB_LABEL[tab] ?? tab}</h1>
               </>}
             </nav>
             <div className="top-selectors">

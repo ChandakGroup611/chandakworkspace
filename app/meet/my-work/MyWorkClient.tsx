@@ -313,6 +313,9 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
           <div className="flex rounded-md border border-border bg-surface p-0.5">
             <button
               onClick={() => setViewMode("list")}
+              aria-label="List view"
+              aria-pressed={viewMode === "list"}
+              title="List view"
               className={`rounded p-1 text-muted transition-colors ${
                 viewMode === "list" ? "bg-sunken text-foreground" : "hover:text-foreground"
               }`}
@@ -321,6 +324,9 @@ export default function MyWorkClient({ initialTasks, users = [], serverFiltered 
             </button>
             <button
               onClick={() => setViewMode("kanban")}
+              aria-label="Board view"
+              aria-pressed={viewMode === "kanban"}
+              title="Board view"
               className={`rounded p-1 text-muted transition-colors ${
                 viewMode === "kanban" ? "bg-sunken text-foreground" : "hover:text-foreground"
               }`}

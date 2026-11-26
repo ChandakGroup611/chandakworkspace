@@ -41,7 +41,7 @@ const COLOR_THEMES = [
   { id: "amber", label: "Amber", bg: "bg-warning-soft", text: "text-warning-text", border: "border-warning-border", dot: "bg-warning" },
   { id: "teal", label: "Teal", bg: "bg-info-soft", text: "text-info-text", border: "border-border", dot: "bg-info" },
   { id: "rose", label: "Rose", bg: "bg-danger-soft", text: "text-danger-text", border: "border-danger-border", dot: "bg-danger-solid" },
-  { id: "slate", label: "Slate", bg: "bg-sunken", text: "text-subtle", border: "border-border", dot: "bg-muted" }
+  { id: "slate", label: "Slate", bg: "bg-sunken", text: "text-subtle", border: "border-border", dot: "bg-sunken" }
 ];
 
 const PRESET_ICONS = ["🏛️", "🏗️", "⚡", "🧱", "🏢", "🌳", "🛋️", "⛰️", "🔥", "🌱", "🚗", "💻", "🔬", "📐", "📋", "⚙️"];

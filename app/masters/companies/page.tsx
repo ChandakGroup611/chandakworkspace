@@ -315,7 +315,7 @@ export default function CompanyMasterPage() {
                   </AppTableCell>
                   <AppTableCell className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                      <AppButton variant="secondary" onClick={() => toggleActive(c)} className={`p-1.5 rounded-lg transition-colors ${c.is_active ? 'text-danger-text hover:bg-danger-soft' : 'text-success-text hover:bg-success-soft'}`}>
+                      <AppButton variant="secondary" onClick={() => toggleActive(c)} aria-label={c.is_active ? "Deactivate company" : "Activate company"} title={c.is_active ? "Deactivate company" : "Activate company"} className={`p-1.5 rounded-lg transition-colors ${c.is_active ? 'text-danger-text hover:bg-danger-soft' : 'text-success-text hover:bg-success-soft'}`}>
                         {c.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                       </AppButton>
                       <AppButton aria-label="View" title="View" variant="ghost" size="icon-sm" onClick={() => handleOpenView(c)} className="text-muted hover:text-foreground">

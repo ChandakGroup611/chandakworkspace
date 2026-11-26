@@ -790,7 +790,7 @@ export default function FleetRbacGovernance() {
                       <span className="text-xs font-bold text-foreground truncate">
                         {role.label}
                       </span>
-                      <span className="text-xs text-muted-foreground font-mono mt-0.5">
+                      <span className="text-xs text-subtle font-mono mt-0.5">
                         {role.code}
                       </span>
                     </div>

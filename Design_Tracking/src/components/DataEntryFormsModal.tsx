@@ -271,7 +271,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       saveIcon={Save}
     >
       {/* Tab Selector Banner */}
-      <div className="p-1.5 rounded-lg bg-muted/40 border border-border flex items-center gap-1.5 text-xs max-w-2xl">
+      <div className="p-1.5 rounded-lg bg-sunken border border-border flex items-center gap-1.5 text-xs max-w-2xl">
         <button
           type="button"
           onClick={() => setActiveTab("PACKAGE")}

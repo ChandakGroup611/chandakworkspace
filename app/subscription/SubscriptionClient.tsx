@@ -326,7 +326,7 @@ export function SubscriptionClient() {
                     </div>
                     <h3 className="text-xl font-semibold">{plan.name}</h3>
                     {plan.highlighted && (
-                      <AppBadge className="ml-auto bg-primary text-theme-icon-foreground border-none shadow-sm text-[11px] font-semibold">
+                      <AppBadge className="ml-auto bg-primary text-white border-none shadow-sm text-[11px] font-semibold">
                         Most popular
                       </AppBadge>
                     )}

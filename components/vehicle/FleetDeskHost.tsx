@@ -11200,7 +11200,7 @@ export default function FleetDeskHost({
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="px-3 py-1 rounded-lg bg-success text-white font-mono font-bold text-xs shadow-xs flex items-center gap-1.5">
-                        <span className="text-success-text font-sans text-xs font-normal">On-Road:</span>
+                        <span className="text-white/85 font-sans text-xs font-normal">On-Road:</span>
                         <span>₹{Number(newVehicleOnRoadPrice || newVehiclePurchasePrice || 0).toLocaleString("en-IN")}</span>
                       </div>
                     </div>
@@ -11309,7 +11309,7 @@ export default function FleetDeskHost({
                       <button
                         type="button"
                         onClick={() => setIsPreGstExpanded(!isPreGstExpanded)}
-                        className="w-full flex items-center justify-between px-3.5 py-2.5 bg-muted/20 hover:bg-muted/40 transition-colors text-left"
+                        className="w-full flex items-center justify-between px-3.5 py-2.5 bg-muted/20 hover:bg-surface-hover transition-colors text-left"
                       >
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
@@ -11534,7 +11534,7 @@ export default function FleetDeskHost({
                                 setNewVehicleRtoRoadTax(val);
                                 syncNewVehicleOnRoad({ rto: val });
                               }}
-                              className="text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
+                              className="text-[11px] text-muted-foreground hover:text-foreground bg-sunken hover:bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
                               title="Standard state road tax ~10% of Ex-Showroom"
                             >
                               Petrol (~10%)
@@ -11546,7 +11546,7 @@ export default function FleetDeskHost({
                                 setNewVehicleRtoRoadTax(val);
                                 syncNewVehicleOnRoad({ rto: val });
                               }}
-                              className="text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
+                              className="text-[11px] text-muted-foreground hover:text-foreground bg-sunken hover:bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
                               title="Standard state diesel road tax ~12% of Ex-Showroom"
                             >
                               Diesel (~12%)
@@ -11624,7 +11624,7 @@ export default function FleetDeskHost({
                             setNewVehicleHsrpFee(270);
                             syncNewVehicleOnRoad({ hsrp: 270 });
                           }}
-                          className="text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
+                          className="text-[11px] text-muted-foreground hover:text-foreground bg-sunken hover:bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
                         >
                           Std HSRP (₹270)
                         </button>
@@ -11634,7 +11634,7 @@ export default function FleetDeskHost({
                             setNewVehicleHsrpFee(500);
                             syncNewVehicleOnRoad({ hsrp: 500 });
                           }}
-                          className="text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
+                          className="text-[11px] text-muted-foreground hover:text-foreground bg-sunken hover:bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
                         >
                           HSRP + RC (₹500)
                         </button>
@@ -11755,7 +11755,7 @@ export default function FleetDeskHost({
                   <div className="p-3.5 rounded-xl bg-surface border border-border/90 flex flex-col gap-2.5 text-xs shadow-2xs">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center gap-1.5 flex-wrap text-muted-foreground font-mono text-[11px] sm:text-xs">
-                        <span className="bg-muted/40 px-2 py-0.5 rounded border border-border/50">
+                        <span className="bg-sunken px-2 py-0.5 rounded border border-border/50">
                           Ex-Showroom: <strong className="text-foreground font-bold">₹{Number(newVehicleExShowroomPrice || 0).toLocaleString("en-IN")}</strong>
                           {((Number(newVehiclePreGstVatAmount) || 0) + (Number(newVehiclePreGstExciseAmount) || 0) + (Number(newVehiclePreGstBharatCessAmount) || 0) + (Number(newVehiclePreGstEntryTaxAmount) || 0)) > 0 && (
                             <span className="text-[11px] text-warning-text font-semibold ml-1" title="Includes Pre-GST VAT, Central Excise, Bharat Cess & Entry Tax">
@@ -11764,7 +11764,7 @@ export default function FleetDeskHost({
                           )}
                         </span>
                         <span>+</span>
-                        <span className="bg-muted/40 px-2 py-0.5 rounded border border-border/50" title="RTO Road Tax & Registration Fee + Laser HSRP & Smart Card">
+                        <span className="bg-sunken px-2 py-0.5 rounded border border-border/50" title="RTO Road Tax & Registration Fee + Laser HSRP & Smart Card">
                           RTO &amp; Reg: <strong className="text-foreground font-bold">₹{(Number(newVehicleRtoRoadTax || 0) + Number(newVehicleHsrpFee || 0)).toLocaleString("en-IN")}</strong>
                           {(Number(newVehicleHsrpFee) > 0) && (
                             <span className="text-[11px] text-muted-foreground ml-1">
@@ -11773,17 +11773,17 @@ export default function FleetDeskHost({
                           )}
                         </span>
                         <span>+</span>
-                        <span className="bg-muted/40 px-2 py-0.5 rounded border border-border/50" title="TCS 1% under Section 206C(1F) of Income Tax Act for vehicle value > INR 10 Lakhs">
+                        <span className="bg-sunken px-2 py-0.5 rounded border border-border/50" title="TCS 1% under Section 206C(1F) of Income Tax Act for vehicle value > INR 10 Lakhs">
                           TCS (1%): <strong className="text-foreground font-bold">₹{Number(newVehicleTcsAmount || 0).toLocaleString("en-IN")}</strong>
                         </span>
                         <span>+</span>
-                        <span className="bg-muted/40 px-2 py-0.5 rounded border border-border/50" title="Comprehensive motor insurance policy">
+                        <span className="bg-sunken px-2 py-0.5 rounded border border-border/50" title="Comprehensive motor insurance policy">
                           Insurance: <strong className="text-foreground font-bold">₹{Number(newVehicleInsuranceCost || 0).toLocaleString("en-IN")}</strong>
                         </span>
                         {((Number(newVehicleExtendedWarrantyCost) || 0) + (Number(newVehicleFastagCharges) || 0) + (Number(newVehicleAccessoriesCost) || 0) + (Number(newVehicleOtherCharges) || 0)) > 0 && (
                           <>
                             <span>+</span>
-                            <span className="bg-muted/40 px-2 py-0.5 rounded border border-border/50" title="Extended warranty/AMC, FASTag, accessories & fitments">
+                            <span className="bg-sunken px-2 py-0.5 rounded border border-border/50" title="Extended warranty/AMC, FASTag, accessories & fitments">
                               Fitments &amp; EW: <strong className="text-foreground font-bold">₹{((Number(newVehicleExtendedWarrantyCost) || 0) + (Number(newVehicleFastagCharges) || 0) + (Number(newVehicleAccessoriesCost) || 0) + (Number(newVehicleOtherCharges) || 0)).toLocaleString("en-IN")}</strong>
                               {(Number(newVehicleExtendedWarrantyCost) > 0) && (
                                 <span className="text-[11px] text-muted-foreground ml-1">
@@ -19122,7 +19122,7 @@ export default function FleetDeskHost({
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="px-3 py-1 rounded-lg bg-success text-white font-mono font-bold text-xs shadow-xs flex items-center gap-1.5">
-                          <span className="text-success-text font-sans text-xs font-normal">On-Road:</span>
+                          <span className="text-white/85 font-sans text-xs font-normal">On-Road:</span>
                           <span>₹{Number(editVehicleOnRoadPrice || editVehiclePurchasePrice || 0).toLocaleString("en-IN")}</span>
                         </div>
                       </div>
@@ -19231,7 +19231,7 @@ export default function FleetDeskHost({
                         <button
                           type="button"
                           onClick={() => setIsEditPreGstExpanded(!isEditPreGstExpanded)}
-                          className="w-full flex items-center justify-between px-3.5 py-2.5 bg-muted/20 hover:bg-muted/40 transition-colors text-left"
+                          className="w-full flex items-center justify-between px-3.5 py-2.5 bg-muted/20 hover:bg-surface-hover transition-colors text-left"
                         >
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
@@ -19456,7 +19456,7 @@ export default function FleetDeskHost({
                                   setEditVehicleRtoRoadTax(val);
                                   syncEditVehicleOnRoad({ rto: val });
                                 }}
-                                className="text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
+                                className="text-[11px] text-muted-foreground hover:text-foreground bg-sunken hover:bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
                                 title="Standard state road tax ~10% of Ex-Showroom"
                               >
                                 Petrol (~10%)
@@ -19468,7 +19468,7 @@ export default function FleetDeskHost({
                                   setEditVehicleRtoRoadTax(val);
                                   syncEditVehicleOnRoad({ rto: val });
                                 }}
-                                className="text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
+                                className="text-[11px] text-muted-foreground hover:text-foreground bg-sunken hover:bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
                                 title="Standard state diesel road tax ~12% of Ex-Showroom"
                               >
                                 Diesel (~12%)
@@ -19546,7 +19546,7 @@ export default function FleetDeskHost({
                               setEditVehicleHsrpFee(270);
                               syncEditVehicleOnRoad({ hsrp: 270 });
                             }}
-                            className="text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
+                            className="text-[11px] text-muted-foreground hover:text-foreground bg-sunken hover:bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
                           >
                             Std HSRP (₹270)
                           </button>
@@ -19556,7 +19556,7 @@ export default function FleetDeskHost({
                               setEditVehicleHsrpFee(500);
                               syncEditVehicleOnRoad({ hsrp: 500 });
                             }}
-                            className="text-[11px] text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
+                            className="text-[11px] text-muted-foreground hover:text-foreground bg-sunken hover:bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 transition-colors cursor-pointer"
                           >
                             HSRP + RC (₹500)
                           </button>
@@ -19677,7 +19677,7 @@ export default function FleetDeskHost({
                     <div className="p-3.5 rounded-xl bg-surface border border-border/90 flex flex-col gap-2.5 text-xs shadow-2xs">
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <div className="flex items-center gap-1.5 flex-wrap text-muted-foreground font-mono text-[11px] sm:text-xs">
-                          <span className="bg-muted/40 px-2 py-0.5 rounded border border-border/50">
+                          <span className="bg-sunken px-2 py-0.5 rounded border border-border/50">
                             Ex-Showroom: <strong className="text-foreground font-bold">₹{Number(editVehicleExShowroomPrice || 0).toLocaleString("en-IN")}</strong>
                             {((Number(editVehiclePreGstVatAmount) || 0) + (Number(editVehiclePreGstExciseAmount) || 0) + (Number(editVehiclePreGstBharatCessAmount) || 0) + (Number(editVehiclePreGstEntryTaxAmount) || 0)) > 0 && (
                               <span className="text-[11px] text-warning-text font-semibold ml-1" title="Includes Pre-GST VAT, Central Excise, Bharat Cess & Entry Tax">
@@ -19686,7 +19686,7 @@ export default function FleetDeskHost({
                             )}
                           </span>
                           <span>+</span>
-                          <span className="bg-muted/40 px-2 py-0.5 rounded border border-border/50" title="RTO Road Tax & Registration Fee + Laser HSRP & Smart Card">
+                          <span className="bg-sunken px-2 py-0.5 rounded border border-border/50" title="RTO Road Tax & Registration Fee + Laser HSRP & Smart Card">
                             RTO &amp; Reg: <strong className="text-foreground font-bold">₹{(Number(editVehicleRtoRoadTax || 0) + Number(editVehicleHsrpFee || 0)).toLocaleString("en-IN")}</strong>
                             {(Number(editVehicleHsrpFee) > 0) && (
                               <span className="text-[11px] text-muted-foreground ml-1">
@@ -19695,17 +19695,17 @@ export default function FleetDeskHost({
                             )}
                           </span>
                           <span>+</span>
-                          <span className="bg-muted/40 px-2 py-0.5 rounded border border-border/50" title="TCS 1% under Section 206C(1F) of Income Tax Act for vehicle value > INR 10 Lakhs">
+                          <span className="bg-sunken px-2 py-0.5 rounded border border-border/50" title="TCS 1% under Section 206C(1F) of Income Tax Act for vehicle value > INR 10 Lakhs">
                             TCS (1%): <strong className="text-foreground font-bold">₹{Number(editVehicleTcsAmount || 0).toLocaleString("en-IN")}</strong>
                           </span>
                           <span>+</span>
-                          <span className="bg-muted/40 px-2 py-0.5 rounded border border-border/50" title="Comprehensive motor insurance policy">
+                          <span className="bg-sunken px-2 py-0.5 rounded border border-border/50" title="Comprehensive motor insurance policy">
                             Insurance: <strong className="text-foreground font-bold">₹{Number(editVehicleInsuranceCost || 0).toLocaleString("en-IN")}</strong>
                           </span>
                           {((Number(editVehicleExtendedWarrantyCost) || 0) + (Number(editVehicleFastagCharges) || 0) + (Number(editVehicleAccessoriesCost) || 0) + (Number(editVehicleOtherCharges) || 0)) > 0 && (
                             <>
                               <span>+</span>
-                              <span className="bg-muted/40 px-2 py-0.5 rounded border border-border/50" title="Extended warranty/AMC, FASTag, accessories & fitments">
+                              <span className="bg-sunken px-2 py-0.5 rounded border border-border/50" title="Extended warranty/AMC, FASTag, accessories & fitments">
                                 Fitments &amp; EW: <strong className="text-foreground font-bold">₹{((Number(editVehicleExtendedWarrantyCost) || 0) + (Number(editVehicleFastagCharges) || 0) + (Number(editVehicleAccessoriesCost) || 0) + (Number(editVehicleOtherCharges) || 0)).toLocaleString("en-IN")}</strong>
                                 {(Number(editVehicleExtendedWarrantyCost) > 0) && (
                                   <span className="text-[11px] text-muted-foreground ml-1">

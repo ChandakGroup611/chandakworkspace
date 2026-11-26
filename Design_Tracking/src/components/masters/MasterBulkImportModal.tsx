@@ -319,7 +319,7 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <div className="h-10 w-10 mx-auto rounded-lg bg-muted text-muted-foreground flex items-center justify-center">
+                    <div className="h-10 w-10 mx-auto rounded-lg bg-sunken text-muted-foreground flex items-center justify-center">
                       <Upload className="h-5 w-5" />
                     </div>
                     <div>

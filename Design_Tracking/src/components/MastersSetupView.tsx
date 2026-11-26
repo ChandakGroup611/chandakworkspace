@@ -448,7 +448,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
                     selectedDisciplineFilter === "ALL"
                       ? "bg-accent-soft text-accent-soft-text font-semibold"
-                      : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                      : "bg-sunken text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   All ({storeState.packages.length})
@@ -463,7 +463,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
                         selectedDisciplineFilter === cat.name
                           ? "bg-accent-soft text-accent-soft-text font-semibold"
-                          : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                          : "bg-sunken text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       <span>{cat.name}</span>
@@ -486,7 +486,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                       <span className="text-[11px] font-mono font-semibold px-1.5 py-0.2 rounded bg-info-soft text-info-text border border-info-border">
                         {pkg.subPackageCode || pkg.packageCode || "PKG"}
                       </span>
-                      <span className="text-[11px] font-semibold text-muted-foreground bg-muted/40 px-1.5 py-0.2 rounded">
+                      <span className="text-[11px] font-semibold text-muted-foreground bg-sunken px-1.5 py-0.2 rounded">
                         {pkg.disciplineName}
                       </span>
                     </div>
@@ -500,7 +500,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     <button aria-label="Edit"
                       type="button"
                       onClick={() => handleOpenEditPackage(pkg)}
-                      className="h-6 w-6 rounded hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center cursor-pointer"
+                      className="h-6 w-6 rounded hover:bg-surface-hover text-muted-foreground hover:text-foreground flex items-center justify-center cursor-pointer"
                     >
                       <Edit2 className="h-3 w-3" />
                     </button>
@@ -676,7 +676,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   downloadAnchor.remove();
                   toast.success("Design masters JSON backup exported successfully!");
                 }}
-                className="px-3.5 py-1.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg border border-border bg-background hover:bg-surface-hover text-foreground text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Download className="h-3.5 w-3.5" />
                 <span>Export JSON backup</span>

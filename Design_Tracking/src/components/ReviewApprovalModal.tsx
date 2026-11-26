@@ -102,7 +102,7 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
                 </h2>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-muted text-foreground font-semibold border border-border">
+                <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-sunken text-foreground font-semibold border border-border">
                   Revision: {drawing.revision}
                 </span>
                 <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold border ${
@@ -184,7 +184,7 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
                     className={`p-4 rounded-lg border text-left transition-all cursor-pointer ${
                       isSel 
                         ? `${st.badge} ring-2 ring-primary font-semibold shadow-xs` 
-                        : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:bg-surface-hover hover:text-foreground"
                     }`}
                   >
                     <div className="text-sm font-semibold">{st.label}</div>

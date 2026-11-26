@@ -349,7 +349,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
         return <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-surface text-foreground dark:text-muted-foreground border border-border">Authority</span>;
       case "MATRIX_CELL":
       default:
-        return <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-muted text-muted-foreground border border-border">Matrix cell</span>;
+        return <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-sunken text-muted-foreground border border-border">Matrix cell</span>;
     }
   };
 
@@ -555,7 +555,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
             <button
               type="button"
               onClick={handleExportDrawingCsv}
-              className="h-8 px-3 rounded-lg border border-border bg-surface hover:bg-muted text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer ml-auto"
+              className="h-8 px-3 rounded-lg border border-border bg-surface hover:bg-surface-hover text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer ml-auto"
             >
               <FileSpreadsheet className="h-3.5 w-3.5 text-info-text" />
               <span>Export drawing CSV</span>
@@ -684,7 +684,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                             <button
                               type="button"
                               onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
-                              className="px-2 py-1 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-foreground text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                              className="px-2 py-1 rounded-lg border border-border hover:bg-surface-hover text-muted-foreground hover:text-foreground text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
                             >
                               <span>{isExpanded ? "Hide" : "Diff"}</span>
                               {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -711,7 +711,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                                     <span className="text-[11px] font-semibold text-danger-text block">
                                       Previous state snapshot (before change):
                                     </span>
-                                    <pre className="p-2.5 rounded-lg bg-muted/40 border border-border text-[11px] font-mono text-muted-foreground overflow-x-auto max-h-48 custom-scrollbar">
+                                    <pre className="p-2.5 rounded-lg bg-sunken border border-border text-[11px] font-mono text-muted-foreground overflow-x-auto max-h-48 custom-scrollbar">
                                       {log.previousValue 
                                         ? JSON.stringify(log.previousValue, null, 2) 
                                         : (log.previousStatus ? `Status: ${log.previousStatus}\nPlanned Date: ${log.previousPlannedDate || "—"}\nActual Date: ${log.previousActualDate || "—"}` : "None / Initial State")}
@@ -723,7 +723,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                                     <span className="text-[11px] font-semibold text-success-text block">
                                       New state snapshot (after change):
                                     </span>
-                                    <pre className="p-2.5 rounded-lg bg-muted/40 border border-border text-[11px] font-mono text-foreground overflow-x-auto max-h-48 custom-scrollbar">
+                                    <pre className="p-2.5 rounded-lg bg-sunken border border-border text-[11px] font-mono text-foreground overflow-x-auto max-h-48 custom-scrollbar">
                                       {log.newValue 
                                         ? JSON.stringify(log.newValue, null, 2) 
                                         : (log.action === "DELETE" || log.action === "CASCADE_DELETE" ? "DELETED (Purged from active dataset)" : `Status: ${log.newStatus || "—"}\nPlanned Date: ${log.newPlannedDate || "—"}\nActual Date: ${log.newActualDate || "—"}`)}

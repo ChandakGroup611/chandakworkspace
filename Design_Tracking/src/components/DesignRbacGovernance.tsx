@@ -774,9 +774,9 @@ export const DesignRbacGovernance: React.FC = () => {
             <Key className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">
+            <h2 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">
               Design & tracking RBAC governance
-            </h1>
+            </h2>
           </div>
         </div>
 
@@ -926,7 +926,7 @@ export const DesignRbacGovernance: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] font-mono text-muted truncate mt-0.5">{role.code}</p>
+                      <p className="text-[11px] font-mono text-subtle truncate mt-0.5">{role.code}</p>
                     </div>
 
                     <div className="flex items-center gap-1.5 text-xs text-muted shrink-0">

@@ -2275,7 +2275,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                       </h3>
                       <div className="relative">
                         {/* Connecting Line */}
-                        <div className="absolute top-5 left-4 bottom-5 w-0.5 bg-muted" />
+                        <div className="absolute top-5 left-4 bottom-5 w-0.5 bg-sunken" />
                         
                         <div className="space-y-6 relative z-10">
                           {flows.map((flow: any, index: number) => {

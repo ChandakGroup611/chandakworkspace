@@ -236,6 +236,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             {hasChildren ? (
               <button type="button"
                 onClick={(e) => toggleFolderExpand(node.id, e)}
+                aria-label={isExpanded ? "Collapse folder" : "Expand folder"}
+                aria-expanded={isExpanded}
                 className="p-0.5 hover:bg-surface rounded-sm text-muted-foreground"
               >
                 {isExpanded ? (
@@ -303,10 +305,10 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface border border-border p-4 rounded-lg shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading flex items-center gap-2">
+            <h2 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading flex items-center gap-2">
               <FolderTree className="h-5 w-5 text-primary" />
               <span>DMS folders</span>
-            </h1>
+            </h2>
             <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-primary">
               6-Layer RBAC
             </span>

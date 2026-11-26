@@ -426,7 +426,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
       {/* Sub Projects Cards Grid */}
       {filteredSubProjects.length === 0 ? (
         <div className="p-8 rounded-lg border border-border bg-surface text-center space-y-3">
-          <div className="h-10 w-10 mx-auto rounded-lg bg-muted text-muted-foreground flex items-center justify-center">
+          <div className="h-10 w-10 mx-auto rounded-lg bg-sunken text-muted-foreground flex items-center justify-center">
             <Layers className="h-5 w-5" />
           </div>
           <div>
@@ -610,7 +610,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                   className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
                     formTab === "SPECS"
                       ? "bg-primary text-white shadow-xs"
-                      : "text-muted-foreground hover:text-foreground bg-muted/40"
+                      : "text-muted-foreground hover:text-foreground bg-sunken"
                   }`}
                 >
                   <Building className="h-4 w-4" />
@@ -622,7 +622,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                   className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
                     formTab === "MAPPINGS"
                       ? "bg-primary text-white shadow-xs"
-                      : "text-muted-foreground hover:text-foreground bg-muted/40"
+                      : "text-muted-foreground hover:text-foreground bg-sunken"
                   }`}
                 >
                   <Users className="h-4 w-4" />

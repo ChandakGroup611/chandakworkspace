@@ -240,7 +240,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
           </div>
 
           {/* Quick Guide Tab Switcher */}
-          <div className="flex items-center gap-1.5 bg-muted/60 p-1.5 rounded-lg border border-border shrink-0 self-start lg:self-center">
+          <div className="flex items-center gap-1.5 bg-sunken p-1.5 rounded-lg border border-border shrink-0 self-start lg:self-center">
             <button
               type="button"
               onClick={() => setActiveGuideView("FLOWCHART")}
@@ -306,7 +306,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                     <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${phase.bgColor} ${phase.color} border ${phase.borderColor}`}>
                       <Icon className="h-4 w-4" />
                     </div>
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sunken text-muted-foreground">
                       Phase {phase.phaseNumber}
                     </span>
                   </div>
@@ -341,7 +341,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                         <span className="theme-label text-muted-foreground">
                           Phase {activePhase.phaseNumber} of 5
                         </span>
-                        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-muted text-foreground border border-border">
+                        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sunken text-foreground border border-border">
                           {activePhase.badge}
                         </span>
                       </div>
@@ -362,7 +362,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
 
                 {/* Why This Stage & Purpose Callout */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-lg bg-muted/40 border border-border space-y-1.5">
+                  <div className="p-4 rounded-lg bg-sunken border border-border space-y-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                       <Sparkles className="h-3.5 w-3.5 text-warning-text" />
                       <span>Executive overview</span>
@@ -393,7 +393,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                   <div className="overflow-x-auto rounded-lg border border-border">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="bg-muted/60 border-b border-border text-muted-foreground font-semibold">
+                        <tr className="bg-sunken border-b border-border text-muted-foreground font-semibold">
                           <th className="py-2.5 px-3 w-16">Seq #</th>
                           <th className="py-2.5 px-3 w-40">Entity / master</th>
                           <th className="py-2.5 px-3 w-56">Action & inputs</th>

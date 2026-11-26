@@ -221,14 +221,20 @@ export default function ModuleRbacManager({
 
   return (
     <div className="space-y-6 w-full max-w-7xl mx-auto">
+      {showModuleSwitcher && (
+        <div>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading">Access policies</h1>
+          <p className="text-[13px] text-muted mt-0.5">Who can see and do what in each module.</p>
+        </div>
+      )}
       {/* Module Switcher Bar (Rendered when showModuleSwitcher is active) */}
       {showModuleSwitcher && (
         <div className="bg-surface border border-border rounded-xl p-3 shadow-xs">
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-border text-xs text-muted">
             <span className="font-semibold text-heading uppercase tracking-wider text-[11px]">
-              Business Modules RBAC Directory
+              Modules
             </span>
-            <span>7 Autonomous Modules · Deterministic Default-Deny</span>
+            <span>Access stays off until a role allows it</span>
           </div>
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
             <AppButton
@@ -293,7 +299,7 @@ export default function ModuleRbacManager({
         <div className="space-y-6">
           <div className="bg-surface border border-border rounded-xl p-5">
             <h2 className="text-base font-semibold text-heading">
-              Module-by-Module Access Control & RBAC Governance
+              How access works in each module
             </h2>
             <p className="text-xs text-muted mt-1 leading-relaxed max-w-3xl">
               Chandak Workspace implements independent module authority. Chandak Workspace assigns{" "}

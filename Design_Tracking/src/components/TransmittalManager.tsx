@@ -804,7 +804,7 @@ export function TransmittalManager() {
                             <div className="flex-1 min-w-0">
                               <div className="font-mono font-semibold text-foreground flex items-center gap-2">
                                 <span>{d.code}</span>
-                                <span className="px-2 py-0.5 rounded-md bg-muted text-[11px] border border-border">{d.revision}</span>
+                                <span className="px-2 py-0.5 rounded-md bg-sunken text-[11px] border border-border">{d.revision}</span>
                                 <span className="text-[11px] text-muted-foreground">({d.discipline})</span>
                               </div>
                               <div className="truncate text-muted-foreground text-xs mt-0.5">{d.title}</div>
