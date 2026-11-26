@@ -234,6 +234,7 @@ export async function createMeeting(input: CreateMeetingInput) {
         const dur = input.default_duration_minutes || 60;
         const endIso = new Date(new Date(startIso).getTime() + dur * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, "");
 
+        const { getAzureCredentials } = await import("@/lib/utils/meet-azure");
         effectiveVideoLink = await generateTeamsMeetingLink({
           title: input.title,
           description: input.description,
@@ -244,6 +245,7 @@ export async function createMeeting(input: CreateMeetingInput) {
           attendeeEmails,
           callType: "meeting",
           meetingCode: "MTG",
+          credentials: await getAzureCredentials(),
         });
       } catch (teamsErr) {
         console.warn("[createMeeting] Auto Teams link generation fallback:", teamsErr);

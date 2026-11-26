@@ -665,7 +665,10 @@ export async function createSessionForMeeting(input: {
           }
         }
 
-        const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
+        const [{ generateTeamsMeetingLink }, { getAzureCredentials }] = await Promise.all([
+          import("@/lib/integrations/microsoft-teams"),
+          import("@/lib/utils/meet-azure"),
+        ]);
         sessionVideoLink = await generateTeamsMeetingLink({
           title: meeting.title,
           scheduledStart,
@@ -673,6 +676,7 @@ export async function createSessionForMeeting(input: {
           meetingCode: sessionCode,
           attendeeEmails,
           callType: "meeting",
+          credentials: await getAzureCredentials(),
         });
       } catch (e) {
         console.warn("Auto Teams meeting generation fallback:", e);

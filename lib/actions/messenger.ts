@@ -1359,7 +1359,10 @@ export async function startInstantCallFromChat(
       }
     }
 
-    const { generateTeamsMeetingLink } = await import("@/lib/integrations/microsoft-teams");
+    const [{ generateTeamsMeetingLink }, { getAzureCredentials }] = await Promise.all([
+      import("@/lib/integrations/microsoft-teams"),
+      import("@/lib/utils/meet-azure"),
+    ]);
     const teamsUrl = await generateTeamsMeetingLink({
       title: `Instant Call with ${senderName}`,
       meetingCode: `CHAT-${conversationId.slice(0, 6)}`,
@@ -1367,6 +1370,7 @@ export async function startInstantCallFromChat(
       organizerEmail: user?.email,
       attendeeEmails,
       callType: "call",
+      credentials: await getAzureCredentials(),
     });
 
     const cardContent = JSON.stringify({
