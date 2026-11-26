@@ -16770,11 +16770,13 @@ export default function FleetDeskHost({
             {/* Filter Bar & Tabs */}
             <div className="p-4 border-b border-border/50 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
               <div className="flex flex-1 items-center gap-2">
-                <div className="relative flex-1">
+                <div className="relative flex-1 min-w-[220px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <AppInput
                     value={partsSearch}
                     onChange={(e) => setPartsSearch(e.target.value)}
+                    placeholder="Search parts…"
+                    aria-label="Search parts"
                     className="pl-9 text-xs h-9"
                   />
                   {partsSearch && (
