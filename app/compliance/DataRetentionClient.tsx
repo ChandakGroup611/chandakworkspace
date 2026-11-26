@@ -351,7 +351,7 @@ export default function DataRetentionClient() {
 
       {/* Table Container */}
       <AppTableContainer>
-        <AppTable>
+        <AppTable cardsOnPhone>
           <AppTableHeader>
             <tr>
               {(activeView === "deleted" || activeTab === "tasks") && (

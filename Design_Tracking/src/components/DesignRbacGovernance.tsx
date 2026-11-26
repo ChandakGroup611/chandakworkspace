@@ -65,6 +65,7 @@ import {
   saveSingleDesignRbacPolicyAction
 } from "@/lib/actions/designTracking";
 import { TransactionFormLayout } from "./DesignTransactionLayout";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 // Clean badge colors
 const ROLE_BADGE_COLORS = [
@@ -1133,7 +1134,7 @@ export const DesignRbacGovernance: React.FC = () => {
               <tbody className="divide-y divide-border/60">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-muted">No personnel found.</td>
+                    <td colSpan={5} className="p-0"><EmptyState compact kind="no-results" title="No people found" /></td>
                   </tr>
                 ) : (
                   filteredUsers.map(user => {

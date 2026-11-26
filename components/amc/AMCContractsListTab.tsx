@@ -285,7 +285,7 @@ export function AMCContractsListTab({
       {/* AMC Table */}
       <AppCard className="overflow-hidden p-0 border-border shadow-xs">
         <AppTableContainer>
-          <AppTable>
+          <AppTable cardsOnPhone>
             <AppTableHeader>
               <AppTableRow className="bg-sunken/50">
                 <AppTableHead className="w-64 font-semibold text-xs">Software / System</AppTableHead>

@@ -15,6 +15,7 @@ import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow,
 import { createClient } from "@/utils/supabase/client";
 import { Layers, Search, Plus, Edit, Trash2, X, RefreshCw } from "lucide-react";
 import { confirmAction } from "@/components/ui/feedback/confirm";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 export default function DepartmentsMasterPage() {
   const supabase = createClient();
@@ -168,7 +169,7 @@ export default function DepartmentsMasterPage() {
           </AppCardHeader>
           <AppCardContent className="flex-1 overflow-hidden p-0 relative">
             <AppTableContainer>
-              <AppTable>
+              <AppTable cardsOnPhone>
                 <AppTableHeader>
                   <AppTableRow>
                     <AppTableHead>Code</AppTableHead>
@@ -187,8 +188,8 @@ export default function DepartmentsMasterPage() {
                     </AppTableRow>
                   ) : filtered.length === 0 ? (
                     <AppTableRow>
-                      <AppTableCell colSpan={5} className="h-40 text-center text-muted">
-                        No departments found.
+                      <AppTableCell colSpan={5} className="p-0">
+                        <EmptyState compact kind="no-results" title="No departments found" />
                       </AppTableCell>
                     </AppTableRow>
                   ) : (

@@ -42,6 +42,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { createClient } from "@/utils/supabase/client";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 interface AMCTCOSpendHistoryTabProps {
   amcId: string;
@@ -805,8 +806,8 @@ export function AMCTCOSpendHistoryTab({
             <AppTableBody className="divide-y divide-border/60">
               {filteredEvents.length === 0 ? (
                 <AppTableRow>
-                  <AppTableCell colSpan={10} className="py-12 text-center text-muted">
-                    No financial events found matching filter criteria.
+                  <AppTableCell colSpan={10} className="p-0">
+                    <EmptyState compact kind="no-results" title="No financial events match these filters" />
                   </AppTableCell>
                 </AppTableRow>
               ) : (

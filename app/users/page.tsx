@@ -968,7 +968,7 @@ export default function UserMasterPage() {
                 </div>
               ) : (
                 <AppTableContainer className="rounded-none border-none max-h-[650px] overflow-auto">
-                  <AppTable>
+                  <AppTable cardsOnPhone>
                     <AppTableHeader>
                       <tr>
                         <AppTableHead className="w-14 text-center px-2"><span className="sr-only">Photo</span></AppTableHead>

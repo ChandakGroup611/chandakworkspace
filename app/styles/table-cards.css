@@ -1,0 +1,51 @@
+/* Lists as cards on phones (26 Nov 2026).
+   AppTable with cardsOnPhone sets data-cards; components/ui/TableCardLabels.tsx gives every
+   cell a data-label from its column header. Under 640 px each row becomes a card with
+   "Column: value" lines, so people don't have to scroll a wide table sideways.
+   Wider screens are unchanged. */
+@media (max-width: 639px) {
+  table[data-cards] { display: block; border-spacing: 0; }
+  table[data-cards] > thead { display: none; }
+  table[data-cards] > tbody { display: flex; flex-direction: column; gap: 10px; padding: 2px 0; }
+  table[data-cards] > tbody > tr {
+    display: flex; flex-direction: column;
+    padding: 10px 14px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card, 10px);
+    background: var(--bg-surface);
+  }
+  table[data-cards] > tbody > tr > td {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    width: auto; height: auto; min-height: 0;
+    padding: 6px 0;
+    border: 0; border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 60%, transparent);
+    text-align: right;
+    position: static; box-shadow: none; max-width: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  table[data-cards] > tbody > tr > td:last-child { border-bottom: 0; }
+  table[data-cards] > tbody > tr > td::before {
+    content: attr(data-label);
+    flex: 0 0 38%;
+    text-align: left;
+    font-size: 12.5px; font-weight: 500;
+    color: var(--text-muted);
+  }
+  /* first column is the row's name: full width, bold, no label */
+  table[data-cards] > tbody > tr > td:first-child { display: block; text-align: left; font-weight: 600; font-size: 14.5px; padding-top: 2px; }
+  table[data-cards] > tbody > tr > td:first-child::before,
+  table[data-cards] > tbody > tr > td[data-label=""]::before,
+  table[data-cards] > tbody > tr > td:not([data-label])::before { display: none; }
+  /* lists that start with a checkbox or photo: that cell stays small, the next one is the title */
+  table[data-cards] > tbody > tr:has(> td:first-child :is(input[type="checkbox"], img, [data-avatar], .rounded-full)) > td:first-child { display: flex; justify-content: flex-start; padding-bottom: 2px; border-bottom: 0; font-size: inherit; }
+  table[data-cards] > tbody > tr:has(> td:first-child :is(input[type="checkbox"], img, [data-avatar], .rounded-full)) > td:nth-child(2) { display: block; text-align: left; font-weight: 600; font-size: 14.5px; }
+  table[data-cards] > tbody > tr:has(> td:first-child :is(input[type="checkbox"], img, [data-avatar], .rounded-full)) > td:nth-child(2)::before { display: none; }
+  /* unlabeled cells (actions, checkboxes) and full-width rows (empty states) */
+  table[data-cards] > tbody > tr > td[data-label=""] { justify-content: flex-end; }
+  table[data-cards] > tbody > tr > td[colspan] { display: block; text-align: center; }
+  table[data-cards] > tbody > tr:has(> td[colspan]) { padding: 0; }
+  /* the scroll box around the table is not needed for cards */
+  .theme-table-structural:has(> table[data-cards]) { overflow: visible; border: 0; background: transparent; box-shadow: none; }
+}

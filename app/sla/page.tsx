@@ -181,7 +181,7 @@ export default function SLAPage() {
                 />
               ) : (
               <AppTableContainer className="rounded-none border-0">
-                <AppTable>
+                <AppTable cardsOnPhone>
                   <AppTableHeader>
                     <tr>
                       <AppTableHead>Record</AppTableHead>

@@ -204,6 +204,7 @@ import {
   deleteVehicleSaleAction
 } from "@/lib/actions/vehicle";
 import { formatDate, formatDateTime } from "@/components/ui/data";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 export const MAINTENANCE_CATEGORIES = [
   { id: "PERIODIC_SERVICE", label: "Scheduled periodic service", icon: "🔄", badge: "bg-surface text-foreground border-border" },
@@ -15865,8 +15866,8 @@ export default function FleetDeskHost({
                   <AppTableBody className="divide-y divide-border/60">
                     {filteredTrips.length === 0 ? (
                       <AppTableRow>
-                        <AppTableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                          No traveller transit records found. Click <strong>Dispatch trip</strong> to schedule passenger movement.
+                        <AppTableCell colSpan={7} className="p-0">
+                          <EmptyState compact kind="empty" title="No traveller trips yet" description="Use Dispatch trip to schedule passenger movement." />
                         </AppTableCell>
                       </AppTableRow>
                     ) : (
@@ -18284,8 +18285,8 @@ export default function FleetDeskHost({
                   <AppTableBody className="divide-y divide-border/60">
                     {insuranceVendors.length === 0 ? (
                       <AppTableRow>
-                        <AppTableCell colSpan={7} className="text-center py-10 text-muted-foreground">
-                          No insurance vendors configured yet. Click <strong>Add insurance vendor</strong> to create one.
+                        <AppTableCell colSpan={7} className="p-0">
+                          <EmptyState compact kind="empty" title="No insurance vendors yet" description="Use Add insurance vendor to create one." />
                         </AppTableCell>
                       </AppTableRow>
                     ) : (

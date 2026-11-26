@@ -17,6 +17,7 @@ import GlobalShortcuts from "./GlobalShortcuts";
 import MobileBottomNav from "./MobileBottomNav";
 import DeploymentVersionBanner from "./DeploymentVersionBanner";
 import { ConfirmHost } from "@/components/ui/feedback/confirm";
+import { TableCardLabels } from "@/components/ui/TableCardLabels";
 import { SystemMessengerNotifier } from "@/components/messenger/SystemMessengerNotifier";
 import { cn } from "@/lib/utils";
 
@@ -82,6 +83,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
       <MobileBottomNav onOpenMobileMenu={() => setMobileMenuOpen(true)} />
       <GlobalShortcuts />
       <ConfirmHost />
+      <TableCardLabels />
     </div>
   );
 }

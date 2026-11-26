@@ -328,7 +328,7 @@ export default function RequirementsPage() {
             </div>
           ) : (
             <AppTableContainer className="flex-1 overflow-auto">
-              <AppTable>
+              <AppTable cardsOnPhone>
                 <AppTableHeader>
                   <AppTableRow>
                     <AppTableHead>Requirement</AppTableHead>

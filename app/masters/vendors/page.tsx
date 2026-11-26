@@ -20,6 +20,7 @@ import { FormMultiSelect } from "@/components/ui/FormMultiSelect";
 import { MasterOptionsManager } from "@/components/shared/MasterOptionsManager";
 import { SystemMasterBulkImportModal, MasterTableConfig } from "@/components/masters/SystemMasterBulkImportModal";
 import { confirmAction } from "@/components/ui/feedback/confirm";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 const VENDOR_MASTER_CONFIG: MasterTableConfig[] = [
   {
@@ -416,7 +417,7 @@ export default function VendorMasterPage() {
           </AppCardHeader>
           <AppCardContent className="flex-1 overflow-hidden p-0 relative">
             <AppTableContainer>
-              <AppTable>
+              <AppTable cardsOnPhone>
                 <AppTableHeader>
                   <AppTableRow>
                     <AppTableHead>Vendor name</AppTableHead>
@@ -436,8 +437,8 @@ export default function VendorMasterPage() {
                     </AppTableRow>
                   ) : filtered.length === 0 ? (
                     <AppTableRow>
-                      <AppTableCell colSpan={6} className="h-40 text-center text-muted">
-                        No vendors found.
+                      <AppTableCell colSpan={6} className="p-0">
+                        <EmptyState compact kind="no-results" title="No vendors found" />
                       </AppTableCell>
                     </AppTableRow>
                   ) : (

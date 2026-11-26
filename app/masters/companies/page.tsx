@@ -17,6 +17,7 @@ import { SystemMasterBulkImportModal, MasterTableConfig } from "@/components/mas
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { confirmAction } from "@/components/ui/feedback/confirm";
 import { AccessRestricted } from "@/components/errors/AccessRestricted";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 const COMPANY_MASTER_CONFIG: MasterTableConfig[] = [
   {
@@ -280,7 +281,7 @@ export default function CompanyMasterPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <AppTableContainer><AppTable className="w-full text-left border-collapse">
+          <AppTableContainer><AppTable cardsOnPhone className="w-full text-left border-collapse">
             <AppTableHeader>
               <AppTableRow className={`border-b text-xs border-border text-muted`}>
                 <AppTableHead className="pb-3 px-4 font-semibold">Code</AppTableHead>
@@ -333,8 +334,8 @@ export default function CompanyMasterPage() {
               ))}
               {filteredData.length === 0 && (
                 <AppTableRow>
-                  <AppTableCell colSpan={5} className="py-12 text-center text-sm text-muted">
-                    No company records found. Ensure database migrations are synced.
+                  <AppTableCell colSpan={5} className="p-0">
+                    <EmptyState compact kind="empty" title="No companies yet" />
                   </AppTableCell>
                 </AppTableRow>
               )}

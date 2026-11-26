@@ -119,7 +119,7 @@ export default function ApprovalInboxClient({ initialItems }: ApprovalInboxClien
             <p className="text-xs">Your inbox is clear. All reviews and sign-offs have been processed.</p>
           </div>
         ) : (
-          <AppTable>
+          <AppTable cardsOnPhone>
             <AppTableHeader>
               <AppTableRow>
                 <AppTableHead className="w-36">Module</AppTableHead>

@@ -45,6 +45,7 @@ import {
   ResponsiveContainer,
   Legend
 } from "recharts";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 interface AMCExecutiveDashboardProps {
   records: any[];
@@ -634,8 +635,8 @@ export function AMCExecutiveDashboard({
             <AppTableBody>
               {upcomingRenewalsList.length === 0 ? (
                 <AppTableRow>
-                  <AppTableCell colSpan={8} className="p-8 text-center text-muted italic">
-                    No subscriptions match the selected renewal filter criteria.
+                  <AppTableCell colSpan={8} className="p-0">
+                    <EmptyState compact kind="no-results" title="No renewals match this filter" />
                   </AppTableCell>
                 </AppTableRow>
               ) : (

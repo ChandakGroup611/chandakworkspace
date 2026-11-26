@@ -22,11 +22,18 @@ export const AppTableContainer = React.forwardRef<HTMLDivElement, React.HTMLAttr
 );
 AppTableContainer.displayName = "AppTableContainer";
 
-export const AppTable = React.forwardRef<HTMLTableElement, React.TableHTMLAttributes<HTMLTableElement> & { zebra?: boolean }>(
-  ({ className, zebra = false, ...props }, ref) => (
+export const AppTable = React.forwardRef<HTMLTableElement, React.TableHTMLAttributes<HTMLTableElement> & {
+  zebra?: boolean;
+  /** On phones (under 640 px) show each row as a card with "column: value" lines instead of a
+   *  sideways-scrolling table. For lists, not matrices. Cell labels come from the header row
+   *  (components/ui/TableCardLabels.tsx, mounted once in the app shell). */
+  cardsOnPhone?: boolean;
+}>(
+  ({ className, zebra = false, cardsOnPhone = false, ...props }, ref) => (
     <table
       ref={ref}
       data-zebra={zebra || undefined}
+      data-cards={cardsOnPhone || undefined}
       className={cn(
         "w-full caption-bottom border-separate border-spacing-0 text-left text-[length:var(--font-table,13.5px)]",
         "[&[data-zebra]_tbody_tr:nth-child(even)]:bg-sunken/60",

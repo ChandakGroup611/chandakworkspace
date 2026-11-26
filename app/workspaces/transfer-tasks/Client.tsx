@@ -8,6 +8,7 @@ import { ArrowRightLeft, Search, Users, AlertTriangle } from 'lucide-react';
 import { moveTasksInBulk } from '@/lib/actions/tasks';
 import { useRouter } from 'next/navigation';
 import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 
 export default function TransferTasksClient({ initialTasks, workspaces, allUsers, wsMembers }: any) {
@@ -126,7 +127,8 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
 
   const handleTransfer = async () => {
     if (!targetWorkspaceId) return;
-    // Validate that we have a new owner if it's required
+
+    // Validate that we have a new owner if it's required
     if (!validity.isValid && !newOwnerId) {
       toast.warning("Please select a new owner for the tasks since current owners don't have access.");
       return;
@@ -228,7 +230,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
       {/* Table */}
       <AppCard className="overflow-hidden border border-border">
         <div className="overflow-x-auto">
-          <AppTable className="w-full text-left text-base text-muted">
+          <AppTable cardsOnPhone className="w-full text-left text-base text-muted">
             <AppTableHeader className="bg-sunken border-b border-border text-xs text-muted">
               <AppTableRow>
                 <AppTableHead className="px-4 py-3 w-10">
@@ -279,8 +281,8 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
               ))}
               {filteredTasks.length === 0 && (
                 <AppTableRow>
-                  <AppTableCell colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    No tasks found.
+                  <AppTableCell colSpan={5} className="p-0">
+                    <EmptyState compact kind="no-results" title="No tasks found" />
                   </AppTableCell>
                 </AppTableRow>
               )}

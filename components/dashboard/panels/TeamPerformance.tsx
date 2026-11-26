@@ -6,6 +6,7 @@ import { AppTable, AppTableHeader, AppTableRow, AppTableHead, AppTableBody, AppT
 import { AppButton } from "@/components/ui/AppButton";
 import { Users, ArrowRight } from "lucide-react";
 import { UserPerformanceWorkingSheetModal } from "../performance/UserPerformanceWorkingSheetModal";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 interface TeamPerformanceProps {
   metrics?: any[];
@@ -163,8 +164,8 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
               })}
               {teamStats.length === 0 && (
                 <AppTableRow>
-                  <AppTableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No team performance records available
+                  <AppTableCell colSpan={5} className="p-0">
+                    <EmptyState compact kind="empty" title="No team performance records yet" />
                   </AppTableCell>
                 </AppTableRow>
               )}

@@ -6,6 +6,8 @@
 @import "./styles/components.css";
 /* 3. TEMPORARY: remaps hard-coded Tailwind greys/blacks in older pages. Delete page by page. */
 @import "./styles/legacy-compat.css";
+/* 4. Lists shown as cards on phones (AppTable cardsOnPhone) */
+@import "./styles/table-cards.css";
 
 /* Dark utilities follow the app's mode attribute, not the OS setting */
 @custom-variant dark (&:where([data-mode="dark"], [data-mode="dark"] *));

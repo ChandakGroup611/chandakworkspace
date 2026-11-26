@@ -15,6 +15,7 @@ import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow,
 import { createClient } from "@/utils/supabase/client";
 import { Briefcase, Search, Plus, Edit, Trash2, X, RefreshCw } from "lucide-react";
 import { confirmAction } from "@/components/ui/feedback/confirm";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 export default function DesignationsMasterPage() {
   const supabase = createClient();
@@ -188,7 +189,7 @@ export default function DesignationsMasterPage() {
           </AppCardHeader>
           <AppCardContent className="flex-1 overflow-hidden p-0 relative">
             <AppTableContainer>
-              <AppTable>
+              <AppTable cardsOnPhone>
                 <AppTableHeader>
                   <AppTableRow>
                     <AppTableHead>Code</AppTableHead>
@@ -207,8 +208,8 @@ export default function DesignationsMasterPage() {
                     </AppTableRow>
                   ) : filtered.length === 0 ? (
                     <AppTableRow>
-                      <AppTableCell colSpan={5} className="h-40 text-center text-muted">
-                        No designations found.
+                      <AppTableCell colSpan={5} className="p-0">
+                        <EmptyState compact kind="no-results" title="No designations found" />
                       </AppTableCell>
                     </AppTableRow>
                   ) : (

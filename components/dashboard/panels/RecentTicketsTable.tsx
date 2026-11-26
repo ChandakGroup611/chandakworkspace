@@ -7,6 +7,7 @@ import { AppTable, AppTableHeader, AppTableRow, AppTableHead, AppTableBody, AppT
 import { AppButton } from "@/components/ui/AppButton";
 import { ListChecks } from "lucide-react";
 import { formatDate } from "@/components/ui/data";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 interface RecentTicketsTableProps {
   metrics?: any[];
@@ -99,8 +100,8 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
             })
           ) : (
             <AppTableRow>
-              <AppTableCell colSpan={6} className="text-center py-8 text-muted">
-                No recent tickets found
+              <AppTableCell colSpan={6} className="p-0">
+                <EmptyState compact kind="empty" title="No recent tickets" />
               </AppTableCell>
             </AppTableRow>
           )}

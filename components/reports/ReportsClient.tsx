@@ -31,6 +31,7 @@ import { ReportKPIBar } from "@/components/ui/ReportKPIBar";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { EmptyState } from "@/components/ui/feedback/States";
 
 const getSafeExternalUrl = (url: string | undefined | null) => {
   if (!url) return '#';
@@ -794,8 +795,8 @@ export default function ReportsClient() {
                 <AppTableBody>
                 {filtered.length === 0 ? (
                   <AppTableRow>
-                    <AppTableCell colSpan={visibleColumns.length} className="h-32 text-center text-muted">
-                      {loading ? "Loading report data..." : "No records found matching the current filters."}
+                    <AppTableCell colSpan={visibleColumns.length} className={loading ? "h-32 text-center text-muted" : "p-0"}>
+                      {loading ? "Loading report data…" : <EmptyState compact kind="no-results" title="No records match these filters" description="Change or clear the filters to see more." />}
                     </AppTableCell>
                   </AppTableRow>
                 ) : (

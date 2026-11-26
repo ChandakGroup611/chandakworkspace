@@ -7,6 +7,7 @@ import { AppCard } from "@/components/ui/AppCard";
 import { AppTable, AppTableHeader, AppTableRow, AppTableHead, AppTableBody, AppTableCell } from "@/components/ui/AppTable";
 import { AppButton } from "@/components/ui/AppButton";
 import { formatDateTime } from "@/components/ui/data";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 export default function DeliveryLogs() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -72,7 +73,7 @@ export default function DeliveryLogs() {
 
       <AppCard className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <AppTable>
+          <AppTable cardsOnPhone>
             <AppTableHeader>
               <AppTableRow>
                 <AppTableHead>Timestamp</AppTableHead>
@@ -114,8 +115,8 @@ export default function DeliveryLogs() {
               ))}
               {logs.length === 0 && !loading && (
                 <AppTableRow>
-                  <AppTableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No delivery logs found.
+                  <AppTableCell colSpan={5} className="p-0">
+                    <EmptyState compact kind="empty" title="No delivery logs yet" description="Emails and notifications sent by the system appear here." />
                   </AppTableCell>
                 </AppTableRow>
               )}

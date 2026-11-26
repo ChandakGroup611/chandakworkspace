@@ -124,7 +124,7 @@ export default function MyWorkClient({ initialItems }: MyWorkClientProps) {
             <p className="text-xs">You are completely up to date across all assigned modules.</p>
           </div>
         ) : (
-          <AppTable>
+          <AppTable cardsOnPhone>
             <AppTableHeader>
               <AppTableRow>
                 <AppTableHead className="w-36">Module</AppTableHead>

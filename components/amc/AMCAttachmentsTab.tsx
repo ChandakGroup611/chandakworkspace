@@ -8,6 +8,7 @@ import { Paperclip, Trash2, Download, Plus, Loader2, FileText, CheckCircle2, Eye
 import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 import { confirmAction } from "@/components/ui/feedback/confirm";
 import { formatDate } from "@/components/ui/data";
+import { EmptyState } from "@/components/ui/feedback/States";
 
 interface Attachment {
   id: string;
@@ -264,9 +265,8 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                 </AppTableRow>
               ) : attachments.length === 0 ? (
                 <AppTableRow>
-                  <AppTableCell colSpan={5} className="p-8 text-center text-muted">
-                    <FileText className="h-10 w-10 mx-auto opacity-20 mb-2" />
-                    No documents attached yet.
+                  <AppTableCell colSpan={5} className="p-0">
+                    <EmptyState compact title="No documents attached yet" />
                   </AppTableCell>
                 </AppTableRow>
               ) : (
