@@ -45,6 +45,11 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
     return () => window.removeEventListener("app:scroll-top", toTop);
   }, []);
 
+  // Links shared outside the company: the visitor has no account, so no app chrome at all
+  if (pathname.startsWith("/share/")) {
+    return <div className="min-h-dvh bg-background text-foreground">{children}</div>;
+  }
+
   if (isAuthRoute) {
     return (
       <div className="min-h-dvh bg-background text-foreground">
