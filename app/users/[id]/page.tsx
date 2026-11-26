@@ -36,24 +36,7 @@ import {
   MessageSquare
 } from "lucide-react";
 
-const PRESET_AVATARS = [
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=200",
-  "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80&w=200",
-];
+import { PRESET_AVATARS, getInitialsAvatarUrl } from "@/lib/utils/preset-avatars";
 
 const getModuleMeta = (code: string) => {
   switch (code) {
@@ -673,8 +656,19 @@ export default function UserFormPage() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-border">
                   <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>
                     <div className={`w-28 h-28 rounded-full overflow-hidden flex items-center justify-center ring-4 ring-offset-2 bg-sunken text-muted ring-border ring-offset-surface`}>
-                      {formPhoto && formPhoto !== PRESET_AVATARS[0] ? (
-                        <img src={formPhoto} alt="Profile" className="w-full h-full object-cover" onError={(e) => { (e.target as any).src = '' }} />
+                      {formPhoto ? (
+                        <img
+                          src={formPhoto}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const img = e.currentTarget;
+                            if (!img.dataset.fallbackApplied) {
+                              img.dataset.fallbackApplied = "1";
+                              img.src = getInitialsAvatarUrl(formFullName);
+                            }
+                          }}
+                        />
                       ) : (
                         <ImageIcon className="w-12 h-12 opacity-50" />
                       )}
