@@ -13,6 +13,7 @@ import {
   type DmsDocumentSummary,
   type DmsVersionItem,
 } from "@/lib/actions/dms-core";
+import { DmsDocumentTags } from "./DmsMastersView";
 
 export function formatBytes(n: number) {
   if (!n) return "0 B";
@@ -308,6 +309,7 @@ export function DmsDocumentPanel({ documentId, onChanged }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {tab === "details" && <DmsDocumentTags documentId={doc.id} />}
         {tab === "details" && (
           <dl className="space-y-1.5">
             {[
