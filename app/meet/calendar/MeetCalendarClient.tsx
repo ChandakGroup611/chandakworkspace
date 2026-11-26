@@ -168,7 +168,7 @@ export default function MeetCalendarClient({ sessions }: { sessions: CalSession[
                   <div key={d} className="py-2">{d}</div>
                 ))}
               </div>
-              <div className="grid grid-cols-7">
+              <div className="grid grid-cols-7" data-calendar="">
                 {monthDays.map((k) => {
                   const inMonth = k.slice(0, 7) === cursor.slice(0, 7);
                   const items = byDay.get(k) || [];

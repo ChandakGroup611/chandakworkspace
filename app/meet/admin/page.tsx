@@ -25,6 +25,7 @@ export const metadata = {
 
 export default async function MeetAdminPage({ searchParams }: { searchParams: Promise<{ section?: string }> }) {
   const { section } = await searchParams;
+  const isAzure = section === "teams" || section === "integrations";
   try {
     await requireMeet("MEET_ADMIN", { requireAdmin: true });
   } catch (err: any) {
@@ -62,12 +63,13 @@ export default async function MeetAdminPage({ searchParams }: { searchParams: Pr
   return (
     <div className="space-y-6">
       <MeetHeader
-        title="Settings"
+        title={isAzure ? "Teams and Azure keys" : "Settings"}
         description={section ? "Chandak Meet settings. Other sections are under Settings in the menu on the left." : "Pick a section under Settings in the menu on the left."}
         breadcrumbs={[{ label: "Settings" }]}
       />
 
-      <MeetAdminClient
+      {/* "Teams & Azure Keys" in the menu opens only the Azure card (it used to fall back to Meeting rules) */}
+      {!isAzure && <MeetAdminClient
         initialMasters={masters}
         initialSettings={settings}
         initialRoleMatrix={roleMatrix}
@@ -77,9 +79,9 @@ export default async function MeetAdminPage({ searchParams }: { searchParams: Pr
         initialTemplates={templates}
         initialProjects={projects}
         section={section}
-      />
+      />}
       {(!section || section === "policies") && <AttendanceRulesCard grace={await graceMinutes()} />}
-      {(!section || section === "policies" || section === "integrations" || section === "teams") && (
+      {(!section || section === "policies" || isAzure) && (
         <MeetAzureConfigCard initial={await getMeetAzureForm()} />
       )}
       {section === "email" && <MeetMailServerCard initial={await getMeetSmtpForm()} />}

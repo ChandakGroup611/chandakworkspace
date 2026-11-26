@@ -938,3 +938,16 @@
     --control-h-sm: 40px;
   }
 }
+
+/* Touch screens, part 2 (26 Nov 2026): buttons with their own fixed sizes (filter chips 25 px,
+   row actions 30 px, view toggles 26 px) are also at least 40 px tall on phones and tablets,
+   and icon-only ones 40 px wide. Calendars and date pickers keep their grid sizes.
+   Mouse users see no change. */
+@media (pointer: coarse) {
+  :is(button, [role="button"], select, summary):not([role="switch"]):not(:where(.fc *, .react-datepicker *, [role="grid"] *, [data-calendar] *, .rdp *)) {
+    min-height: 40px;
+  }
+  :is(button, [role="button"]):where(:has(> svg:only-child), :has(> span.sr-only + svg), :has(> svg + span.sr-only)):not(:where(.fc *, .react-datepicker *, [role="grid"] *, [data-calendar] *, .rdp *)) {
+    min-width: 40px;
+  }
+}
