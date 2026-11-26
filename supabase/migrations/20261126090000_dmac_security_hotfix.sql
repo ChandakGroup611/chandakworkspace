@@ -78,7 +78,7 @@ DECLARE
 BEGIN
     FOR t IN
         SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE n.nspname = 'public' AND c.relname LIKE 'dms\_audit\_logs\_%'
+        WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') AND c.relname LIKE 'dms\_audit\_logs\_%'
     LOOP
         EXECUTE format('REVOKE UPDATE, DELETE, TRUNCATE ON public.%I FROM service_role', t.relname);
     END LOOP;
