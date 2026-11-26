@@ -1,7 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
-import { requireDesign, isDesignStoragePath, safeStorageSegment } from "@/lib/permissions/design-guard";
+import { requireDesign, isDesignStoragePath } from "@/lib/permissions/design-guard";
 import { 
   DrawingItem, 
   DrawingStatus, 
@@ -97,94 +97,6 @@ export async function fetchDrawingsListAction(filters?: {
   }
 }
 
-export async function createDrawingAction(payload: Omit<DrawingItem, "id">): Promise<{
-  success: boolean;
-  drawing?: DrawingItem;
-  error?: string;
-}> {
-  try {
-    await requireDesign("drawings", (payload as any).projectId);
-
-    const drawing = await DesignTrackingService.createDrawing(payload);
-
-    // Dynamic persist to Supabase design_drawings table
-    try {
-      const dAny = drawing as any;
-      await supabaseAdmin.from("design_drawings").upsert({
-        id: drawing.id,
-        project: drawing.project,
-        project_id: dAny.projectId || null,
-        tower_name: dAny.towerName || null,
-        code: drawing.code,
-        title: drawing.title,
-        discipline: drawing.discipline,
-        sub_package: dAny.subPackage || null,
-        current_revision: drawing.revision || "R0",
-        status: drawing.status || "Under Review",
-        consultant_name: drawing.consultant || dAny.consultantName || "",
-        file_url: drawing.fileUrl || null,
-        file_size: drawing.fileSize || "2.4 MB",
-        submitted_date: drawing.submittedDate || new Date().toISOString().split("T")[0],
-        approved_date: drawing.approvedDate || null,
-        tags: dAny.tags || [],
-        is_gfc: !!dAny.isGfc,
-        gfc_released_date: dAny.gfcReleasedDate || null,
-        gfc_recipient: dAny.gfcRecipient || null
-      });
-    } catch (e) {
-      console.warn("Could not upsert to design_drawings:", e);
-    }
-
-    return { success: true, drawing };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Failed to create drawing" };
-  }
-}
-
-export async function updateDrawingStatusAction(
-  drawingId: string, 
-  status: DrawingStatus
-): Promise<{
-  success: boolean;
-  drawing?: DrawingItem | null;
-  error?: string;
-}> {
-  try {
-    const { data: existing } = await supabaseAdmin
-      .from("design_drawings")
-      .select("project_id")
-      .eq("id", drawingId)
-      .maybeSingle();
-    // Releasing for construction needs the GFC approval right; other status changes need upload rights.
-    await requireDesign(status === "Approved (GFC)" ? "gfc" : "drawings", existing?.project_id);
-
-    const drawing = await DesignTrackingService.updateDrawingStatus(drawingId, status);
-
-    // Dynamic update in Supabase design_drawings table
-    try {
-      const updates: any = {
-        status,
-        updated_at: new Date().toISOString()
-      };
-      if (status === "Approved (GFC)") {
-        updates.is_gfc = true;
-        updates.approved_date = new Date().toISOString().split("T")[0];
-        updates.gfc_released_date = new Date().toISOString().split("T")[0];
-      }
-      await supabaseAdmin
-        .from("design_drawings")
-        .update(updates)
-        .eq("id", drawingId);
-    } catch (e) {
-      console.warn("Could not update design_drawings in DB:", e);
-    }
-
-    return { success: true, drawing };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Failed to update drawing status" };
-  }
-}
-
 export async function fetchGfcReleasesAction(): Promise<{
   success: boolean;
   releases: GfcRelease[];
@@ -274,80 +186,6 @@ export async function fetchConsultantsAction(): Promise<{
   }
 }
 
-function formatFileSize(bytes: number): string {
-  if (!bytes || bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-}
-
-/**
- * Enterprise Drawing Storage Upload Pipeline
- * Directly uploads large engineering CAD, BIM, DWG, DXF, or PDF files to private Supabase Storage.
- * Stores lightweight `storage:<bucket>:<path>` URI in metadata, ensuring 0 Base64 strings in PostgreSQL.
- */
-export async function uploadDesignDrawingFileAction(formData: FormData): Promise<{
-  success: boolean;
-  storageUrl?: string;
-  fileName?: string;
-  fileSize?: string;
-  fileType?: string;
-  error?: string;
-}> {
-  try {
-    await requireDesign("drawings", (formData.get("projectId") as string) || null);
-
-    const file = formData.get("file") as File | null;
-    if (!file) return { success: false, error: "No file provided" };
-
-    const project = (formData.get("project") as string) || "General";
-    const code = (formData.get("code") as string) || "DRW";
-
-    const cleanProject = safeStorageSegment(project, "General");
-    const cleanCode = safeStorageSegment(code, "DRW");
-    const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const timestamp = Date.now();
-    const storagePath = `drawings/${cleanProject}/${cleanCode}_${timestamp}_${cleanFileName}`;
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    // Upload to design-drawings bucket with automatic fallback to ticket-attachments
-    let bucket = "design-drawings";
-    let { error: upErr } = await supabaseAdmin.storage
-      .from(bucket)
-      .upload(storagePath, buffer, {
-        contentType: file.type || "application/octet-stream",
-        upsert: false
-      });
-
-    if (upErr) {
-      bucket = "ticket-attachments";
-      const { error: fallbackErr } = await supabaseAdmin.storage
-        .from(bucket)
-        .upload(storagePath, buffer, {
-          contentType: file.type || "application/octet-stream",
-          upsert: false
-        });
-      if (fallbackErr) {
-        return { success: false, error: fallbackErr.message || upErr.message };
-      }
-    }
-
-    const storageUrl = `storage:${bucket}:${storagePath}`;
-
-    return {
-      success: true,
-      storageUrl,
-      fileName: file.name,
-      fileSize: formatFileSize(file.size),
-      fileType: file.type || "application/octet-stream"
-    };
-  } catch (err: any) {
-    console.error("uploadDesignDrawingFileAction error:", err);
-    return { success: false, error: err?.message || "Failed to upload drawing file" };
-  }
-}
 
 /**
  * Resolves short-lived (4 hours) authenticated signed URL for private drawing files.

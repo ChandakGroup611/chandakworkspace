@@ -683,51 +683,72 @@ export async function deleteLookAheadAction(lookAheadId: string): Promise<{ succ
 // 8. Drawings, Revisions & GFC Approvals Server Actions
 // ==============================================================================
 
+// Drawings now live in the DMAC review loop (lib/actions/dmac-drawings.ts). design_drawings is a
+// read projection kept in step by database triggers, so these legacy entry points only allow what
+// is not part of the review record: detail edits and recording the site hand-over.
+const DMAC_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function findDmacDrawing(ref: string) {
+  if (!ref) return null;
+  let q = supabaseAdmin
+    .from("dmac_drawings")
+    .select("id, current_status, dmac_projects!inner(legacy_design_project_id)")
+    .is("deleted_at", null);
+  q = DMAC_UUID_RE.test(ref) ? q.or(`id.eq.${ref},legacy_drawing_id.eq.${ref}`) : q.eq("legacy_drawing_id", ref);
+  const { data } = await q.maybeSingle();
+  if (!data) return null;
+  const p = (data as any).dmac_projects;
+  return {
+    id: data.id as string,
+    status: data.current_status as string,
+    scope: ((Array.isArray(p) ? p[0] : p)?.legacy_design_project_id as string | null) || null,
+  };
+}
+
+/** Rows of the drawing register projection, for refreshing the browser cache after a loop step. */
+export async function fetchDrawingRegisterRowsAction(): Promise<{ success: boolean; rows?: any[]; error?: string }> {
+  try {
+    await requireDesign("any");
+    const { data, error } = await supabaseAdmin.from("design_drawings").select("*").order("created_at", { ascending: false });
+    if (error) throw error;
+    return { success: true, rows: data || [] };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Failed to load the drawing register" };
+  }
+}
+
 export async function saveDrawingAction(drawing: DrawingItem): Promise<{
   success: boolean;
   data?: DrawingItem;
   error?: string;
 }> {
   try {
-    await requireDesign("drawings", (drawing as any).projectId);
-    const supabase = await getSupabase();
-    const wantsGfc = !!(drawing as any).isGfc || drawing.status === "Approved (GFC)" || drawing.status === "Site Handed Over";
-    if (wantsGfc) {
-      const { data: existing } = await supabaseAdmin
-        .from("design_drawings")
-        .select("is_gfc, status")
-        .eq("id", drawing.id)
-        .maybeSingle();
-      const alreadyGfc = !!existing && (existing.is_gfc || existing.status === "Approved (GFC)" || existing.status === "Site Handed Over");
-      if (!alreadyGfc) await requireDesign("gfc", (drawing as any).projectId);
+    const found = await findDmacDrawing(drawing.id);
+    if (!found) {
+      return { success: false, error: "New drawings are registered through Upload drawing, so they enter review." };
     }
-    const row = {
-      id: drawing.id,
-      project_id: (drawing as any).projectId || null,
-      project: drawing.project,
-      tower_name: (drawing as any).towerName || null,
-      code: drawing.code,
-      title: drawing.title,
-      discipline: drawing.discipline,
-      sub_package: (drawing as any).subPackage || null,
-      current_revision: (drawing as any).currentRevision || drawing.revision || "R0",
-      status: drawing.status || "Under Review",
-      consultant_name: (drawing as any).consultantName || drawing.consultant || null,
-      file_url: drawing.fileUrl || null,
-      file_size: drawing.fileSize || null,
-      submitted_date: drawing.submittedDate || new Date().toISOString().split("T")[0],
-      approved_date: drawing.approvedDate || null,
-      tags: (drawing as any).tags || [],
-      is_gfc: (drawing as any).isGfc !== undefined ? !!(drawing as any).isGfc : (drawing.status === "Approved (GFC)"),
-      gfc_released_date: (drawing as any).gfcReleasedDate || null,
-      gfc_recipient: (drawing as any).gfcRecipient || null,
-      updated_at: new Date().toISOString()
-    };
+    await requireDesign("drawings", found.scope);
 
-    const { error } = await supabase.from("design_drawings").upsert(row, { onConflict: "code" });
-    if (error) {
-      const adminRes = await supabaseAdmin.from("design_drawings").upsert(row, { onConflict: "code" });
-      if (adminRes.error) throw adminRes.error;
+    const { error } = await supabaseAdmin
+      .from("dmac_drawings")
+      .update({
+        title: String(drawing.title || "").trim() || undefined,
+        consultant_name: (drawing as any).consultantName || drawing.consultant || null,
+        sub_package: (drawing as any).subPackage || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", found.id);
+    if (error) throw error;
+
+    // Site hand-over is the one status recorded outside the loop, and only on a GFC sheet
+    if (drawing.status === "Site Handed Over" && found.status === "GFC") {
+      await requireDesign("gfc", found.scope);
+      const ref = drawing.id;
+      const { error: hoErr } = await supabaseAdmin
+        .from("design_drawings")
+        .update({ status: "Site Handed Over", gfc_recipient: (drawing as any).gfcRecipient || null })
+        .eq("id", ref);
+      if (hoErr) throw hoErr;
     }
     return { success: true, data: drawing };
   } catch (err: any) {
@@ -737,19 +758,9 @@ export async function saveDrawingAction(drawing: DrawingItem): Promise<{
 }
 
 export async function deleteDrawingAction(drawingId: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    await requireDesign("drawings");
-    const supabase = await getSupabase();
-    const { error } = await supabase.from("design_drawings").delete().eq("id", drawingId);
-    if (error) {
-      const adminRes = await supabaseAdmin.from("design_drawings").delete().eq("id", drawingId);
-      if (adminRes.error) throw adminRes.error;
-    }
-    return { success: true };
-  } catch (err: any) {
-    console.error("deleteDrawingAction error:", err);
-    return { success: false, error: err?.message || "Failed to delete drawing" };
-  }
+  const { deleteDmacDrawingAction } = await import("@/lib/actions/dmac-drawings");
+  const res = await deleteDmacDrawingAction(drawingId, "Removed from the drawing register");
+  return res.success ? { success: true } : { success: false, error: res.error };
 }
 
 export async function saveDrawingRevisionAction(revision: DrawingRevision): Promise<{
@@ -757,31 +768,8 @@ export async function saveDrawingRevisionAction(revision: DrawingRevision): Prom
   data?: DrawingRevision;
   error?: string;
 }> {
-  try {
-    await requireDesign("drawings", (revision as any).projectId);
-    const supabase = await getSupabase();
-    const row = {
-      id: revision.id,
-      drawing_id: revision.drawingId,
-      revision_number: revision.revisionNumber,
-      file_url: (revision as any).fileUrl || null,
-      file_size: revision.fileSize || null,
-      changes_summary: revision.changesSummary || null,
-      submitted_by: revision.submittedBy || "Consultant",
-      approved_by: (revision as any).approvedBy || null,
-      created_at: (revision as any).createdAt || (revision as any).date || new Date().toISOString()
-    };
-
-    const { error } = await supabase.from("design_drawing_revisions").upsert(row, { onConflict: "id" });
-    if (error) {
-      const adminRes = await supabaseAdmin.from("design_drawing_revisions").upsert(row, { onConflict: "id" });
-      if (adminRes.error) throw adminRes.error;
-    }
-    return { success: true, data: revision };
-  } catch (err: any) {
-    console.error("saveDrawingRevisionAction error:", err);
-    return { success: false, error: err?.message || "Failed to save revision" };
-  }
+  await requireDesign("drawings", (revision as any).projectId);
+  return { success: false, error: "Revisions are created by submitting a new revision for review." };
 }
 
 // ==============================================================================

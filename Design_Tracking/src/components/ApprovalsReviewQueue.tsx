@@ -25,13 +25,11 @@ import { DesignMasterStore } from "../services/designMasterStore";
 interface ApprovalsReviewQueueProps {
   drawings: DrawingItem[];
   onOpenReviewModal: (drawing: DrawingItem) => void;
-  onQuickStatusUpdate: (drawingId: string, status: DrawingStatus) => void;
 }
 
 export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
   drawings,
   onOpenReviewModal,
-  onQuickStatusUpdate
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatusFilters, setSelectedStatusFilters] = useState<string[]>([]);
@@ -395,17 +393,6 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
                   <span>Review & certify</span>
                 </button>
 
-                {drawing.status !== "Approved (GFC)" && (
-                  <button
-                    type="button"
-                    onClick={() => onQuickStatusUpdate(drawing.id, "Approved (GFC)")}
-                    className="h-8 px-3 rounded-lg border border-success-border bg-success-soft hover:bg-success-soft text-success-text text-xs font-semibold inline-flex items-center gap-1 transition-all cursor-pointer"
-                    title="Directly stamp as GFC approved"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>Stamp GFC</span>
-                  </button>
-                )}
               </div>
             </div>
           ))

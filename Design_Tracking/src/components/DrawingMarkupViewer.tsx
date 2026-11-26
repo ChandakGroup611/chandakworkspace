@@ -115,7 +115,7 @@ export interface DrawingMarkupViewerProps {
     dmac_revision_files?: {
       id: string;
       file_role: string;
-      storage_key: string;
+      storage_key?: string;
       file_name: string;
       file_size_bytes: number;
     }[];
@@ -402,7 +402,7 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
         setDraftCommentText("");
         setActiveTool("select");
       } else {
-        toast.info(res.error || "Failed to save comment");
+        toast.info(("error" in res && res.error) || "Failed to save comment");
       }
     } catch (err: any) {
       console.error("Save comment error:", err);
@@ -504,6 +504,8 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
 
   const activeRev = revisions.find((r) => r.id === activeRevId);
   const primaryFile = activeRev?.dmac_revision_files?.find((f) => f.file_role === "PRIMARY_PDF");
+  // The sheet streams through the authenticated file proxy; storage keys never reach the browser
+  const sheetUrl = fileUrl || (primaryFile ? `/api/proxy-attachment/${primaryFile.id}?raw=1` : undefined);
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 flex flex-col overflow-hidden animate-in fade-in duration-150">
@@ -766,9 +768,9 @@ export const DrawingMarkupViewer: React.FC<DrawingMarkupViewerProps> = ({
           >
             {/* Sheet Background / Simulation Grid */}
             <div className="absolute inset-0 bg-surface flex items-center justify-center">
-              {fileUrl ? (
+              {sheetUrl ? (
                 <iframe
-                  src={fileUrl}
+                  src={sheetUrl}
                   className="w-full h-full pointer-events-none border-none"
                   title="Drawing sheet PDF"
                 />

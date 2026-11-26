@@ -174,6 +174,19 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     }
 
     if (!attachment) {
+      // DMAC revision files (drawing review loop)
+      const { data: revFile } = await supabaseAdmin
+        .from('dmac_revision_files')
+        .select('file_name, storage_key')
+        .eq('id', id)
+        .maybeSingle();
+      if (revFile && revFile.storage_key) {
+        designFile = true;
+        attachment = { file_name: revFile.file_name, file_url: revFile.storage_key, file_type: null };
+      }
+    }
+
+    if (!attachment) {
       let { data: drawingDoc } = await supabaseAdmin.from('design_drawings').select('*').eq('id', id).maybeSingle();
       if (drawingDoc && drawingDoc.file_url) {
         designFile = true;
