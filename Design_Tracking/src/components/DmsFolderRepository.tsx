@@ -47,6 +47,7 @@ import {
 import { DmsSplitIndexingWizard } from "./DmsSplitIndexingWizard";
 import { DmsDocumentPanel, formatBytes } from "./DmsDocumentPanel";
 import { DmsQcQueueView, DmsRecycleBinView } from "./DmsBinAndQcViews";
+import { DmsSearchView } from "./DmsSearchView";
 import { DmsFolderPermissionsModal } from "./DmsFolderPermissionsModal";
 import { toast } from "react-toastify";
 
@@ -93,7 +94,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [docViewerZoom, setDocViewerZoom] = useState<number>(1);
 
   // Which list the main area shows, and what the person may do in the open folder
-  const [view, setView] = useState<"FOLDER" | "QC" | "BIN">("FOLDER");
+  const [view, setView] = useState<"FOLDER" | "SEARCH" | "QC" | "BIN">("FOLDER");
   const [folderRights, setFolderRights] = useState<DmsRights | null>(null);
   const [docsError, setDocsError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -341,6 +342,13 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
         <div className="flex flex-wrap items-center gap-2">
           <button type="button"
+            onClick={() => setView(view === "SEARCH" ? "FOLDER" : "SEARCH")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border transition-colors cursor-pointer ${view === "SEARCH" ? "bg-accent-soft text-primary" : "bg-surface text-foreground"}`}
+          >
+            <Search className="h-3.5 w-3.5 text-primary" />
+            <span>Search</span>
+          </button>
+          <button type="button"
             onClick={() => setView(view === "QC" ? "FOLDER" : "QC")}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border transition-colors cursor-pointer ${view === "QC" ? "bg-accent-soft text-primary" : "bg-surface text-foreground"}`}
           >
@@ -437,12 +445,16 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           {view !== "FOLDER" ? (
             <>
               <div className="flex items-center justify-between pb-3 border-b border-border">
-                <h2 className="text-sm font-semibold text-foreground">{view === "QC" ? "Waiting for your QC decision" : "Recycle bin"}</h2>
+                <h2 className="text-sm font-semibold text-foreground">
+                  {view === "SEARCH" ? "Search documents" : view === "QC" ? "Waiting for your QC decision" : "Recycle bin"}
+                </h2>
                 <button type="button" onClick={() => setView("FOLDER")} className="text-xs text-primary font-semibold">
                   Back to folders
                 </button>
               </div>
-              {view === "QC" ? (
+              {view === "SEARCH" ? (
+                <DmsSearchView workspaceId={workspaceId} currentFolder={selectedFolder} onOpen={(doc) => setSelectedDoc(doc)} />
+              ) : view === "QC" ? (
                 <DmsQcQueueView
                   workspaceId={workspaceId}
                   onOpen={(item) =>
