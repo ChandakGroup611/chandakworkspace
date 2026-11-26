@@ -19,7 +19,15 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
   const sp = await searchParams;
   const workspaceId = typeof sp?.workspaceId === "string" ? sp.workspaceId : null;
 
-  const canAccess = await checkServerPermission("TASKS_VIEW");
+  const t0 = Date.now();
+  const timings: Record<string, number> = {};
+  // The permission check, the user's scope and the task list load at the same time;
+  // the list is only shown when the permission check passes.
+  const [canAccess, { user }, tasks] = await Promise.all([
+    checkServerPermission("TASKS_VIEW"),
+    getCachedUser(),
+    workspaceId ? fetchTasksByWorkspace(workspaceId, true) : fetchAllTasks(timings),
+  ]);
   if (!canAccess) {
     return (
       <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center p-8">
@@ -31,12 +39,11 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
     );
   }
 
-  const { user } = await getCachedUser();
   const userScope = user ? await getUserAccessScope(user.id) : null;
-  const tasks = workspaceId ? await fetchTasksByWorkspace(workspaceId, true) : await fetchAllTasks();
-  
+  timings.total = Date.now() - t0;
+
   return (
-    <div className="w-full h-full animate-in fade-in-50 duration-150">
+    <div className="w-full h-full animate-in fade-in-50 duration-150" data-load-ms={JSON.stringify(timings)}>
       <main>
         <TaskListViewClient initialTasks={tasks} userScope={userScope} currentUserId={user?.id || userScope?.userId || null} />
       </main>

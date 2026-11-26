@@ -1992,25 +1992,20 @@ export async function fetchTasksByWorkspace(workspaceId: string, includeDescenda
 }
 
 
-export async function fetchAllTasks() {
+export async function fetchAllTasks(timings?: Record<string, number>) {
+  const t0 = Date.now();
+  const mark = (k: string) => { if (timings) timings[k] = Date.now() - t0; };
   const cookieStore = await cookies();
   const supabaseClient = createClient(cookieStore);
 
   // Get current user
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return [];
+  mark("auth");
 
   const canManageAll = await hasPermission(user.id, "WORKSPACES_MANAGE");
   const supabase = canManageAll ? supabaseAdmin : supabaseClient;
-
-  // Fetch workspaces the user has access to
-  const visibleWorkspaces = await getVisibleWorkspaces(user.id);
-  const visibleWsIds = visibleWorkspaces.map((w: any) => w.id);
-
-  // If non-admin user has NO visible workspaces, they have 0 workspace tasks
-  if (!canManageAll && visibleWsIds.length === 0) {
-    return [];
-  }
+  mark("perm");
 
   let query = supabase
     .from("tasks")
@@ -2025,13 +2020,23 @@ export async function fetchAllTasks() {
     `)
     .eq("is_deleted", false);
 
+  // Workspace visibility only narrows the list for people who cannot manage all workspaces,
+  // so admins skip that lookup. The two lookups below do not depend on each other.
   if (!canManageAll) {
+    const [visibleWorkspaces, enrollContext] = await Promise.all([
+      getVisibleWorkspaces(user.id),
+      getUserTaskEnrollmentContext(user.id),
+    ]);
+    const visibleWsIds = visibleWorkspaces.map((w: any) => w.id);
+    // A user with NO visible workspaces has 0 workspace tasks
+    if (visibleWsIds.length === 0) return [];
     query = query.in("workspace_id", visibleWsIds);
-    const enrollContext = await getUserTaskEnrollmentContext(user.id);
     query = query.or(buildTaskEnrollmentFilter(enrollContext));
+    mark("scope");
   }
 
   const { data: allTasks, error: tasksError } = await query.order("created_at", { ascending: false });
+  mark("tasks");
 
   if (tasksError) {
     console.error("[Workspaces] Error fetching all tasks:", tasksError);
@@ -2041,30 +2046,39 @@ export async function fetchAllTasks() {
   if (allTasks && allTasks.length > 0) {
     const wsIds = Array.from(new Set(allTasks.map((t: any) => t.workspace?.parent_workspace_id).filter(Boolean)));
 
-    let parentWorkspaces: any[] = [];
-    if (wsIds.length > 0) {
-      const { data: pWs } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds);
-      if (pWs) parentWorkspaces = pWs;
-    }
-
     const userIds = new Set<string>();
     allTasks.forEach((t: any) => {
       if (t.created_by) userIds.add(t.created_by);
       if (t.assigned_to) userIds.add(t.assigned_to);
       if (t.participants) t.participants.forEach((p: any) => userIds.add(p.user_id));
     });
-    let userMap: Record<string, any> = {};
-    if (userIds.size > 0) {
-      const { data: usersData } = await supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", Array.from(userIds));
-      if (usersData) usersData.forEach((u: any) => userMap[u.id] = u);
-    }
 
     const taskIds = allTasks.map((t: any) => t.id);
-    const [checklistsData, attachmentsData, commentsData] = await Promise.all([
-      supabaseAdmin.from("task_checklists").select("task_id, is_completed").in("task_id", taskIds),
-      supabaseAdmin.from("task_attachments").select("task_id").in("task_id", taskIds),
-      supabaseAdmin.from("task_comments").select("task_id").in("task_id", taskIds)
+    // Long id lists are sent in parts so each request stays short; all lookups run at the same time.
+    const CHUNK = 150;
+    const parts: string[][] = [];
+    for (let i = 0; i < taskIds.length; i += CHUNK) parts.push(taskIds.slice(i, i + CHUNK));
+    const byTask = async (table: string, cols: string) => {
+      const res = await Promise.all(parts.map((ids) => supabaseAdmin.from(table).select(cols).in("task_id", ids)));
+      return { data: res.flatMap((r: any) => r.data || []) };
+    };
+
+    const [pWsRes, usersRes, checklistsData, attachmentsData, commentsData] = await Promise.all([
+      wsIds.length > 0
+        ? supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds)
+        : Promise.resolve({ data: [] as any[] }),
+      userIds.size > 0
+        ? supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", Array.from(userIds))
+        : Promise.resolve({ data: [] as any[] }),
+      byTask("task_checklists", "task_id, is_completed"),
+      byTask("task_attachments", "task_id"),
+      byTask("task_comments", "task_id"),
     ]);
+    mark("details");
+
+    const parentWorkspaces: any[] = (pWsRes as any).data || [];
+    const userMap: Record<string, any> = {};
+    ((usersRes as any).data || []).forEach((u: any) => userMap[u.id] = u);
 
     const checklistMap: Record<string, any[]> = {};
     if (checklistsData.data) checklistsData.data.forEach((c: any) => { if (!checklistMap[c.task_id]) checklistMap[c.task_id] = []; checklistMap[c.task_id].push(c); });
