@@ -24,6 +24,8 @@ const MODULE_ROUTES: Record<VoiceModuleTarget, string> = {
   VEHICLE: "/vehicle",
   BUDGET: "/budget/create",
   MEETING: "/meet/meetings/new",
+  DESIGN: "/design",
+  AMC: "/amc/contracts/new",
 };
 
 const MODULE_LABELS: Record<VoiceModuleTarget, string> = {
@@ -34,7 +36,26 @@ const MODULE_LABELS: Record<VoiceModuleTarget, string> = {
   VEHICLE: "Vehicle",
   BUDGET: "Budget",
   MEETING: "Meeting",
+  DESIGN: "Design Tracking",
+  AMC: "AMC & Subscriptions",
 };
+
+/** Discovers routes for any future workspace module dynamically from live navigation links in the DOM. */
+function findDynamicModuleRoute(spokenPhrase: string | undefined): { label: string; href: string } | undefined {
+  if (!spokenPhrase) return undefined;
+  const q = spokenPhrase.trim().toLowerCase();
+  if (!q || q.length < 3) return undefined;
+  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>("nav a[href], aside a[href], header a[href]"));
+  for (const a of links) {
+    const href = a.getAttribute("href") || "";
+    const txt = (a.textContent || "").trim().toLowerCase();
+    if (!href.startsWith("/") || href === "/" || !txt) continue;
+    if (txt === q || txt.includes(q) || q.includes(txt) || href.toLowerCase().includes(`/${q.replace(/\s+/g, "-")}`)) {
+      return { label: (a.textContent || q).trim(), href };
+    }
+  }
+  return undefined;
+}
 
 function resolveModuleName(pathname: string): string {
   if (pathname.startsWith("/vehicle")) return "Vehicle Desk";
@@ -58,6 +79,8 @@ function currentMatchesHint(pathname: string, hint: VoiceModuleTarget): boolean 
   if (hint === "VEHICLE") return pathname.startsWith("/vehicle");
   if (hint === "BUDGET") return pathname.startsWith("/budget");
   if (hint === "MEETING") return pathname.startsWith("/meet");
+  if (hint === "DESIGN") return pathname.startsWith("/design");
+  if (hint === "AMC") return pathname.startsWith("/amc") || pathname.startsWith("/subscription");
   return false;
 }
 
@@ -71,14 +94,19 @@ function findCreateButton(hint?: VoiceModuleTarget): HTMLElement | undefined {
     VEHICLE: /^\s*(?:\+?\s*)?(?:add\s+vehicle|new\s+vehicle)\b/i,
     BUDGET: /^\s*(?:\+?\s*)?(?:create\s+budget|new\s+budget)\b/i,
     MEETING: /^\s*(?:\+?\s*)?(?:new\s+meeting|schedule\s+meeting|create\s+meeting)\b/i,
+    DESIGN: /^\s*(?:\+?\s*)?(?:new|create|add|upload)\b/i,
+    AMC: /^\s*(?:\+?\s*)?(?:new\s+contract|create\s+contract|new\s+amc|add\s+amc|new|create|add)\b/i,
   };
   if (hint) {
-    return candidates.find((el) => el.offsetParent !== null && patterns[hint].test(el.textContent || ""));
+    return (
+      candidates.find((el) => el.offsetParent !== null && patterns[hint].test(el.textContent || "")) ||
+      candidates.find((el) => el.offsetParent !== null && /^\s*(?:\+?\s*)?(?:new|create|add|raise|schedule)\b/i.test(el.textContent || ""))
+    );
   }
   return candidates.find(
     (el) =>
       el.offsetParent !== null &&
-      /^\s*(?:\+?\s*)?(?:new\s+task|create\s+task|create\s+new\s+task|new\s+ticket|create\s+ticket|new\s+requirement|create\s+requirement|new\s+meeting|add\s+vehicle|create\s+budget)\b/i.test(
+      /^\s*(?:\+?\s*)?(?:new\s+task|create\s+task|create\s+new\s+task|new\s+ticket|create\s+ticket|new\s+requirement|create\s+requirement|new\s+meeting|add\s+vehicle|create\s+budget|new|create|add)\b/i.test(
         el.textContent || ""
       )
   );
@@ -104,16 +132,18 @@ export function GlobalVoiceAssistant() {
 
   // After cross-page navigation triggered by voice intent, auto-open the destination Create form or fill direct form
   useEffect(() => {
-    let target: VoiceModuleTarget | null = null;
+    let rawTarget: string | null = null;
     try {
-      target = sessionStorage.getItem("chandak_voice_auto_open") as VoiceModuleTarget | null;
+      rawTarget = sessionStorage.getItem("chandak_voice_auto_open");
     } catch {}
-    if (!target) return;
+    if (!rawTarget) return;
+    const isDynamic = rawTarget === "DYNAMIC";
+    const target = isDynamic ? undefined : (rawTarget as VoiceModuleTarget);
 
     let attempts = 0;
     const timer = window.setInterval(() => {
       attempts += 1;
-      const btn = findCreateButton(target!);
+      const btn = findCreateButton(target);
       if (btn) {
         window.clearInterval(timer);
         try { sessionStorage.removeItem("chandak_voice_auto_open"); } catch {}
@@ -121,7 +151,7 @@ export function GlobalVoiceAssistant() {
         return;
       }
       const fields = inspectActiveFormFields();
-      if (fields.length > 0 && currentMatchesHint(pathname, target!)) {
+      if (fields.length > 0 && (isDynamic || (target && currentMatchesHint(pathname, target)))) {
         window.clearInterval(timer);
         try {
           const draft = sessionStorage.getItem("chandak_voice_draft") || "";
@@ -146,7 +176,12 @@ export function GlobalVoiceAssistant() {
       }
       if (attempts >= 10) {
         window.clearInterval(timer);
-        try { sessionStorage.removeItem("chandak_voice_auto_open"); } catch {}
+        try {
+          sessionStorage.removeItem("chandak_voice_auto_open");
+          sessionStorage.removeItem("chandak_voice_draft");
+          sessionStorage.removeItem("chandak_voice_ai_values");
+        } catch {}
+        toast.warning("Unable to open creation form — please check your module access permissions.");
       }
     }, 300);
 
@@ -213,10 +248,14 @@ export function GlobalVoiceAssistant() {
     const aiItems = Object.entries(aiValues).filter(([, v]) => Boolean(v)).map(([k, v]) => ({ label: k, value: String(v) }));
     const previewItems = aiItems.length > 0
       ? aiItems
-      : Object.entries(parsed).filter(([k, v]) => k !== "moduleHint" && Boolean(v)).map(([k, v]) => ({ label: k, value: String(v) }));
+      : Object.entries(parsed)
+          .filter(([k, v]) => k !== "moduleHint" && k !== "spokenModulePhrase" && Boolean(v))
+          .map(([k, v]) => ({ label: k, value: String(v) }));
     const fallbackItems = previewItems.length > 0 ? previewItems : pairs.map((p) => ({ label: p.field, value: p.value }));
 
-    if (fallbackItems.length > 0 || parsed.moduleHint) {
+    const dynamicMatch = !parsed.moduleHint ? findDynamicModuleRoute(parsed.spokenModulePhrase) : undefined;
+
+    if (fallbackItems.length > 0 || parsed.moduleHint || dynamicMatch) {
       try {
         sessionStorage.setItem("chandak_voice_draft", clean);
         if (Object.keys(aiValues).length > 0) sessionStorage.setItem("chandak_voice_ai_values", JSON.stringify(aiValues));
@@ -225,6 +264,14 @@ export function GlobalVoiceAssistant() {
 
       if (parsed.moduleHint) {
         launchModule(parsed.moduleHint);
+        return;
+      }
+
+      if (dynamicMatch) {
+        setOpen(false);
+        try { sessionStorage.setItem("chandak_voice_auto_open", "DYNAMIC"); } catch {}
+        router.push(dynamicMatch.href);
+        toast.success(`Opening ${dynamicMatch.label}…`);
         return;
       }
 

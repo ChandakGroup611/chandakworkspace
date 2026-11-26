@@ -18,14 +18,15 @@ export interface ParsedVoiceFields {
   executors?: string;
   watchers?: string;
   businessReason?: string;
-  moduleHint?: "TASK" | "SUBTASK" | "TICKET" | "REQUIREMENT" | "VEHICLE" | "BUDGET" | "MEETING";
+  moduleHint?: "TASK" | "SUBTASK" | "TICKET" | "REQUIREMENT" | "VEHICLE" | "BUDGET" | "MEETING" | "DESIGN" | "AMC";
+  spokenModulePhrase?: string;
 }
 
 const SEP = `(?:\\s+(?:is|are|should\\s+be|will\\s+be|as|to)\\b[.,:\\s]*|[.:\\-]+\\s*)`;
 // Boundary-anchored space-only separator so "Priority High. Duration 15 days." works without false-triggering mid-sentence
 const BOUNDARY = `(?:^|(?<=[.,;!?]\\s*))`;
 
-const FIELD_DEFS: { key: keyof Omit<ParsedVoiceFields, "moduleHint">; trigger: string }[] = [
+const FIELD_DEFS: { key: keyof Omit<ParsedVoiceFields, "moduleHint" | "spokenModulePhrase">; trigger: string }[] = [
   { key: "subject", trigger: `(?:my\\s+)?(?:task|subtask|sub-task|ticket|requirement)?\\s*(?:subject|object|topic|title|name|heading)` },
   { key: "description", trigger: `(?:task\\s+creation\\s+|task\\s+)?(?:description|details?|summary|remark|remarks|notes?)` },
   { key: "duration", trigger: `(?:duration(?:\\s+in\\s+days)?|due\\s+days)` },
@@ -189,19 +190,24 @@ export function parseVoiceFields(transcript: string): ParsedVoiceFields {
 
   const out: ParsedVoiceFields = {};
   const explicitIntent = text.match(
-    /\b(?:create|new|add|raise|log|open|make)\s+(?:a\s+|an\s+)?(sub-?task|ticket|requirement|vehicle|budget|meeting|task)\b/i
+    /\b(?:create|new|add|raise|log|open|make|go\s+to)\s+(?:a\s+|an\s+|in\s+)?([a-z][a-z0-9\s-]{1,28}?)(?=\s*(?:[.,;:]|\b(?:subject|title|name|object|description|priority|status|duration|for|with|is)\b|$))/i
   );
-  const intentWord = explicitIntent?.[1]?.toLowerCase().replace("-", "");
+  if (explicitIntent?.[1]) {
+    out.spokenModulePhrase = explicitIntent[1].trim();
+  }
+  const intentWord = explicitIntent?.[1]?.toLowerCase().replace("-", "") || "";
   if (intentWord === "subtask" || /\bsub-?task\b/i.test(text)) out.moduleHint = "SUBTASK";
   else if (intentWord === "requirement" || /\brequirement\b/i.test(text)) out.moduleHint = "REQUIREMENT";
   else if (intentWord === "ticket" || /\bticket\b/i.test(text)) out.moduleHint = "TICKET";
   else if (intentWord === "vehicle" || /\bvehicle\b/i.test(text)) out.moduleHint = "VEHICLE";
   else if (intentWord === "budget" || /\bbudget\b/i.test(text)) out.moduleHint = "BUDGET";
   else if (intentWord === "meeting" || /\bmeeting\b/i.test(text)) out.moduleHint = "MEETING";
+  else if (intentWord.includes("design") || /\bdesign\s*(?:tracking)?\b/i.test(text)) out.moduleHint = "DESIGN";
+  else if (intentWord === "amc" || /\b(?:amc|subscription)\b/i.test(text)) out.moduleHint = "AMC";
   else if (intentWord === "task" || /\btask\b/i.test(text)) out.moduleHint = "TASK";
 
   // Pass 1: match explicit separators (is/are/should be/as/to/./:/-) OR boundary-anchored space-only headers
-  const matches: { key: keyof Omit<ParsedVoiceFields, "moduleHint">; start: number; valueStart: number }[] = [];
+  const matches: { key: keyof Omit<ParsedVoiceFields, "moduleHint" | "spokenModulePhrase">; start: number; valueStart: number }[] = [];
   for (const { key, trigger } of FIELD_DEFS) {
     const explicitRe = new RegExp(`\\b${trigger}${SEP}`, "gi");
     let m: RegExpExecArray | null;
