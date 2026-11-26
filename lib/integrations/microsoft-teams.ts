@@ -7,7 +7,19 @@
  * if Azure tenant credentials are active.
  */
 
-import { getAzureCredentials } from "@/lib/utils/meet-azure";
+// The Azure keys are read with the admin database client, which must never load in the browser.
+// This file is also used by browser components (sanitizeTeamsUrl in the chat panel), so the
+// lookup is loaded only when a link is generated. A top-level import here took every page down.
+async function loadAzureCredentials() {
+  if (typeof window !== "undefined") return null;
+  try {
+    const { getAzureCredentials } = await import("@/lib/utils/meet-azure");
+    return await getAzureCredentials();
+  } catch (err) {
+    console.warn("[Teams] Azure credentials unavailable:", err);
+    return null;
+  }
+}
 
 export interface GenerateTeamsMeetingParams {
   title: string;
@@ -45,7 +57,7 @@ export async function generateTeamsMeetingLink(
   } = params;
 
   // 1. Try Microsoft Graph API using Meet Settings UI keys (or env fallback)
-  const creds = await getAzureCredentials();
+  const creds = await loadAzureCredentials();
 
   if (creds) {
     const { tenantId, clientId, clientSecret } = creds;
