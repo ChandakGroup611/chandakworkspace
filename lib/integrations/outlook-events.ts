@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { getAzureCredentials } from "@/lib/utils/meet-azure";
 
 /**
  * Chandak Meet ⇄ Outlook / Teams (Microsoft Graph, app-only).
@@ -25,32 +26,27 @@ const one = (v: any) => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 
 export type OutlookResult = { ok: boolean; skipped?: string; error?: string; eventId?: string; joinUrl?: string };
 
-let cached: { token: string; exp: number } | null = null;
+let cached: { key: string; token: string; exp: number } | null = null;
 
 async function appToken(): Promise<string | null> {
-  const tenant = process.env.AZURE_TENANT_ID || process.env.MICROSOFT_TENANT_ID;
-  const client = process.env.AZURE_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID;
-  const secret = process.env.AZURE_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET;
-  if (!tenant || !client || !secret) return null;
-  if (cached && cached.exp > Date.now() + 60000) return cached.token;
-  const res = await fetch(`https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`, {
+  const creds = await getAzureCredentials();
+  if (!creds) return null;
+  const cacheKey = `${creds.tenantId}:${creds.clientId}`;
+  if (cached && cached.key === cacheKey && cached.exp > Date.now() + 60000) return cached.token;
+  const res = await fetch(`https://login.microsoftonline.com/${creds.tenantId}/oauth2/v2.0/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ client_id: client, client_secret: secret, grant_type: "client_credentials", scope: "https://graph.microsoft.com/.default" }),
+    body: new URLSearchParams({ client_id: creds.clientId, client_secret: creds.clientSecret, grant_type: "client_credentials", scope: "https://graph.microsoft.com/.default" }),
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`Microsoft sign-in failed (${res.status})`);
   const j = await res.json();
-  cached = { token: j.access_token, exp: Date.now() + (Number(j.expires_in) || 3000) * 1000 };
+  cached = { key: cacheKey, token: j.access_token, exp: Date.now() + (Number(j.expires_in) || 3000) * 1000 };
   return cached.token;
 }
 
-export function outlookConfigured(): boolean {
-  return !!(
-    (process.env.AZURE_TENANT_ID || process.env.MICROSOFT_TENANT_ID) &&
-    (process.env.AZURE_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID) &&
-    (process.env.AZURE_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET)
-  );
+export async function outlookConfigured(): Promise<boolean> {
+  return !!(await getAzureCredentials());
 }
 
 async function graph(token: string, method: string, path: string, body?: any): Promise<{ status: number; data: any }> {
@@ -220,7 +216,7 @@ async function noteError(sessionId: string, roomId: string | null, message: stri
 
 /** Creates the Outlook / Teams event for a session (once), or updates it if it already exists. */
 export async function syncSessionEvent(sessionId: string): Promise<OutlookResult> {
-  if (!outlookConfigured()) return { ok: false, skipped: "not_configured" };
+  if (!(await outlookConfigured())) return { ok: false, skipped: "not_configured" };
   const s = await loadSession(sessionId);
   if (!s) return { ok: false, error: "Session not found" };
   if (s.status === "cancelled") return cancelSessionEvent(sessionId);
@@ -273,7 +269,7 @@ export async function syncSessionEvent(sessionId: string): Promise<OutlookResult
 
 /** Cancels the Outlook event (attendees are told by Outlook; the room is freed). */
 export async function cancelSessionEvent(sessionId: string, comment?: string): Promise<OutlookResult> {
-  if (!outlookConfigured()) return { ok: false, skipped: "not_configured" };
+  if (!(await outlookConfigured())) return { ok: false, skipped: "not_configured" };
   const eventId = await getStoredEventId(sessionId);
   if (!eventId) return { ok: true, skipped: "no_event" };
   try {
@@ -297,7 +293,7 @@ export async function cancelSessionEvent(sessionId: string, comment?: string): P
 
 /** Reads the room's answer for one booking: accepted → confirmed, declined → declined. */
 export async function readRoomResponse(sessionId: string): Promise<"accepted" | "declined" | "pending" | null> {
-  if (!outlookConfigured()) return null;
+  if (!(await outlookConfigured())) return null;
   const s = await loadSession(sessionId);
   const room = one(s?.room);
   const email = one(one(s?.meeting)?.organizer)?.email;

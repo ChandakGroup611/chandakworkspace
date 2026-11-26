@@ -50,7 +50,7 @@ export async function getOutlookStatus(sessionId: string): Promise<OutlookStatus
     : "own";
   const bs = String((b as any)?.status || "");
   return {
-    connected: outlookConfigured(),
+    connected: await outlookConfigured(),
     inOutlook: !!eventId,
     teams,
     room: room

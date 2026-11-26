@@ -9,7 +9,9 @@ import { readMeetProjects } from "@/lib/utils/meet-projects";
 import { graceMinutes } from "@/lib/utils/meet-attendance";
 import AttendanceRulesCard from "@/components/meet/AttendanceRulesCard";
 import MeetMailServerCard from "@/components/meet/MeetMailServerCard";
+import MeetAzureConfigCard from "@/components/meet/MeetAzureConfigCard";
 import { getMeetSmtpForm } from "@/lib/actions/meet/mail-server";
+import { getMeetAzureForm } from "@/lib/actions/meet/azure-config";
 import { ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { AppButton } from "@/components/ui/AppButton";
@@ -77,6 +79,9 @@ export default async function MeetAdminPage({ searchParams }: { searchParams: Pr
         section={section}
       />
       {(!section || section === "policies") && <AttendanceRulesCard grace={await graceMinutes()} />}
+      {(!section || section === "policies" || section === "integrations" || section === "teams") && (
+        <MeetAzureConfigCard initial={await getMeetAzureForm()} />
+      )}
       {section === "email" && <MeetMailServerCard initial={await getMeetSmtpForm()} />}
     </div>
   );

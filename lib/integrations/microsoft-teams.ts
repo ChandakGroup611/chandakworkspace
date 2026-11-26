@@ -7,6 +7,8 @@
  * if Azure tenant credentials are active.
  */
 
+import { getAzureCredentials } from "@/lib/utils/meet-azure";
+
 export interface GenerateTeamsMeetingParams {
   title: string;
   description?: string;
@@ -42,12 +44,11 @@ export async function generateTeamsMeetingLink(
     callType = "meeting",
   } = params;
 
-  // 1. Try Microsoft Graph API if Azure App credentials are configured in environment
-  const tenantId = process.env.AZURE_TENANT_ID || process.env.MICROSOFT_TENANT_ID;
-  const clientId = process.env.AZURE_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID;
-  const clientSecret = process.env.AZURE_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET;
+  // 1. Try Microsoft Graph API using Meet Settings UI keys (or env fallback)
+  const creds = await getAzureCredentials();
 
-  if (tenantId && clientId && clientSecret) {
+  if (creds) {
+    const { tenantId, clientId, clientSecret } = creds;
     try {
       const tokenRes = await fetch(
         `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,

@@ -13,6 +13,8 @@ import { isActionLikeText } from "@/lib/utils/meet-notes";
  * Everything here is read-only towards Microsoft; nothing is changed in Teams.
  */
 
+import { getAzureCredentials } from "@/lib/utils/meet-azure";
+
 const one = (v: any) => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 const GRAPH = "https://graph.microsoft.com/v1.0";
 const DECISION_RE = /\b(decided|agreed|approved|finali[sz]ed|resolved that|we keep|will remain|no change|tay hua|final hai)\b/i;
@@ -20,10 +22,9 @@ const DECISION_RE = /\b(decided|agreed|approved|finali[sz]ed|resolved that|we ke
 const NEEDED = ["Calendars.ReadWrite", "OnlineMeetings.Read.All", "OnlineMeetingArtifact.Read.All", "OnlineMeetingTranscript.Read.All"];
 
 async function graphToken(): Promise<{ token: string | null; roles: string[]; error?: string }> {
-  const tenantId = process.env.AZURE_TENANT_ID || process.env.MICROSOFT_TENANT_ID;
-  const clientId = process.env.AZURE_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID;
-  const clientSecret = process.env.AZURE_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET;
-  if (!tenantId || !clientId || !clientSecret) return { token: null, roles: [], error: "not_configured" };
+  const creds = await getAzureCredentials();
+  if (!creds) return { token: null, roles: [], error: "not_configured" };
+  const { tenantId, clientId, clientSecret } = creds;
   try {
     const res = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
       method: "POST",
