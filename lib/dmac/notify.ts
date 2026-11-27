@@ -15,7 +15,21 @@ export type DesignEvent =
   | "GFC Released"
   | "Review Overdue"
   | "Revision Overdue"
-  | "Daily Digest";
+  | "Daily Digest"
+  | "Drawing Coordination Started"
+  | "Drawing Handed Over"
+  | "Drawing Receipt Confirmed"
+  | "Design Received"
+  | "Drawing Returned for Revision"
+  | "Revised Drawing Resubmitted"
+  | "Drawing Coordination Completed"
+  | "Drawing Next Check Due"
+  | "Drawing Next Task Created"
+  | "Drawing SLA Due Soon"
+  | "Drawing SLA Breached"
+  | "Drawing Task Closed"
+  | "Drawing Transmittal Issued"
+  | "Drawing Transmittal Acknowledged";
 
 interface DrawingContext {
   id: string;
@@ -89,6 +103,28 @@ export async function escalationContacts(projectId: string, departmentId: string
 }
 
 function drawingLink(event: DesignEvent) {
+  if (
+    event === "Drawing Coordination Started" ||
+    event === "Drawing Handed Over" ||
+    event === "Drawing Receipt Confirmed" ||
+    event === "Design Received" ||
+    event === "Drawing Returned for Revision" ||
+    event === "Revised Drawing Resubmitted" ||
+    event === "Drawing Coordination Completed" ||
+    event === "Drawing Next Check Due" ||
+    event === "Drawing Next Task Created" ||
+    event === "Drawing SLA Due Soon" ||
+    event === "Drawing SLA Breached" ||
+    event === "Drawing Task Closed"
+  ) {
+    return "/design/tracker";
+  }
+  if (
+    event === "Drawing Transmittal Issued" ||
+    event === "Drawing Transmittal Acknowledged"
+  ) {
+    return "/design/transmittals";
+  }
   // Reviewers act from the approvals queue; designers and site teams from the register
   return event === "Drawing Submitted" || event === "Review Overdue" ? "/design/approvals" : "/design/drawings";
 }
@@ -98,7 +134,7 @@ export async function notifyDrawingEvent(
   event: DesignEvent,
   drawingId: string,
   actorId: string | null,
-  extra: { revision?: string; code?: string; remarks?: string; openComments?: number; days?: number } = {}
+  extra: { revision?: string; code?: string; remarks?: string; openComments?: number; days?: number; next_check_date?: string | null; sla_due_date?: string | null; transmittal_number?: string; recipient_email?: string } = {}
 ) {
   try {
     const d = await loadDrawingContext(drawingId);
@@ -108,7 +144,7 @@ export async function notifyDrawingEvent(
       Designer: [...new Set(designer)],
       Reviewers: await projectReviewers(d.legacyProjectId, d.engineering_reviewer_id),
     };
-    if (event === "Review Overdue" || event === "Revision Overdue") {
+    if (event === "Review Overdue" || event === "Revision Overdue" || event === "Drawing SLA Breached") {
       recipients.Escalation = await escalationContacts(d.project_id, d.department_id);
     }
     const revision = extra.revision || (d.latest_rev_no === null ? "" : `R${d.latest_rev_no}`);
@@ -120,6 +156,20 @@ export async function notifyDrawingEvent(
       "Review Overdue": `${revision} has waited ${extra.days ?? "?"} working days for review.`,
       "Revision Overdue": `${revision} was returned ${extra.days ?? "?"} working days ago and has not been resubmitted.`,
       "Daily Digest": "",
+      "Drawing Coordination Started": `${revision} was approved and a Drawing Submission coordination task was created.`,
+      "Drawing Handed Over": `${revision} was handed over to the receiving department.`,
+      "Drawing Receipt Confirmed": `${revision} receipt was confirmed.`,
+      "Design Received": `${revision} was received for design review.`,
+      "Drawing Returned for Revision": `${revision} was returned for revision.`,
+      "Revised Drawing Resubmitted": `Revised ${revision} was submitted on the active coordination task.`,
+      "Drawing Coordination Completed": `${revision} coordination was accepted and completed.`,
+      "Drawing Next Check Due": `Next check is due for ${revision}.`,
+      "Drawing Next Task Created": `Scheduled follow-up task created for ${revision}.`,
+      "Drawing SLA Due Soon": `SLA is due soon for ${revision}.`,
+      "Drawing SLA Breached": `SLA breached for ${revision}.`,
+      "Drawing Task Closed": `Drawing coordination task for ${revision} was formally closed.`,
+      "Drawing Transmittal Issued": `Transmittal ${extra.transmittal_number || ""} issued for ${revision} to ${extra.recipient_email || "recipient"}.`,
+      "Drawing Transmittal Acknowledged": `Transmittal ${extra.transmittal_number || ""} was acknowledged for ${revision}.`,
     };
 
     await queueBusinessEvent("Design", event, {

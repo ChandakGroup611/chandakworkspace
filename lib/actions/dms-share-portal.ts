@@ -112,30 +112,49 @@ async function contentFor(rawToken: string, share: ShareRow): Promise<ShareConte
   };
 }
 
-/** Wrong address entered: count it, and when that locks the link tell the person who shared it. */
+/** Wrong address entered: immediately lock the forwarded/mismatched link and escalate to sender & admins. */
 async function wrongEmail(share: ShareRow, entered: string): Promise<string> {
   await logShareAttempt(share.id, "EMAIL_MISMATCH", false, entered);
-  const { data } = await supabaseAdmin.rpc("fn_dms_share_register_failure", { p_share: share.id, p_kind: "EMAIL" });
-  const row = Array.isArray(data) ? data[0] : data;
-  if (row?.locked) {
-    if (share.created_by) {
-      const { data: u } = await supabaseAdmin.from("user_master").select("email").eq("id", share.created_by).maybeSingle();
-      if (u?.email) {
-        const { ip } = await clientInfo();
-        await queueShareEmail(
-          u.email,
-          "A link you shared was locked",
-          mailFrame(
-            "A link you shared was locked",
-            `<p>Someone opened the link you shared with <b>${escapeHtml(share.recipient_email)}</b>${share.title ? ` (“${escapeHtml(share.title)}”)` : ""} and entered a different email address: <b>${escapeHtml(entered)}</b>, from IP ${escapeHtml(ip)}.</p>
-<p>The link and its password have been switched off. If this was a mistake, create a new share from the document.</p>`
-          )
-        ).catch(() => {});
-      }
-    }
-    return "That email address does not match. For safety this link is now locked and the sender has been told.";
+  await supabaseAdmin.rpc("fn_dms_share_register_failure", { p_share: share.id, p_kind: "EMAIL" });
+  await supabaseAdmin
+    .from("dms_shares")
+    .update({
+      is_revoked: true,
+      revoked_at: new Date().toISOString(),
+      revoked_reason: `Locked: forwarded or mismatched email (${entered})`,
+    })
+    .eq("id", share.id);
+
+  const { ip } = await clientInfo();
+  const recipients = new Set<string>();
+  if (share.created_by) {
+    const { data: u } = await supabaseAdmin.from("user_master").select("email").eq("id", share.created_by).maybeSingle();
+    if (u?.email) recipients.add(String(u.email).toLowerCase());
   }
-  return "That email address does not match the person this was shared with. Another wrong address will lock the link.";
+  const { data: admins } = await supabaseAdmin
+    .from("design_user_access")
+    .select("user_id")
+    .eq("design_role", "DESIGN_ADMIN")
+    .limit(10);
+  const adminIds = (admins || []).map((a: any) => a.user_id).filter(Boolean);
+  if (adminIds.length > 0) {
+    const { data: adminUsers } = await supabaseAdmin.from("user_master").select("email").in("id", adminIds);
+    for (const au of adminUsers || []) {
+      if (au.email) recipients.add(String(au.email).toLowerCase());
+    }
+  }
+  for (const notifyTo of recipients) {
+    await queueShareEmail(
+      notifyTo,
+      "Security Escalation: Shared document link locked (email mismatch)",
+      mailFrame(
+        "Shared document link locked & escalated",
+        `<p>A shared document link intended for <b>${escapeHtml(share.recipient_email)}</b>${share.title ? ` (“${escapeHtml(share.title)}”)` : ""} was opened with a different email address: <b>${escapeHtml(entered)}</b> (IP: ${escapeHtml(ip)}).</p>
+<p>Per security policy, the link has been <b>expired and locked immediately</b>.</p>`
+      )
+    ).catch(() => {});
+  }
+  return "That email address does not match the intended recipient. For security, this link has expired immediately and the sender has been alerted.";
 }
 
 async function registerFailure(share: ShareRow, kind: "OTP" | "PASSWORD"): Promise<string> {

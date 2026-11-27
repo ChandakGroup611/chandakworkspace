@@ -61,6 +61,23 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   if (countErr) return deny(500, "Could not open the file. Try again.");
   if (!allowed) return deny(403, download ? "The download limit for this link has been reached." : "This link is no longer active.");
 
+  const { data: metaRow } = await supabaseAdmin
+    .from("core_module_settings")
+    .select("value_json")
+    .eq("module_key", "dms_share_meta")
+    .eq("key", s.id)
+    .maybeSingle();
+  if ((metaRow?.value_json as any)?.oneTimeView) {
+    await supabaseAdmin
+      .from("dms_shares")
+      .update({
+        is_revoked: true,
+        revoked_at: new Date().toISOString(),
+        revoked_reason: "Expired after one-time view",
+      })
+      .eq("id", s.id);
+  }
+
   const [, bucket = "", ...rest] = file.storageKey.split(":");
   const { data: blob, error } = await supabaseAdmin.storage.from(bucket).download(rest.join(":"));
   if (error || !blob) return deny(404, "The file could not be found.");

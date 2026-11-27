@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import Link from "next/link";
 import {
   FolderTree,
   Folder,
@@ -33,7 +34,11 @@ import {
   Trash2,
   Link2,
   Star,
+  Users,
+  SlidersHorizontal,
 } from "lucide-react";
+import { DmsGroupsView } from "./DmsGroupsView";
+import { DmsShareSettingsView } from "./DmsShareSettingsView";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import {
@@ -140,7 +145,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [docViewerZoom, setDocViewerZoom] = useState<number>(1);
 
   // Which list the main area shows, and what the person may do in the open folder
-  const [view, setView] = useState<"FOLDER" | "SEARCH" | "QC" | "BIN" | "MASTERS" | "SHARES">("FOLDER");
+  const [view, setView] = useState<"FOLDER" | "SEARCH" | "BIN" | "MASTERS" | "SHARES" | "GROUPS" | "SETTINGS">("FOLDER");
   const [folderRights, setFolderRights] = useState<DmsRights | null>(null);
   const [docsError, setDocsError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -425,10 +430,11 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           {(
             [
               { id: "FOLDER", label: "Folders", icon: FolderTree },
-              { id: "QC", label: "Document Approval", icon: CheckCircle2 },
               { id: "SEARCH", label: "Search", icon: Search },
               { id: "MASTERS", label: "Master tables", icon: Layers },
+              { id: "GROUPS", label: "Groups", icon: Users },
               { id: "SHARES", label: "Shared links", icon: Link2 },
+              ...(folderRights?.admin ? [{ id: "SETTINGS" as const, label: "Share Settings", icon: SlidersHorizontal }] : []),
               { id: "BIN", label: "Recycle bin", icon: Trash2 },
             ] as const
           ).map((t) => {
@@ -561,7 +567,27 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
       {/* 2. UNIFIED WORKSPACE CONTAINER */}
       <div>
-        {selectedDoc && docModalMode === "DETAILS" ? (
+        {(shareSingleDoc || bulkSharing) ? (
+          <DmsShareDialog
+            inline
+            documents={
+              shareSingleDoc
+                ? [{ id: shareSingleDoc.id, title: shareSingleDoc.title }]
+                : documents
+                    .filter((d) => selectedDocIds.has(d.id) && d.approvalStatus === "APPROVED" && d.rights?.email)
+                    .map((d) => ({ id: d.id, title: d.title }))
+            }
+            onClose={() => {
+              setShareSingleDoc(null);
+              setBulkSharing(false);
+            }}
+            onCreated={() => {
+              setShareSingleDoc(null);
+              setBulkSharing(false);
+              setSelectedDocIds(new Set());
+            }}
+          />
+        ) : selectedDoc && docModalMode === "DETAILS" ? (
           <section className="w-full bg-surface border border-border rounded-lg shadow-xs overflow-hidden">
             <div className="px-4 py-3 border-b border-border bg-sunken flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
@@ -652,7 +678,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   ))
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
                 <select
                   aria-label="Jump to folder"
                   value={selectedFolder?.id || ""}
@@ -669,13 +695,13 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                     const found = findNode(folders);
                     if (found && found.canOpen !== false) setSelectedFolder(found);
                   }}
-                  className="text-xs rounded-lg bg-surface border border-border px-2.5 py-1 text-foreground"
+                  className="text-xs rounded-lg bg-surface border border-border px-2.5 py-1 text-foreground min-w-0 max-w-full flex-1 sm:flex-none sm:max-w-[240px]"
                 >
                   {flatFolders.map((f) => (
                     <option key={f.id} value={f.id}>{f.name}</option>
                   ))}
                 </select>
-                <div className="relative w-40 sm:w-48">
+                <div className="relative w-full sm:w-48 min-w-0">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <input
                     type="text"
@@ -754,7 +780,17 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             <>
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <h2 className="text-sm font-semibold text-foreground">
-                  {view === "SEARCH" ? "Search documents" : view === "MASTERS" ? "Master tables" : view === "SHARES" ? "Shared outside the company" : view === "QC" ? "Document Approval" : "Recycle bin"}
+                  {view === "SEARCH"
+                    ? "Search documents"
+                    : view === "MASTERS"
+                    ? "Master tables"
+                    : view === "GROUPS"
+                    ? "DMS Groups"
+                    : view === "SETTINGS"
+                    ? "Share Settings"
+                    : view === "SHARES"
+                    ? "Shared outside the company"
+                    : "Recycle bin"}
                 </h2>
                 <button
                   type="button"
@@ -766,42 +802,14 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               </div>
               {view === "SHARES" ? (
                 <DmsSharesView />
+              ) : view === "GROUPS" ? (
+                <DmsGroupsView />
+              ) : view === "SETTINGS" ? (
+                <DmsShareSettingsView />
               ) : view === "MASTERS" ? (
                 <DmsMastersView workspaceId={workspaceId} />
               ) : view === "SEARCH" ? (
                 <DmsSearchView workspaceId={workspaceId} currentFolder={selectedFolder} onOpen={(doc) => setSelectedDoc(doc)} />
-              ) : view === "QC" ? (
-                <DmsQcQueueView
-                  workspaceId={workspaceId}
-                  folderId={selectedFolder?.id}
-                  folderName={selectedFolder?.name}
-                  onChanged={() => {
-                    loadFolderDocuments();
-                    loadFolderTree();
-                  }}
-                  onOpen={(item) => {
-                    setDocModalMode("DETAILS");
-                    setPanelInitialTab("details");
-                    setPanelInitialEditing(false);
-                    setSelectedDoc({
-                      id: item.documentId,
-                      folderId: item.folderId,
-                      docTypeId: "",
-                      docTypeCode: "",
-                      docTypeName: "",
-                      title: item.title,
-                      originalFileName: "",
-                      currentVersionNo: item.versionNo,
-                      approvalStatus: "PENDING",
-                      fileSizeBytes: 0,
-                      mimeType: "",
-                      storageKey: "",
-                      isLocked: false,
-                      createdAt: item.uploadedAt,
-                      updatedAt: item.uploadedAt,
-                    });
-                  }}
-                />
               ) : (
                 <DmsRecycleBinView
                   workspaceId={workspaceId}
@@ -990,15 +998,14 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               )}
 
               {selectedFolder && (
-                <button
-                  type="button"
-                  onClick={() => setView("QC")}
+                <Link
+                  href="/design/dms-approvals"
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-sunken cursor-pointer"
-                  title="Review and approve pending documents in this folder"
+                  title="Open dedicated Approval queue"
                 >
                   <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                  <span>Document Approval</span>
-                </button>
+                  <span>Approval Queue</span>
+                </Link>
               )}
 
               <button
@@ -1817,29 +1824,6 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           </div>
           </div>
         </div>
-      )}
-
-      {shareSingleDoc && (
-        <DmsShareDialog
-          documents={[{ id: shareSingleDoc.id, title: shareSingleDoc.title }]}
-          onClose={() => setShareSingleDoc(null)}
-          onCreated={() => {
-            setShareSingleDoc(null);
-          }}
-        />
-      )}
-
-      {bulkSharing && (
-        <DmsShareDialog
-          documents={documents
-            .filter((d) => selectedDocIds.has(d.id) && d.approvalStatus === "APPROVED" && d.rights?.email)
-            .map((d) => ({ id: d.id, title: d.title }))}
-          onClose={() => setBulkSharing(false)}
-          onCreated={() => {
-            setBulkSharing(false);
-            setSelectedDocIds(new Set());
-          }}
-        />
       )}
 
       {versionUploadDoc && (

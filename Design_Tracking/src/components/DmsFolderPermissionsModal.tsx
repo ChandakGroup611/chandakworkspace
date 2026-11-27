@@ -69,6 +69,13 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
   const [dtRows, setDtRows] = useState<DmsDocTypePermissionRow[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [dtLoaded, setDtLoaded] = useState<boolean>(false);
+  const [folderGroups, setFolderGroups] = useState<{ id: string; name: string }[]>([]);
+  const [folderDepartments, setFolderDepartments] = useState<{ id: string; code: string; name: string }[]>([]);
+  const [shareSettings, setShareSettings] = useState<{ userWise: boolean; groupWise: boolean; departmentWise: boolean }>({
+    userWise: true,
+    groupWise: true,
+    departmentWise: true,
+  });
 
   // Multi-select user picker state
   const [isUserPickerOpen, setIsUserPickerOpen] = useState<boolean>(false);
@@ -102,6 +109,9 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
           setInheritPermissions(permsRes.inheritPermissions ?? true);
           setAssignedPermissions(permsRes.permissions || []);
           setCanManage(!!permsRes.canManage);
+          setFolderGroups(permsRes.groups || []);
+          setFolderDepartments(permsRes.departments || []);
+          if (permsRes.shareSettings) setShareSettings(permsRes.shareSettings);
         } else {
           setErrorMessage(permsRes.error || "Failed to load permissions");
         }
@@ -522,6 +532,81 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+                {shareSettings.groupWise && (
+                  <select
+                    aria-label="Add group to folder"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const gid = e.target.value;
+                      e.target.value = "";
+                      if (!gid) return;
+                      if (assignedPermissions.some((p) => p.groupId === gid)) return;
+                      const grp = folderGroups.find((g) => g.id === gid);
+                      if (!grp) return;
+                      setAssignedPermissions((prev) => [
+                        ...prev,
+                        {
+                          id: `group-${gid}-${Date.now()}`,
+                          folderId: folder.id,
+                          groupId: gid,
+                          userName: `Group: ${grp.name}`,
+                          userEmail: "DMS Group",
+                          canView: true,
+                          canUpload: true,
+                          canDownload: true,
+                          canDelete: false,
+                          canManage: false,
+                        },
+                      ]);
+                    }}
+                    className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground"
+                  >
+                    <option value="">+ Add Group…</option>
+                    {folderGroups
+                      .filter((g) => !assignedPermissions.some((p) => p.groupId === g.id))
+                      .map((g) => (
+                        <option key={g.id} value={g.id}>{g.name}</option>
+                      ))}
+                  </select>
+                )}
+                {shareSettings.departmentWise && (
+                  <select
+                    aria-label="Add department to folder"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const did = e.target.value;
+                      e.target.value = "";
+                      if (!did) return;
+                      if (assignedPermissions.some((p) => p.departmentId === did)) return;
+                      const dep = folderDepartments.find((d) => d.id === did);
+                      if (!dep) return;
+                      setAssignedPermissions((prev) => [
+                        ...prev,
+                        {
+                          id: `dept-${did}-${Date.now()}`,
+                          folderId: folder.id,
+                          departmentId: did,
+                          departmentName: dep.name,
+                          userName: `Dept: ${dep.name}`,
+                          userEmail: "Department",
+                          canView: true,
+                          canUpload: false,
+                          canDownload: true,
+                          canDelete: false,
+                          canManage: false,
+                        },
+                      ]);
+                    }}
+                    className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground"
+                  >
+                    <option value="">+ Add Department…</option>
+                    {folderDepartments
+                      .filter((d) => !assignedPermissions.some((p) => p.departmentId === d.id))
+                      .map((d) => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                  </select>
+                )}
                 <select
                   aria-label="Add role to folder"
                   defaultValue=""
@@ -529,7 +614,7 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                     const rc = e.target.value;
                     e.target.value = "";
                     if (!rc) return;
-                    if (assignedPermissions.some((p) => !p.userId && String(p.roleCode || "").toUpperCase() === rc)) return;
+                    if (assignedPermissions.some((p) => !p.userId && !p.groupId && !p.departmentId && String(p.roleCode || "").toUpperCase() === rc)) return;
                     setAssignedPermissions((prev) => [
                       ...prev,
                       {
@@ -555,14 +640,16 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                   <option value="DESIGN_REVIEWER">Reviewer / QC</option>
                   <option value="DESIGN_VIEWER">Viewer</option>
                 </select>
-                <button
-                  type="button"
-                  onClick={() => setIsUserPickerOpen(!isUserPickerOpen)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>{isUserPickerOpen ? "Hide User Picker" : "Add Users (Multi-Select)"}</span>
-                </button>
+                {shareSettings.userWise && (
+                  <button
+                    type="button"
+                    onClick={() => setIsUserPickerOpen(!isUserPickerOpen)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>{isUserPickerOpen ? "Hide User Picker" : "Add Users (Multi-Select)"}</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -741,20 +828,33 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                       </td>
                     </tr>
                   ) : (
-                    assignedPermissions.map((perm, index) => (
+                    assignedPermissions.map((perm, index) => {
+                      const resolvedGroup = perm.groupId ? folderGroups.find((g) => g.id === perm.groupId) : null;
+                      const resolvedDept = perm.departmentId ? folderDepartments.find((d) => d.id === perm.departmentId) : null;
+                      const displayTitle = perm.groupId
+                        ? `Group: ${resolvedGroup?.name || perm.userName || perm.groupId}`
+                        : perm.departmentId
+                        ? `Dept: ${resolvedDept?.name || perm.departmentName || perm.departmentId}`
+                        : perm.userName || perm.userEmail || "Workspace User";
+                      const displaySub = perm.groupId
+                        ? "DMS Group"
+                        : perm.departmentId
+                        ? "Department"
+                        : perm.userEmail || perm.roleCode || "Role";
+                      return (
                       <tr key={perm.id || index} className="hover:bg-muted/30 transition-colors">
-                        {/* User Profile */}
+                        {/* Principal */}
                         <td className="py-2.5 px-3 min-w-48">
                           <div className="flex items-center gap-2">
                             <div className="h-7 w-7 rounded-full bg-accent-soft text-primary font-semibold text-xs flex items-center justify-center shrink-0">
-                              {(perm.userName || perm.userEmail || "U")[0].toUpperCase()}
+                              {displayTitle[0].toUpperCase()}
                             </div>
                             <div className="min-w-0">
                               <p className="font-semibold text-foreground truncate">
-                                {perm.userName || perm.userEmail || "Workspace User"}
+                                {displayTitle}
                               </p>
                               <p className="text-[11px] text-muted-foreground truncate font-mono">
-                                {perm.userEmail || perm.roleCode || "Role"}
+                                {displaySub}
                               </p>
                             </div>
                           </div>
@@ -842,17 +942,18 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
 
                         {/* Delete User Entry */}
                         <td className="py-2.5 px-2 text-right">
-                          <button aria-label="Remove user from folder"
+                          <button aria-label="Remove access entry from folder"
                             type="button"
                             onClick={() => handleRemoveUserPermission(index)}
                             className="p-1 rounded-md text-muted-foreground hover:text-danger-text hover:bg-danger-soft transition-colors cursor-pointer"
-                            title="Remove user from folder"
+                            title="Remove access entry from folder"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </td>
                       </tr>
-                    ))
+                    );
+                    })
                   )}
                 </tbody>
               </table>

@@ -395,6 +395,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
 
       {sharing && (
         <DmsShareDialog
+          inline
           documents={[{ id: doc.id, title: doc.title }]}
           onClose={() => setSharing(false)}
           onCreated={() => setSharesKey((k) => k + 1)}
@@ -617,21 +618,27 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
               </span>
             </div>
             <p className="text-[10px] text-muted-foreground">
-              Only users &amp; roles with access to this folder are listed.
+              Only users, groups, departments, &amp; roles with access to this folder are listed.
             </p>
             <div className="flex items-center gap-1">
               <select
-                aria-label="Add folder user or role to document RBAC"
+                aria-label="Add folder user, group, department or role to document RBAC"
                 value={pickPrincipalKey}
                 onChange={(e) => setPickPrincipalKey(e.target.value)}
                 className="flex-1 min-w-0 rounded border border-border bg-background px-2 py-1 text-[11px]"
               >
-                <option value="">Choose folder user or role…</option>
+                <option value="">Choose user, group, department or role…</option>
                 {eligiblePrincipals
                   .filter(
                     (p) =>
                       !docGrants.some((g) =>
-                        p.kind === "USER" ? g.userId === p.userId : !g.userId && g.roleCode === p.roleCode
+                        p.kind === "USER"
+                          ? g.userId === p.userId
+                          : p.kind === "GROUP"
+                          ? g.groupId === p.groupId
+                          : p.kind === "DEPARTMENT"
+                          ? g.departmentId === p.departmentId
+                          : !g.userId && !g.groupId && !g.departmentId && g.roleCode === p.roleCode
                       )
                   )
                   .map((p) => (
@@ -650,6 +657,8 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
                     ...prev,
                     {
                       userId: p.userId,
+                      groupId: p.groupId,
+                      departmentId: p.departmentId,
                       roleCode: p.roleCode,
                       label: p.label,
                       email: p.email,

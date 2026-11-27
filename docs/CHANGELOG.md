@@ -24,6 +24,8 @@ All changes to the Chandak Workspace application will be documented in this file
 
 ## Changes
 
+* **Date:** 2026-11-28 | **Release:** Design & Tracking Enterprise Enhancement (14 Phases — Releases 1–4), DMS Approvals & Group Sharing, Live Tender Matrix, Expected Deliverables & Cockpit, Live Transmittals, SLA Pause/Resume & Holiday Calendar, Design Notifications, Consultant Scorecard & Design Intelligence | **Status:** Ready for Deployment [approved]
+
 * **Date:** 2026-11-23 | **Release:** Scoped Super Admin Module & Dashboard Entitlements: Allow granular scoping of operational modules and specific dashboards for Super Admins in User Master while preserving universal access for unconfigured Super Admins; update getDashboardAccess to enforce configured dashboard keys, update can() and getModuleRole() in central RBAC, and align module-switcher and route gates to respect user_module_access | **Status:** Ready for Deployment [approved]
 
 * **Date:** 2026-11-22 | **Release:** Record lifecycle standard (create → list → view → edit in the same form): shared record kit (components/ui/record); Meet series details tab + full edit page; tickets and requirements shown/edited in their intake form; budget versions viewable in the 6-step wizard; Design RFIs, transmittals and drawings view/edit; SLA rules view, holiday edit; learning courses view; masters view; post-create landing with highlight; standard in docs/ui-standards/record-lifecycle.md | **Commit:** `473f45e2` | **Status:** PASS (Verified Live) [approved]

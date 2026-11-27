@@ -13,6 +13,8 @@ import { createHash } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { requireDesign, safeStorageSegment } from "@/lib/permissions/design-guard";
 import { notifyDrawingEvent } from "@/lib/dmac/notify";
+import { initiateDrawingCoordinationOnApproval, syncTrackerOnRevisionResubmitted } from "@/lib/actions/drawing-coordination";
+import { autoMatchDrawingToExpectedDeliverable } from "@/lib/actions/design-cockpit";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_FILE_BYTES = 28 * 1024 * 1024; // the server action body limit is 30 MB
@@ -40,18 +42,24 @@ async function isSuperAdmin(userId: string) {
 async function resolveProject(ref: string) {
   if (!ref) throw new Error("Pick a project first.");
   let q = supabaseAdmin.from("dmac_projects").select("id, code, name, legacy_design_project_id").is("deleted_at", null);
-  q = UUID_RE.test(ref) ? q.eq("id", ref) : q.eq("legacy_design_project_id", ref);
+  q = UUID_RE.test(ref)
+    ? q.or(`id.eq.${ref},legacy_design_project_id.eq.${ref}`)
+    : q.eq("legacy_design_project_id", ref);
   let { data } = await q.maybeSingle();
-  if (!data && !UUID_RE.test(ref)) {
-    // Project saved before the mirror trigger existed: mirror it now
-    await supabaseAdmin.rpc("fn_dmac_sync_project", { p_legacy_id: ref });
+  if (!data) {
+    // Project saved before the mirror trigger existed (or UUID legacy id): mirror it now
+    const { error: syncErr } = await supabaseAdmin.rpc("fn_dmac_sync_project", { p_legacy_id: ref });
+    if (syncErr) {
+      throw new Error(`Project review sync failed: ${syncErr.message}`);
+    }
     ({ data } = await supabaseAdmin
       .from("dmac_projects")
       .select("id, code, name, legacy_design_project_id")
-      .eq("legacy_design_project_id", ref)
+      .or(`id.eq.${ref},legacy_design_project_id.eq.${ref}`)
+      .is("deleted_at", null)
       .maybeSingle());
   }
-  if (!data) throw new Error("This project isn't set up for drawing review yet.");
+  if (!data) throw new Error("This project is not in the project master yet. Sync or add it in Design Masters.");
   return data as { id: string; code: string; name: string; legacy_design_project_id: string | null };
 }
 
@@ -126,6 +134,8 @@ async function storeRevisionFile(file: File, projectCode: string, drawingNumber:
     fileName: file.name,
     fileSizeBytes: file.size,
     checksumSha256: checksum,
+    mimeType: file.type || "application/octet-stream",
+    storagePath: path,
   };
 }
 
@@ -144,6 +154,8 @@ export interface DmacSetup {
   project: { id: string; legacyId: string | null; code: string; name: string };
   buildings: { id: string; legacyId: string | null; code: string; name: string; floors: { id: string; code: string; name: string; floorOrder: number }[] }[];
   departments: { id: string; code: string; name: string }[];
+  reviewConfigured: boolean;
+  reviewWarning?: string;
 }
 
 export async function fetchDmacSetupAction(projectRef: string): Promise<ActionResult<DmacSetup>> {
@@ -151,7 +163,7 @@ export async function fetchDmacSetupAction(projectRef: string): Promise<ActionRe
     const project = await resolveProject(projectRef);
     await requireDesign("any", [scopeOf(project)]);
 
-    const [{ data: buildings, error: bErr }, { data: departments, error: dErr }] = await Promise.all([
+    let [{ data: buildings, error: bErr }, { data: departments, error: dErr }] = await Promise.all([
       supabaseAdmin
         .from("dmac_buildings")
         .select("id, code, name, sort_order, legacy_tower_id, dmac_floors(id, code, name, floor_order, deleted_at)")
@@ -163,6 +175,34 @@ export async function fetchDmacSetupAction(projectRef: string): Promise<ActionRe
     ]);
     if (bErr) throw bErr;
     if (dErr) throw dErr;
+
+    // Ensure every project has at least the GEN building so ordinary uploads are never blocked
+    if (!buildings || buildings.length === 0) {
+      const { data: genRow } = await supabaseAdmin
+        .from("dmac_buildings")
+        .upsert({ project_id: project.id, code: "GEN", name: "General / site-wide", sort_order: 9999 }, { onConflict: "project_id,code" })
+        .select("id, code, name, sort_order, legacy_tower_id")
+        .single();
+      if (genRow) {
+        await supabaseAdmin
+          .from("dmac_floors")
+          .upsert({ building_id: genRow.id, code: "SITE", name: "Whole site", floor_order: 0 }, { onConflict: "building_id,code" });
+        const { data: reloaded } = await supabaseAdmin
+          .from("dmac_buildings")
+          .select("id, code, name, sort_order, legacy_tower_id, dmac_floors(id, code, name, floor_order, deleted_at)")
+          .eq("project_id", project.id)
+          .is("deleted_at", null)
+          .order("sort_order")
+          .order("name");
+        buildings = reloaded || [];
+      }
+    }
+
+    const hasCustomBuildings = (buildings || []).some((b: any) => b.code !== "GEN");
+    const reviewConfigured = hasCustomBuildings && (departments || []).length > 0;
+    const reviewWarning = !hasCustomBuildings
+      ? "No project-specific towers/buildings configured yet; using General / site-wide for upload."
+      : undefined;
 
     return {
       success: true,
@@ -179,6 +219,8 @@ export async function fetchDmacSetupAction(projectRef: string): Promise<ActionRe
             .map((f: any) => ({ id: f.id, code: f.code, name: f.name, floorOrder: f.floor_order })),
         })),
         departments: departments || [],
+        reviewConfigured,
+        reviewWarning,
       },
     };
   } catch (err) {
@@ -420,7 +462,19 @@ export async function submitNewDrawingAction(formData: FormData): Promise<
     // Make sure the file is acceptable before anything is written
     const primary = formData.get("file") as File | null;
     if (!primary || !primary.size) throw new Error("Attach the drawing sheet (PDF) for R0.");
+    if (primary.size > MAX_FILE_BYTES) throw new Error(`${primary.name} is larger than 28 MB.`);
+    if (!ALLOWED_FILE.test(primary.name)) throw new Error(`${primary.name}: only PDF, DWG, DXF, image or ZIP files are accepted.`);
 
+    const referenceNumberRaw = String(formData.get("referenceNumber") || "").trim();
+    if (referenceNumberRaw.length > 100) throw new Error("Reference number cannot exceed 100 characters.");
+    if (referenceNumberRaw && !/^[a-zA-Z0-9\-_/. ]+$/.test(referenceNumberRaw)) {
+      throw new Error("Reference number can only contain letters, numbers, spaces, and - _ / .");
+    }
+
+    const drawingTypeRaw = String(formData.get("drawingType") || "").trim().slice(0, 80) || null;
+    const drawingDate = dateOrNull("drawingDate");
+
+    // Drawing number is always server-generated atomically on create
     const { data: drawingId, error: regErr } = await supabaseAdmin.rpc("fn_dmac_register_drawing", {
       p_actor: user.id,
       p_actor_email: user.email || null,
@@ -428,7 +482,7 @@ export async function submitNewDrawingAction(formData: FormData): Promise<
       p_building_id: buildingId,
       p_department_id: departmentId,
       p_title: String(formData.get("title") || ""),
-      p_drawing_number: String(formData.get("drawingNumber") || "") || null,
+      p_drawing_number: null,
       p_floor_ids: floorIds,
       p_primary_floor_id: primaryFloorId && UUID_RE.test(primaryFloorId) ? primaryFloorId : null,
       p_planned_submission: dateOrNull("plannedSubmissionDate"),
@@ -437,6 +491,9 @@ export async function submitNewDrawingAction(formData: FormData): Promise<
       p_reviewer: null,
       p_consultant_name: String(formData.get("consultantName") || "") || null,
       p_sub_package: String(formData.get("subPackage") || "") || null,
+      p_reference_number: referenceNumberRaw || null,
+      p_drawing_date: drawingDate,
+      p_drawing_type: drawingTypeRaw,
     });
     if (regErr) throw regErr;
 
@@ -444,9 +501,11 @@ export async function submitNewDrawingAction(formData: FormData): Promise<
       .from("dmac_drawings").select("drawing_number").eq("id", drawingId as string).single();
     const drawingNumber = created?.drawing_number as string;
 
-    // The drawing is registered; a failed upload leaves it as "not submitted" so it can be retried
+    // Upload files and submit R0; clean up any uploaded storage files if DB revision fails
+    let uploadedPaths: string[] = [];
     try {
       const files = await filesFromForm(formData, project.code, drawingNumber);
+      uploadedPaths = files.map((f) => f.storagePath).filter(Boolean);
       const { data: rev, error: subErr } = await supabaseAdmin.rpc("fn_dmac_submit_revision", {
         p_actor: user.id,
         p_actor_email: user.email || null,
@@ -457,12 +516,21 @@ export async function submitNewDrawingAction(formData: FormData): Promise<
         p_change_summary: String(formData.get("changeSummary") || "") || "First issue",
       });
       if (subErr) throw subErr;
+      await autoMatchDrawingToExpectedDeliverable({
+        drawingId: drawingId as string,
+        projectId: project.id,
+        departmentId,
+        referenceNumber: referenceNumberRaw || null,
+      }).catch(() => {});
       await notifyDrawingEvent("Drawing Submitted", drawingId as string, user.id, { revision: (rev as any)?.revision || "R0" });
       return {
         success: true,
         data: { drawingId: drawingId as string, drawingRef: drawingId as string, drawingNumber, revision: (rev as any)?.revision || "R0", submitted: true },
       };
     } catch (subErr: any) {
+      if (uploadedPaths.length > 0) {
+        await supabaseAdmin.storage.from("design-drawings").remove(uploadedPaths).catch(() => {});
+      }
       return {
         success: true,
         data: {
@@ -529,6 +597,12 @@ export async function submitDrawingRevisionAction(formData: FormData): Promise<A
       p_change_summary: String(formData.get("changeSummary") || "") || null,
     });
     if (error) throw error;
+    await syncTrackerOnRevisionResubmitted({
+      drawingId: d.id,
+      revNo: Number((data as any)?.revNo ?? (d.latest_rev_no ?? 0) + 1),
+      actorId: user.id,
+      actorEmail: user.email || null,
+    }).catch(() => {});
     await notifyDrawingEvent("Drawing Submitted", d.id, user.id, { revision: (data as any).revision });
     return { success: true, data: { revisionId: (data as any).revisionId, revision: (data as any).revision } };
   } catch (err) {
@@ -581,6 +655,13 @@ export async function reviewDrawingRevisionAction(params: {
     });
     if (error) throw error;
     const outcome = data as { status: string; holder: string; openComments: number };
+    if (outcome.status === "APPROVED") {
+      await initiateDrawingCoordinationOnApproval({
+        drawingId: d.id,
+        actorId: user.id,
+        actorEmail: user.email || null,
+      });
+    }
     await notifyDrawingEvent(outcome.status === "APPROVED" ? "Drawing Approved" : "Drawing Returned", d.id, user.id, {
       code: params.decisionCode,
       remarks: params.remarks,

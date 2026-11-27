@@ -61,13 +61,18 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   const d = recordMode === "create" ? null : drawing;
   const isCreate = recordMode === "create";
   const [code, setCode] = useState(d?.code || "");
+  const [referenceNumber, setReferenceNumber] = useState(d?.referenceNumber || "");
   const [title, setTitle] = useState(d?.title || "");
   const [discipline, setDiscipline] = useState<DesignDiscipline>((d?.discipline as DesignDiscipline) || "Architectural");
   const [project, setProject] = useState(d?.project || projects[0]?.name || "");
   const [revision, setRevision] = useState(d?.revision || "R0");
   const [consultant, setConsultant] = useState(d?.consultant || "");
+  const [subPackage, setSubPackage] = useState(d?.subPackage || "");
+  const [drawingType, setDrawingType] = useState(d?.drawingType || "");
+  const [drawingDate, setDrawingDate] = useState(d?.drawingDate || "");
   const [description, setDescription] = useState(d?.description || "");
   const [fileSize, setFileSize] = useState(d?.fileSize || "");
+  const [fileTypeLabel, setFileTypeLabel] = useState(d?.fileType || "");
   const [submitting, setSubmitting] = useState(false);
 
   // Review-loop fields (create only): where the sheet sits and when it is due
@@ -98,6 +103,31 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
     return () => { live = false; };
   }, [isCreate, projectId]);
 
+  const masterState = DesignMasterStore.getState();
+  const activeDept = setup?.departments.find((dep) => dep.id === departmentId);
+  const subPackageOptions = (masterState.packages || []).filter((pkg) => {
+    if (!activeDept) return true;
+    const dName = activeDept.name.toLowerCase();
+    const dCode = activeDept.code.toLowerCase();
+    return (
+      pkg.disciplineName.toLowerCase().includes(dName) ||
+      dName.includes(pkg.disciplineName.toLowerCase()) ||
+      pkg.packageCode.toLowerCase().startsWith(dCode)
+    );
+  });
+  const scopedConsultants = (masterState.consultants || []).filter((c) => {
+    const matchesProject = !projectId || !c.activeProjects?.length || c.activeProjects.includes(projectId);
+    if (!matchesProject) return false;
+    if (!activeDept) return true;
+    const dName = activeDept.name.toLowerCase();
+    return (
+      String(c.category || "").toLowerCase().includes(dName) ||
+      (c.categories || []).some((x) => x.toLowerCase().includes(dName)) ||
+      (c.expertise || []).some((x) => x.toLowerCase().includes(dName))
+    );
+  });
+  const consultantOptions = scopedConsultants.length > 0 ? scopedConsultants : (masterState.consultants || []);
+
   const building = setup?.buildings.find((b) => b.id === buildingId);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -118,11 +148,14 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
     if (!file) {
       setSelectedFile(null);
       setFileSize("");
+      setFileTypeLabel("");
       return;
     }
     setSelectedFile(file);
     const formatted = formatBytes(file.size);
     setFileSize(formatted);
+    const ext = file.name.split(".").pop()?.toUpperCase() || "";
+    setFileTypeLabel(file.type ? `${ext ? `${ext} · ` : ""}${file.type}` : ext || "Unknown");
     const objUrl = URL.createObjectURL(file);
     setPreviewUrl(objUrl);
 
@@ -181,7 +214,11 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
         discipline,
         project: project || d.project,
         consultant: consultant.trim() || d.consultant,
-        fileSize: fileSize || d.fileSize,
+        subPackage: subPackage.trim() || undefined,
+        referenceNumber: referenceNumber.trim() || undefined,
+        drawingDate: drawingDate || undefined,
+        drawingType: drawingType || undefined,
+        fileSize: d.fileSize,
         description: description.trim() || undefined,
       });
       onClose();
@@ -190,6 +227,11 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
 
     if (!selectedFile) { setUploadError("Attach the drawing sheet for R0."); return; }
     if (!departmentId || !buildingId) { setUploadError("Pick the building and discipline."); return; }
+    if (referenceNumber.trim().length > 100) { setUploadError("Reference number cannot exceed 100 characters."); return; }
+    if (referenceNumber.trim() && !/^[a-zA-Z0-9\-_/. ]+$/.test(referenceNumber.trim())) {
+      setUploadError("Reference number can only contain letters, numbers, spaces, and - _ / .");
+      return;
+    }
 
     setSubmitting(true);
     setUploadError(null);
@@ -201,7 +243,10 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
       fd.append("floorIds", JSON.stringify(floorIds));
       if (floorIds[0]) fd.append("primaryFloorId", floorIds[0]);
       fd.append("title", title.trim());
-      fd.append("drawingNumber", code.trim().toUpperCase());
+      if (referenceNumber.trim()) fd.append("referenceNumber", referenceNumber.trim());
+      if (subPackage.trim()) fd.append("subPackage", subPackage.trim());
+      if (drawingType) fd.append("drawingType", drawingType);
+      if (drawingDate) fd.append("drawingDate", drawingDate);
       fd.append("plannedSubmissionDate", plannedSubmission);
       fd.append("plannedApprovalDate", plannedApproval);
       fd.append("consultantName", consultant.trim());
@@ -233,12 +278,17 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
     }
     setSelectedFile(null);
     setCode("");
+    setReferenceNumber("");
     setTitle("");
     setDiscipline("Architectural");
     setRevision("R0");
     setConsultant("");
+    setSubPackage("");
+    setDrawingType("");
+    setDrawingDate("");
     setDescription("");
     setFileSize("");
+    setFileTypeLabel("");
     setUploadError(null);
   };
 
@@ -330,7 +380,14 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               </div>
             </div>
             {isCreate && setupError && (
-              <p className="text-xs text-danger-text">{setupError}</p>
+              <div className="p-2.5 rounded-lg border border-warning-border bg-warning-soft/60 text-warning-text text-xs">
+                {setupError}
+              </div>
+            )}
+            {isCreate && setup?.reviewWarning && (
+              <div className="p-2.5 rounded-lg border border-warning-border bg-warning-soft/60 text-warning-text text-xs">
+                {setup.reviewWarning}
+              </div>
             )}
             {isCreate && setup && (
               <>
@@ -397,17 +454,30 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
           </AppCardHeader>
           <AppCardContent className="p-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="sm:col-span-2 space-y-1.5">
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">
-                  Drawing number {isCreate ? <span className="font-normal text-muted-foreground">(leave blank to number it automatically)</span> : "*"}
+                  Drawing number
                 </label>
                 <input
                   type="text"
-                  required={!isCreate}
-                  value={code}
-                  disabled={!isCreate}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="e.g. AR-T1-TYP-101"
+                  value={isCreate ? "" : code}
+                  disabled
+                  readOnly
+                  placeholder="Auto-generated on upload"
+                  className="w-full h-10 rounded-lg border border-border bg-sunken px-3 text-xs text-muted-foreground font-mono disabled:opacity-80 cursor-not-allowed"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  Reference number <span className="font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={referenceNumber}
+                  maxLength={100}
+                  onChange={(e) => setReferenceNumber(e.target.value)}
+                  placeholder="e.g. EXT-REF-2026-01"
                   className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
@@ -419,20 +489,20 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
                   required
                   value={isCreate ? "R0" : revision}
                   disabled
-                  onChange={(e) => setRevision(e.target.value)}
+                  readOnly
                   placeholder="e.g. R0, R1"
-                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary disabled:opacity-70"
+                  className="w-full h-10 rounded-lg border border-border bg-sunken px-3 text-xs text-muted-foreground font-mono disabled:opacity-80 cursor-not-allowed"
                 />
               </div>
             </div>
             {recordMode === "edit" && (
               <p className="text-[11px] text-muted-foreground">
-                Sheet code and revision are fixed once registered. A new revision or file goes through Review.
+                Drawing number and revision are fixed once registered. A new revision or file goes through Review.
               </p>
             )}
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Drawing title / description *</label>
+              <label className="text-xs font-semibold text-foreground">Drawing title *</label>
               <input
                 type="text"
                 required
@@ -443,27 +513,109 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">Consultant / firm author</label>
-                <input
-                  type="text"
-                  value={consultant}
-                  onChange={(e) => setConsultant(e.target.value)}
-                  placeholder="e.g. Hafeez contractor / MEP design partners"
-                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-                />
+                <label className="text-xs font-semibold text-foreground">Drawing type</label>
+                <select
+                  value={drawingType}
+                  onChange={(e) => setDrawingType(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                >
+                  <option value="">Select type (optional)</option>
+                  <option value="General Arrangement">General Arrangement</option>
+                  <option value="Detail Drawing">Detail Drawing</option>
+                  <option value="Shop Drawing">Shop Drawing</option>
+                  <option value="Section / Elevation">Section / Elevation</option>
+                  <option value="Schematic">Schematic</option>
+                  <option value="As-Built">As-Built</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">File size indicator</label>
+                <label className="text-xs font-semibold text-foreground">Sub-package</label>
+                {subPackageOptions.length > 0 ? (
+                  <select
+                    value={subPackage}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSubPackage(val);
+                      const matched = subPackageOptions.find((p) => (p.subPackageName || p.packageName) === val);
+                      if (matched?.defaultConsultant && !consultant.trim()) {
+                        setConsultant(matched.defaultConsultant);
+                      }
+                    }}
+                    className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="">Select sub-package (optional)</option>
+                    {subPackageOptions.map((p) => {
+                      const label = p.subPackageName || p.packageName;
+                      return (
+                        <option key={p.id} value={label}>
+                          {label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={subPackage}
+                    onChange={(e) => setSubPackage(e.target.value)}
+                    placeholder="e.g. Podium / Core / Facade"
+                    className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">Drawing date</label>
                 <input
-                  type="text"
-                  value={fileSize}
-                  onChange={(e) => setFileSize(e.target.value)}
-                  placeholder="Auto-calculated on attachment (e.g. 18.4 MB)"
-                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary font-mono"
+                  type="date"
+                  value={drawingDate}
+                  onChange={(e) => setDrawingDate(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">Consultant / firm author</label>
+                {consultantOptions.length > 0 ? (
+                  <select
+                    value={consultant}
+                    onChange={(e) => setConsultant(e.target.value)}
+                    className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="">Select consultant (optional)</option>
+                    {consultantOptions.map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name} {c.category ? `(${c.category})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={consultant}
+                    onChange={(e) => setConsultant(e.target.value)}
+                    placeholder="e.g. Hafeez contractor / MEP design partners"
+                    className="w-full h-10 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-xs font-semibold text-foreground block">File metadata</span>
+                <div className="min-h-10 rounded-lg border border-border bg-sunken px-3 py-2 text-xs text-muted-foreground flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-mono">
+                    {fileSize ? `File Size: ${fileSize}` : "File size will be calculated after file selection"}
+                  </span>
+                  {fileTypeLabel && (
+                    <span className="text-[11px] font-mono text-foreground">{fileTypeLabel}</span>
+                  )}
+                </div>
               </div>
             </div>
 

@@ -35,6 +35,8 @@ export interface UserInviteWizardModalProps {
   managers: Array<{ id: string; full_name: string; email: string }>;
   roles: Array<{ id: string; code: string; name: string }>;
   moduleRoles: Array<{ module_code: string; role_code: string; name: string; description?: string; permissions: string[] }>;
+  designProjects?: Array<{ id: string; code: string; name: string }>;
+  designTowers?: Array<{ id: string; project_id: string; tower_name: string }>;
   isCallerSuperAdmin: boolean;
 }
 
@@ -94,8 +96,12 @@ export function UserInviteWizardModal({
   managers,
   roles,
   moduleRoles,
+  designProjects = [],
+  designTowers = [],
   isCallerSuperAdmin
 }: UserInviteWizardModalProps) {
+  const [designProjectIds, setDesignProjectIds] = useState<string[]>([]);
+  const [designSubProjectIds, setDesignSubProjectIds] = useState<string[]>([]);
   // Wizard State
   const [step, setStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -220,7 +226,10 @@ export function UserInviteWizardModal({
         .map(([modCode, cfg]) => ({
           module_code: modCode,
           role_code: cfg.role_code,
-          scope: { type: cfg.scopeType || "all" }
+          scope:
+            modCode === "DESIGN_TRACKING" && cfg.scopeType === "projects"
+              ? { type: "projects", project_ids: designProjectIds, sub_project_ids: designSubProjectIds }
+              : { type: cfg.scopeType || "all" }
         }));
 
       // Format dashboardAccess
@@ -583,7 +592,11 @@ export function UserInviteWizardModal({
                                 }}
                               >
                                 <option value="all">ALL (Unrestricted)</option>
-                                <option value="departments">SPECIFIC (Department / Scoped)</option>
+                                {mod.code === "DESIGN_TRACKING" ? (
+                                  <option value="projects">SPECIFIC (Projects &amp; Sub-projects)</option>
+                                ) : (
+                                  <option value="departments">SPECIFIC (Department / Scoped)</option>
+                                )}
                               </select>
                             </div>
                           </div>
@@ -593,6 +606,57 @@ export function UserInviteWizardModal({
                       <p className="text-[11px] text-muted-foreground ml-6 mt-1">
                         {mod.desc}
                       </p>
+
+                      {cfg.enabled && mod.code === "DESIGN_TRACKING" && cfg.scopeType === "projects" && (
+                        <div className="ml-6 mt-2.5 p-2.5 rounded-lg border border-border bg-surface space-y-2 text-[11px]">
+                          <div className="font-semibold text-foreground">Assign Projects</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {designProjects.map((p) => {
+                              const checked = designProjectIds.includes(p.id);
+                              return (
+                                <label key={p.id} className={`inline-flex items-center gap-1.5 px-2 py-1 rounded border cursor-pointer ${checked ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border"}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => {
+                                      setDesignProjectIds((prev) =>
+                                        checked ? prev.filter((x) => x !== p.id) : [...prev, p.id]
+                                      );
+                                    }}
+                                  />
+                                  <span>{p.name}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          {designProjectIds.length > 0 && (
+                            <>
+                              <div className="font-semibold text-foreground pt-1">Assign Sub-projects (leave empty for all in selected projects)</div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {designTowers
+                                  .filter((t) => designProjectIds.includes(t.project_id))
+                                  .map((t) => {
+                                    const checked = designSubProjectIds.includes(t.id);
+                                    return (
+                                      <label key={t.id} className={`inline-flex items-center gap-1.5 px-2 py-1 rounded border cursor-pointer ${checked ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border"}`}>
+                                        <input
+                                          type="checkbox"
+                                          checked={checked}
+                                          onChange={() => {
+                                            setDesignSubProjectIds((prev) =>
+                                              checked ? prev.filter((x) => x !== t.id) : [...prev, t.id]
+                                            );
+                                          }}
+                                        />
+                                        <span>{t.tower_name}</span>
+                                      </label>
+                                    );
+                                  })}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -198,6 +198,8 @@ export default function UserMasterPage() {
 
   // Module Roles from DB
   const [moduleRoles, setModuleRoles] = useState<any[]>([]);
+  const [designProjects, setDesignProjects] = useState<Array<{ id: string; code: string; name: string }>>([]);
+  const [designTowers, setDesignTowers] = useState<Array<{ id: string; project_id: string; tower_name: string }>>([]);
 
   // Invite Modal States
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -452,6 +454,8 @@ export default function UserMasterPage() {
       setDesignations(loadedDesigs);
       setRoles(loadedRoles);
       setModuleRoles(data.moduleRoles || []);
+      setDesignProjects(data.designProjects || []);
+      setDesignTowers(data.designTowers || []);
 
       let assetsData = data.assets || [];
       setAvailableAssets(assetsData);
@@ -836,6 +840,8 @@ export default function UserMasterPage() {
         managers={users}
         roles={roles}
         moduleRoles={moduleRoles}
+        designProjects={designProjects}
+        designTowers={designTowers}
         isCallerSuperAdmin={Boolean(isSuperAdmin || serverIsSuperAdmin)}
       />
 
@@ -1282,6 +1288,8 @@ export default function UserMasterPage() {
           }}
           user={moduleModalUser}
           moduleRoles={moduleRoles}
+          designProjects={designProjects}
+          designTowers={designTowers}
           isCallerSuperAdmin={Boolean(isSuperAdmin || serverIsSuperAdmin)}
         />
       </div>

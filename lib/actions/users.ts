@@ -465,7 +465,7 @@ export async function fetchUsersDashboardData() {
   };
   
   // Parallelize ALL network requests (Users list + metadata lists) to eliminate waterfall latency
-  const [users, [deptRes, desigRes, roleRes, astRes, modRes, modRolesRes]] = await Promise.all([
+  const [users, [deptRes, desigRes, roleRes, astRes, modRes, modRolesRes, dProjRes, dTowerRes]] = await Promise.all([
     getVisibleUsers(user.id, isSuperAdmin),
     Promise.all([
       supabaseAdmin.from("departments").select("id, code, name").eq("is_deleted", false),
@@ -473,7 +473,9 @@ export async function fetchUsersDashboardData() {
       supabaseAdmin.from("roles").select("id, code, name").eq("is_deleted", false),
       supabaseAdmin.from("assets").select("id, code, name, asset_tag, assigned_user_id").eq("is_deleted", false),
       supabaseAdmin.from("modules_master").select("id, code, name, description, icon, display_order").eq("is_active", true).order("display_order", { ascending: true }),
-      supabaseAdmin.from("module_roles").select("module_code, role_code, name, description, permissions").order("role_code", { ascending: true })
+      supabaseAdmin.from("module_roles").select("module_code, role_code, name, description, permissions").order("role_code", { ascending: true }),
+      supabaseAdmin.from("design_projects").select("id, code, name").order("name", { ascending: true }),
+      supabaseAdmin.from("design_towers").select("id, project_id, tower_name").order("tower_name", { ascending: true })
     ])
   ]);
 
@@ -487,7 +489,9 @@ export async function fetchUsersDashboardData() {
     roles: roleRes.data || [],
     assets: astRes.data || [],
     modules: modRes.data || [],
-    moduleRoles: modRolesRes.data || []
+    moduleRoles: modRolesRes.data || [],
+    designProjects: dProjRes.data || [],
+    designTowers: dTowerRes.data || []
   };
 }
 
@@ -949,11 +953,50 @@ export async function saveUserModuleAccessAction(
     }
   }
 
-  // 3. Synchronize legacy tables (user_modules & dashboard_user_access) for backward compatibility
+  // 3. Synchronize legacy tables (user_modules, dashboard_user_access, design_user_access)
   try {
     const { assignUserModules } = await import("@/lib/actions/module-switcher");
     const dashKeys = dashboardAccess ? dashboardAccess.map(d => d.dashboard_key) : [];
     await assignUserModules(targetUserId, Array.from(new Set(activeCodes)), defaultModuleCode || "TASK_WORKFLOW", dashKeys);
+
+    const designMod = moduleAccess.find((m) => m.module_code === "DESIGN_TRACKING");
+    if (designMod) {
+      const sc = designMod.scope || { type: "all" };
+      const projectIds: string[] = sc.type === "projects" && Array.isArray(sc.project_ids) ? sc.project_ids.map(String) : [];
+      const subProjectIds: string[] = sc.type === "projects" && Array.isArray(sc.sub_project_ids) ? sc.sub_project_ids.map(String) : [];
+      const rc = String(designMod.role_code || "VIEWER").toUpperCase();
+      const mappedRole =
+        rc === "DESIGN_ADMIN" || rc === "ADMIN"
+          ? "DESIGN_ADMIN"
+          : rc === "DESIGN_LEAD"
+          ? "DESIGN_LEAD"
+          : rc === "CONTRIBUTOR" || rc === "STANDARD"
+          ? "CONSULTANT_CONTRIBUTOR"
+          : "VIEWER";
+      const isLeadOrAdmin = mappedRole === "DESIGN_ADMIN" || mappedRole === "DESIGN_LEAD";
+      const isContrib = mappedRole === "CONSULTANT_CONTRIBUTOR" || isLeadOrAdmin;
+
+      await adminClient.from("design_user_access").upsert(
+        {
+          user_id: targetUserId,
+          design_role: mappedRole,
+          project_access_type: projectIds.length > 0 ? "SPECIFIC" : "ALL",
+          assigned_project_ids: projectIds,
+          assigned_sub_project_ids: subProjectIds,
+          can_matrix_edit: isContrib,
+          can_drawings_upload: isContrib,
+          can_drawings_approve_gfc: isLeadOrAdmin,
+          can_transmittals_create: isContrib,
+          can_rfis_manage: isContrib,
+          can_masters_manage: mappedRole === "DESIGN_ADMIN",
+          updated_by: authUser.email || authUser.id,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      );
+    } else {
+      await adminClient.from("design_user_access").delete().eq("user_id", targetUserId);
+    }
   } catch (syncErr) {
     console.warn("[saveUserModuleAccessAction] Legacy sync warning:", syncErr);
   }

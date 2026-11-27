@@ -9,6 +9,7 @@ import { WorkPackageMaster, TowerMaster, ProjectMaster, PackageStatusEntry, Matr
 import { recordMatrixAuditAction } from "@/lib/actions/designTracking";
 import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
 import { TransactionFormLayout, WorkingDocumentLayout } from "./DesignTransactionLayout";
+import { LiveTenderMatrixView } from "./LiveTenderMatrixView";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { 
@@ -668,8 +669,42 @@ export const TenderDesignMatrix: React.FC = () => {
     setSearchQuery("");
   };
 
+  const [matrixMode, setMatrixMode] = useState<"LIVE" | "MASTER">("LIVE");
+
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-surface border border-border px-3.5 py-2.5 rounded-xl shadow-xs">
+        <span className="text-xs font-semibold text-foreground">
+          {matrixMode === "LIVE"
+            ? "Live Tender Design Matrix (Drawing Register & Coordination)"
+            : "Master Deliverable Grid (Legacy Package Statuses)"}
+        </span>
+        <div className="flex items-center gap-1 bg-sunken p-1 rounded-lg border border-border text-xs">
+          <button
+            type="button"
+            onClick={() => setMatrixMode("LIVE")}
+            className={`px-3 py-1 rounded-md font-semibold cursor-pointer ${
+              matrixMode === "LIVE" ? "bg-surface text-primary shadow-xs border border-border" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Live Drawing Matrix
+          </button>
+          <button
+            type="button"
+            onClick={() => setMatrixMode("MASTER")}
+            className={`px-3 py-1 rounded-md font-semibold cursor-pointer ${
+              matrixMode === "MASTER" ? "bg-surface text-primary shadow-xs border border-border" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Master Grid
+          </button>
+        </div>
+      </div>
+
+      {matrixMode === "LIVE" ? (
+        <LiveTenderMatrixView />
+      ) : (
+      <>
       {!activeCell && !isAuditDrawerOpen && !isBatchModalOpen && (
         <>
           {/* Top Filter & Control Ribbon */}
@@ -1768,6 +1803,8 @@ export const TenderDesignMatrix: React.FC = () => {
             </AppCard>
           </div>
         </TransactionFormLayout>
+      )}
+      </>
       )}
     </div>
   );

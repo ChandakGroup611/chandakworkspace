@@ -42,6 +42,22 @@ const DmsFolderRepository = dynamic(() => import("../../Design_Tracking/src/comp
   ssr: false,
   loading: () => <AppTableSkeleton rows={8} />
 });
+const DmsApprovalsPage = dynamic(() => import("../../Design_Tracking/src/components/DmsApprovalsPage").then(m => m.DmsApprovalsPage), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const DrawingCoordinationTracker = dynamic(() => import("../../Design_Tracking/src/components/DrawingCoordinationTracker").then(m => m.DrawingCoordinationTracker), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const ExpectedDeliverablesView = dynamic(() => import("../../Design_Tracking/src/components/ExpectedDeliverablesView").then(m => m.ExpectedDeliverablesView), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const DesignCockpitView = dynamic(() => import("../../Design_Tracking/src/components/DesignCockpitView").then(m => m.DesignCockpitView), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
 const TenderDesignMatrix = dynamic(() => import("../../Design_Tracking/src/components/TenderDesignMatrix").then(m => m.TenderDesignMatrix), {
   ssr: false,
   loading: () => <AppTableSkeleton rows={8} />
@@ -75,6 +91,26 @@ const GfcHandoverView = dynamic(() => import("../../Design_Tracking/src/componen
   loading: () => <AppTableSkeleton rows={8} />
 });
 const TransmittalManager = dynamic(() => import("../../Design_Tracking/src/components/TransmittalManager").then(m => m.TransmittalManager), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const LiveTransmittalHandoverView = dynamic(() => import("../../Design_Tracking/src/components/LiveTransmittalHandoverView").then(m => m.LiveTransmittalHandoverView), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const SlaCalendarDashboardView = dynamic(() => import("../../Design_Tracking/src/components/SlaCalendarDashboardView").then(m => m.SlaCalendarDashboardView), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const DesignNotificationCenterView = dynamic(() => import("../../Design_Tracking/src/components/DesignNotificationCenterView").then(m => m.DesignNotificationCenterView), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const ConsultantPerformanceView = dynamic(() => import("../../Design_Tracking/src/components/ConsultantPerformanceView").then(m => m.ConsultantPerformanceView), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const DesignIntelligenceView = dynamic(() => import("../../Design_Tracking/src/components/DesignIntelligenceView").then(m => m.DesignIntelligenceView), {
   ssr: false,
   loading: () => <AppTableSkeleton rows={8} />
 });
@@ -131,6 +167,14 @@ type ActiveTabType =
   | "MATRIX" 
   | "BUILDING_MATRIX"
   | "DMS"
+  | "DMS_APPROVALS"
+  | "TRACKER"
+  | "EXPECTED"
+  | "COCKPIT"
+  | "INTELLIGENCE"
+  | "SLA_CALENDAR"
+  | "NOTIFICATIONS"
+  | "CONSULTANT_PERFORMANCE"
   | "LOOK_AHEAD" 
   | "LIAISONING" 
   | "STAGES" 
@@ -221,6 +265,10 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     const combined = `${currentPath}/${slugStr}`;
 
     if (combined.includes("/design/learning") || combined.includes("learning") || combined.includes("guide") || combined.includes("lifecycle") || combined.includes("flowchart") || combined.includes("playbook") || combined.includes("sop")) return "LEARNING";
+    if (combined.includes("/design/dms-approvals") || combined.includes("dms-approval")) return "DMS_APPROVALS";
+    if (combined.includes("/design/tracker") || combined.includes("drawing-tracker")) return "TRACKER";
+    if (combined.includes("/design/expected") || combined.includes("expected-deliverables")) return "EXPECTED";
+    if (combined.includes("/design/cockpit")) return "COCKPIT";
     if (combined.includes("/design/dms") || combined.includes("folder-repo") || combined.includes("doc-repo") || combined.includes("repository")) return "DMS";
     if (combined.includes("building-matrix") || combined.includes("section-matrix") || combined.includes("heat-matrix") || combined.includes("floor-matrix")) return "BUILDING_MATRIX";
     if (combined.includes("sub-package") || combined.includes("subpackage") || combined.includes("/design/sub-packages")) return "SUB_PACKAGES";
@@ -233,6 +281,10 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     if (combined.includes("rbac") || combined.includes("access") || combined.includes("policy") || combined.includes("permission") || combined.includes("governance")) return "RBAC";
     if (combined.includes("package") || combined.includes("work-package") || combined.includes("workpackage")) return "PACKAGES";
     if (combined.includes("master") || combined.includes("setting")) return "MASTERS";
+    if (combined.includes("sla-calendar") || combined.includes("sla_calendar")) return "SLA_CALENDAR";
+    if (combined.includes("notifications") || combined.includes("notification")) return "NOTIFICATIONS";
+    if (combined.includes("consultant-performance") || combined.includes("scorecard")) return "CONSULTANT_PERFORMANCE";
+    if (combined.includes("intelligence")) return "INTELLIGENCE";
     if (combined.includes("transmittal") || combined.includes("dispatch")) return "TRANSMITTALS";
     if (combined.includes("rfi") || combined.includes("query") || combined.includes("clash")) return "RFIS";
     if (combined.includes("look-ahead") || combined.includes("forecast")) return "LOOK_AHEAD";
@@ -252,6 +304,14 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     MATRIX: "Tender design matrix",
     BUILDING_MATRIX: "Building section matrix",
     DMS: "DMS folders",
+    DMS_APPROVALS: "DMS & Drawing Approval",
+    TRACKER: "Drawing register tracker",
+    EXPECTED: "Expected drawing deliverables",
+    COCKPIT: "Design management cockpit",
+    INTELLIGENCE: "Design intelligence",
+    SLA_CALENDAR: "SLA & holiday calendar",
+    NOTIFICATIONS: "Design notifications",
+    CONSULTANT_PERFORMANCE: "Consultant scorecard",
     LOOK_AHEAD: "Look-ahead forecast",
     LIAISONING: "Statutory liaisoning",
     STAGES: "Design stages roadmap",
@@ -264,7 +324,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     LEARNING: "Learning and lifecycle guide",
     CONSULTANTS: "Consultant directory",
     REPORTS: "Design analytics",
-    RBAC: "Access policies",
+    RBAC: "Users & Access",
     MASTERS: "Masters setup",
     PROJECTS: "Projects",
     SUB_PROJECTS: "Sub-projects",
@@ -281,6 +341,14 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
       MATRIX: "/design/matrix",
       BUILDING_MATRIX: "/design/building-matrix",
       DMS: "/design/dms",
+      DMS_APPROVALS: "/design/dms-approvals",
+      TRACKER: "/design/tracker",
+      EXPECTED: "/design/expected",
+      COCKPIT: "/design/cockpit",
+      INTELLIGENCE: "/design/intelligence",
+      SLA_CALENDAR: "/design/sla-calendar",
+      NOTIFICATIONS: "/design/notifications",
+      CONSULTANT_PERFORMANCE: "/design/consultant-performance",
       LOOK_AHEAD: "/design/look-ahead",
       LIAISONING: "/design/liaisoning",
       STAGES: "/design/stages",
@@ -476,7 +544,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
             </div>
 
             {/* Action Buttons on Right */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
               <button
                 type="button"
                 onClick={() => handleTabChange("LEARNING")}
@@ -526,6 +594,49 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
           {/* Tab DMS: Enterprise DMS Folder Repository & Split Indexing */}
           {activeTab === "DMS" && (
             <DmsFolderRepository currentUser={currentUser} />
+          )}
+
+          {/* Dedicated DMS & Drawing Approval Page */}
+          {activeTab === "DMS_APPROVALS" && (
+            <DmsApprovalsPage
+              drawings={accessibleDrawings}
+              onOpenReviewModal={(drawing) => setSelectedDrawingForReview(drawing)}
+            />
+          )}
+
+          {/* Drawing Register Tracker & Design Coordination */}
+          {activeTab === "TRACKER" && (
+            <DrawingCoordinationTracker />
+          )}
+
+          {/* Expected Drawing Deliverables Register */}
+          {activeTab === "EXPECTED" && (
+            <ExpectedDeliverablesView />
+          )}
+
+          {/* Design Management Cockpit */}
+          {activeTab === "COCKPIT" && (
+            <DesignCockpitView />
+          )}
+
+          {/* Design Intelligence (Release 4) */}
+          {activeTab === "INTELLIGENCE" && (
+            <DesignIntelligenceView />
+          )}
+
+          {/* SLA & Holiday Calendar (Release 3) */}
+          {activeTab === "SLA_CALENDAR" && (
+            <SlaCalendarDashboardView />
+          )}
+
+          {/* Design Notifications (Release 3) */}
+          {activeTab === "NOTIFICATIONS" && (
+            <DesignNotificationCenterView />
+          )}
+
+          {/* Consultant Performance Scorecard (Release 3) */}
+          {activeTab === "CONSULTANT_PERFORMANCE" && (
+            <ConsultantPerformanceView />
           )}
 
           {/* Tab 1: Master Tender Design Matrix */}
@@ -580,7 +691,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
 
           {/* Tab 9: Transmittals & GFC Dispatch Slips */}
           {activeTab === "TRANSMITTALS" && (
-            <TransmittalManager />
+            <TransmittalsTabShell />
           )}
 
           {/* Tab 10: RFI & Site Query Tracker */}
@@ -659,6 +770,39 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function TransmittalsTabShell() {
+  const [mode, setMode] = useState<"LIVE" | "LEGACY">("LIVE");
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setMode("LIVE")}
+          className={`px-3 py-2 min-h-10 rounded-md text-sm font-medium border ${
+            mode === "LIVE"
+              ? "bg-theme-btn-primary text-theme-btn-primary-text border-transparent"
+              : "border-border bg-surface hover:bg-elevated"
+          }`}
+        >
+          Live Drawing Transmittals
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("LEGACY")}
+          className={`px-3 py-2 min-h-10 rounded-md text-sm font-medium border ${
+            mode === "LEGACY"
+              ? "bg-theme-btn-primary text-theme-btn-primary-text border-transparent"
+              : "border-border bg-surface hover:bg-elevated"
+          }`}
+        >
+          Dispatch Slips Register
+        </button>
+      </div>
+      {mode === "LIVE" ? <LiveTransmittalHandoverView /> : <TransmittalManager />}
     </div>
   );
 }

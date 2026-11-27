@@ -36,6 +36,10 @@ async function tick() {
     const { runMeetJobs } = await import("@/workers/meet_jobs");
     const r = await runMeetJobs();
     if (r.errors?.length) console.warn("[meet-scheduler] finished with errors:", r.errors.join(" | "));
+    const { processDueDrawingCoordinationTasksAndSlaAction } = await import("@/lib/actions/drawing-coordination");
+    await processDueDrawingCoordinationTasksAndSlaAction().catch((e) =>
+      console.warn("[meet-scheduler] drawing coordination tick failed:", e)
+    );
   } catch (err) {
     console.error("[meet-scheduler] round failed:", err);
   }

@@ -52,6 +52,7 @@ import {
   createDocTypeAction 
 } from "@/lib/actions/dms-core";
 import { confirmAction } from "@/components/ui/feedback/confirm";
+import { DrawingCoordinationMastersView } from "./DrawingCoordinationMastersView";
 
 export type MasterSubTab = 
   | "PROJECTS" 
@@ -63,7 +64,8 @@ export type MasterSubTab =
   | "AUTHORITIES" 
   | "RBAC" 
   | "TEMPLATES"
-  | "DOC_TYPES";
+  | "DOC_TYPES"
+  | "COORDINATION";
 
 interface MastersSetupViewProps {
   initialSubTab?: MasterSubTab;
@@ -287,6 +289,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 { id: "SUB_PACKAGES" as MasterSubTab, label: "Sub-Packages", icon: Layers, count: storeState.packages.length, color: "text-info-text" },
                 { id: "AUTHORITIES" as MasterSubTab, label: "Authorities", icon: ShieldCheck, count: storeState.authorities.length, color: "text-warning-text" },
                 { id: "DOC_TYPES" as MasterSubTab, label: "Document types", icon: Tag, count: docTypes.length, color: "text-accent-soft-text" },
+                { id: "COORDINATION" as MasterSubTab, label: "Coordination masters", icon: SlidersHorizontal, color: "text-primary" },
                 { id: "TEMPLATES" as MasterSubTab, label: "Templates & backup", icon: FileSpreadsheet, color: "text-subtle" }
               ].map(tab => {
                 const Icon = tab.icon;
@@ -580,6 +583,11 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             ))}
           </div>
         </div>
+      )}
+
+      {/* Sub-tab: Coordination Masters */}
+      {activeSubTab === "COORDINATION" && (
+        <DrawingCoordinationMastersView />
       )}
 
       {/* Sub-tab: Document Types Master (Doc Sets) */}

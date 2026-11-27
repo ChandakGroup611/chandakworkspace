@@ -59,6 +59,7 @@ import {
   fetchDesignWorkspaceUsersAction, 
   saveDesignUserAccessAction, 
   deleteDesignUserAccessAction,
+  fetchDesignAccessAuditAction,
   toggleUserDesignModuleAccessAction,
   saveRbacPoliciesAction,
   fetchRbacPoliciesAction,
@@ -143,7 +144,7 @@ export const DesignRbacGovernance: React.FC = () => {
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Active View Tabs
-  const [activeTab, setActiveTab] = useState<"ROLES_BUILDER" | "PERSONNEL" | "POLICY_MATRIX" | "SIMULATOR">("ROLES_BUILDER");
+  const [activeTab, setActiveTab] = useState<"ROLES_BUILDER" | "PERSONNEL" | "POLICY_MATRIX" | "SIMULATOR">("PERSONNEL");
 
   // Filters for Personnel Tab
   const [searchQuery, setSearchQuery] = useState("");
@@ -151,6 +152,12 @@ export const DesignRbacGovernance: React.FC = () => {
   const [scopeFilter, setScopeFilter] = useState<string>("ALL");
   const [moduleAccessFilter, setModuleAccessFilter] = useState<string>("ALL");
   const [deptFilter, setDeptFilter] = useState<string>("ALL");
+  const [projectFilter, setProjectFilter] = useState<string>("ALL");
+  const [subProjectFilter, setSubProjectFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [grantUserId, setGrantUserId] = useState<string>("");
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
   // Slide-Over Permission Drawer state (User-wise)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -158,6 +165,7 @@ export const DesignRbacGovernance: React.FC = () => {
   const [drawerDesignRole, setDrawerDesignRole] = useState<DesignRoleCode>("DESIGN_COORDINATOR");
   const [drawerProjectAccessType, setDrawerProjectAccessType] = useState<DesignProjectAccessType>("ALL");
   const [drawerAssignedProjectIds, setDrawerAssignedProjectIds] = useState<string[]>([]);
+  const [drawerAssignedSubProjectIds, setDrawerAssignedSubProjectIds] = useState<string[]>([]);
   const [drawerProjectSearch, setDrawerProjectSearch] = useState("");
   const [drawerTicketScope, setDrawerTicketScope] = useState<DesignTicketAccessScope>("ALL");
   
@@ -298,6 +306,9 @@ export const DesignRbacGovernance: React.FC = () => {
 
   const filteredUsers = useMemo(() => {
     return mergedUsers.filter(u => {
+      // Users & Access lists only users granted Design & Tracking access (or revoked from it)
+      if (!u.hasModuleAccess && u.inviteStatus !== "REVOKED") return false;
+
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchName = u.fullName.toLowerCase().includes(q);
@@ -332,10 +343,20 @@ export const DesignRbacGovernance: React.FC = () => {
       }
 
       if (deptFilter !== "ALL" && u.departmentName !== deptFilter) return false;
+      if (statusFilter !== "ALL" && (u.inviteStatus || "ACTIVE") !== statusFilter) return false;
+      if (projectFilter !== "ALL") {
+        if (u.designAccess?.projectAccessType === "SPECIFIC" && !(u.designAccess.assignedProjectIds || []).includes(projectFilter)) {
+          return false;
+        }
+      }
+      if (subProjectFilter !== "ALL") {
+        const subs = u.designAccess?.assignedSubProjectIds || [];
+        if (subs.length > 0 && !subs.includes(subProjectFilter)) return false;
+      }
 
       return true;
     });
-  }, [mergedUsers, searchQuery, roleFilter, scopeFilter, moduleAccessFilter, deptFilter]);
+  }, [mergedUsers, searchQuery, roleFilter, scopeFilter, moduleAccessFilter, deptFilter, statusFilter, projectFilter, subProjectFilter]);
 
   const totalPersonnel = mergedUsers.length;
   const activeTrackingUsers = mergedUsers.filter(u => u.hasModuleAccess).length;
@@ -585,6 +606,7 @@ export const DesignRbacGovernance: React.FC = () => {
     setDrawerDesignRole(assignedRole);
     setDrawerProjectAccessType(access?.projectAccessType || "ALL");
     setDrawerAssignedProjectIds(access?.assignedProjectIds || []);
+    setDrawerAssignedSubProjectIds(access?.assignedSubProjectIds || []);
     setDrawerProjectSearch("");
     setDrawerTicketScope(access?.ticketAccessScope || "ALL");
 
@@ -616,6 +638,7 @@ export const DesignRbacGovernance: React.FC = () => {
         designRole: drawerDesignRole,
         projectAccessType: drawerProjectAccessType,
         assignedProjectIds: drawerProjectAccessType === "SPECIFIC" ? drawerAssignedProjectIds : [],
+        assignedSubProjectIds: drawerProjectAccessType === "SPECIFIC" ? drawerAssignedSubProjectIds : [],
         canMatrixEdit: permMatrixEdit,
         canDrawingsUpload: permDrawingsUpload,
         canDrawingsApproveGfc: permGfcApproval,
@@ -1081,12 +1104,86 @@ export const DesignRbacGovernance: React.FC = () => {
       {/* ======================================================================= */}
       {activeTab === "PERSONNEL" && (
         <div className="space-y-4">
-          <div className="bg-surface border border-border rounded-lg p-3.5 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Grant Existing User / Central Invite Bar */}
+          <div className="bg-surface border border-border rounded-lg p-3.5 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full flex-1">
+              <select
+                value={grantUserId}
+                onChange={(e) => setGrantUserId(e.target.value)}
+                aria-label="Select existing Workspace user"
+                className="text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground w-full sm:w-auto sm:min-w-56 max-w-full min-w-0"
+              >
+                <option value="">Grant access to existing Workspace user…</option>
+                {mergedUsers
+                  .filter((u) => !u.hasModuleAccess && u.isActive)
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.fullName} ({u.email})
+                    </option>
+                  ))}
+              </select>
+              <button
+                type="button"
+                disabled={!grantUserId}
+                onClick={() => {
+                  const target = mergedUsers.find((u) => u.id === grantUserId);
+                  if (target) {
+                    handleOpenDrawer(target);
+                    setGrantUserId("");
+                  }
+                }}
+                className="px-3 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground disabled:opacity-50 cursor-pointer"
+              >
+                Grant &amp; Configure
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  const res = await fetchDesignAccessAuditAction();
+                  if (res.success) setAuditLogs(res.logs || []);
+                  setAuditOpen((o) => !o);
+                }}
+                className="px-3 py-2 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-sunken cursor-pointer"
+              >
+                {auditOpen ? "Hide Access History" : "Access History"}
+              </button>
+              <Link
+                href="/users"
+                className="px-3 py-2 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-sunken"
+              >
+                Invite via Central Workspace
+              </Link>
+            </div>
+          </div>
+
+          {auditOpen && (
+            <div className="bg-surface border border-border rounded-lg p-3.5 space-y-2 max-h-60 overflow-y-auto text-xs">
+              <div className="font-semibold text-foreground">Design &amp; Tracking Access Audit History</div>
+              {auditLogs.length === 0 ? (
+                <p className="text-muted-foreground">No access audit events recorded yet.</p>
+              ) : (
+                auditLogs.map((l) => (
+                  <div key={l.id} className="p-2 rounded border border-border bg-sunken/40 flex flex-wrap justify-between gap-2">
+                    <span>
+                      <strong>{l.operation}</strong> &bull; {l.userName} (by {l.performedByName})
+                    </span>
+                    <span className="text-muted-foreground">
+                      {new Date(l.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          <div className="bg-surface border border-border rounded-lg p-3.5 shadow-2xs flex flex-col gap-3">
             <div className="relative flex-1 min-w-[240px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search personnel by name, email, department…"
+                placeholder="Search by name, employee ID, email, department…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-8 py-2 text-xs bg-background border border-border rounded-lg focus:outline-none text-foreground"
@@ -1109,45 +1206,81 @@ export const DesignRbacGovernance: React.FC = () => {
               </select>
 
               <select
-                value={scopeFilter}
-                onChange={(e) => setScopeFilter(e.target.value)}
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
                 className="text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none cursor-pointer"
               >
-                <option value="ALL">All scopes</option>
-                <option value="GLOBAL">Global</option>
-                <option value="SPECIFIC">Specific projects</option>
+                <option value="ALL">All departments</option>
+                {Array.from(new Set(mergedUsers.map(u => u.departmentName).filter(Boolean) as string[])).sort().map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+
+              <select
+                value={projectFilter}
+                onChange={(e) => { setProjectFilter(e.target.value); setSubProjectFilter("ALL"); }}
+                className="text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none cursor-pointer"
+              >
+                <option value="ALL">All projects</option>
+                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+
+              <select
+                value={subProjectFilter}
+                onChange={(e) => setSubProjectFilter(e.target.value)}
+                className="text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none cursor-pointer"
+              >
+                <option value="ALL">All sub-projects</option>
+                {storeState.towers
+                  .filter(t => projectFilter === "ALL" || t.projectId === projectFilter)
+                  .map(t => <option key={t.id} value={t.id}>{t.towerName}</option>)}
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none cursor-pointer"
+              >
+                <option value="ALL">All statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="PENDING_INVITE">Pending Invite</option>
+                <option value="DEACTIVATED">Deactivated</option>
+                <option value="REVOKED">Revoked</option>
               </select>
             </div>
           </div>
 
-          <div className="bg-surface border border-border rounded-lg shadow-xs overflow-hidden">
-            <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+          <div className="bg-surface border border-border rounded-lg shadow-xs overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse min-w-[920px]">
               <thead>
                 <tr className="bg-sunken border-b border-border text-[11px] font-semibold text-muted">
                   <th className="py-3 px-4">Personnel</th>
+                  <th className="py-3 px-3">Department</th>
                   <th className="py-3 px-3">Role</th>
-                  <th className="py-3 px-3">Project scope</th>
-                  <th className="py-3 px-3">Module access</th>
+                  <th className="py-3 px-3">Project &amp; Sub-project Scope</th>
+                  <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-3">Assigned</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-0"><EmptyState compact kind="no-results" title="No people found" /></td>
+                    <td colSpan={7} className="p-0"><EmptyState compact kind="no-results" title="No Design & Tracking users found" /></td>
                   </tr>
                 ) : (
                   filteredUsers.map(user => {
                     const access = user.designAccess;
                     const roleMeta = access?.designRole ? roleMap.get(access.designRole) : null;
-                    const isToggling = togglingUserId === user.id;
+                    const towerById = new Map(storeState.towers.map(t => [t.id, t.towerName]));
 
                     return (
                       <tr key={user.id} className="hover:bg-sunken">
                         <td className="py-3 px-4">
                           <div className="font-semibold text-foreground">{user.fullName}</div>
-                          <div className="text-[11px] text-muted">{user.email}</div>
+                          <div className="text-[11px] text-muted">{user.email} {user.userCode ? `• ${user.userCode}` : ""}</div>
                         </td>
+                        <td className="py-3 px-3 text-muted-foreground">{user.departmentName || "—"}</td>
                         <td className="py-3 px-3">
                           {roleMeta ? (
                             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${roleMeta.badgeColor || "bg-surface text-accent-soft-text"}`}>
@@ -1159,43 +1292,75 @@ export const DesignRbacGovernance: React.FC = () => {
                         </td>
                         <td className="py-3 px-3">
                           {access?.projectAccessType === "SPECIFIC" ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-warning-soft text-warning-text border border-warning-border">
-                              <Building2 className="h-3 w-3 shrink-0" />
-                              <span className="max-w-[180px] truncate" title={access.assignedProjectIds?.map(pid => projectMap.get(pid)?.name || pid).join(", ") || ""}>
-                                {access.assignedProjectIds && access.assignedProjectIds.length > 0
-                                  ? access.assignedProjectIds.map(pid => projectMap.get(pid)?.name || pid).join(", ")
-                                  : "No Projects Assigned"}
+                            <div className="space-y-1">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-warning-soft text-warning-text border border-warning-border">
+                                <Building2 className="h-3 w-3 shrink-0" />
+                                <span className="max-w-[180px] truncate">
+                                  {access.assignedProjectIds?.length
+                                    ? access.assignedProjectIds.map(pid => projectMap.get(pid)?.name || pid).join(", ")
+                                    : "No Projects"}
+                                </span>
                               </span>
-                            </span>
+                              {(access.assignedSubProjectIds || []).length > 0 && (
+                                <div className="text-[10px] text-muted-foreground truncate max-w-[200px]">
+                                  Sub: {access.assignedSubProjectIds!.map(sid => towerById.get(sid) || sid).join(", ")}
+                                </div>
+                              )}
+                            </div>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-success-soft text-success-text border border-success-border">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-success-soft text-success-text border border-success-border">
                               <ShieldCheck className="h-3 w-3 shrink-0" />
-                              <span>Global (All Projects)</span>
+                              <span>All Projects</span>
                             </span>
                           )}
                         </td>
                         <td className="py-3 px-3">
-                          <button
-                            type="button"
-                            onClick={(e) => handleToggleModuleAccess(user, e)}
-                            disabled={isToggling}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
-                              user.hasModuleAccess
-                                ? "bg-success-soft text-success-text border border-success-border hover:bg-danger-soft hover:text-danger-text"
-                                : "bg-sunken text-muted border border-border hover:bg-success-soft hover:text-success-text"
-                            }`}
-                          >
-                            {user.hasModuleAccess ? "Enabled" : "Disabled"}
-                          </button>
+                          <span className={`px-2 py-0.5 rounded-full border text-[10px] font-semibold ${
+                            user.inviteStatus === "ACTIVE"
+                              ? "bg-success-soft text-success-text border-success-border"
+                              : user.inviteStatus === "PENDING_INVITE"
+                              ? "bg-warning-soft text-warning-text border-warning-border"
+                              : "bg-danger-soft text-danger-text border-danger-border"
+                          }`}>
+                            {user.inviteStatus === "PENDING_INVITE"
+                              ? "Pending Invite"
+                              : user.inviteStatus === "DEACTIVATED"
+                              ? "Deactivated"
+                              : user.inviteStatus === "REVOKED"
+                              ? "Revoked"
+                              : "Active"}
+                          </span>
                         </td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3 px-3 text-[11px] text-muted-foreground">
+                          <div>{user.assignedAt ? new Date(user.assignedAt).toLocaleDateString("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }) : "—"}</div>
+                          {user.assignedByName && <div className="text-[10px]">by {user.assignedByName}</div>}
+                        </td>
+                        <td className="py-3 px-4 text-right space-x-1.5">
                           <button
                             type="button"
                             onClick={() => handleOpenDrawer(user)}
-                            className="px-3 py-1 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-lg transition-all"
+                            className="px-2.5 py-1 text-xs font-semibold text-foreground bg-surface hover:bg-sunken border border-border rounded-lg cursor-pointer"
                           >
                             Configure
                           </button>
+                          {user.hasModuleAccess && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (!confirm(`Revoke Design & Tracking access for ${user.fullName}?`)) return;
+                                const res = await deleteDesignUserAccessAction(user.id);
+                                if (res.success) {
+                                  toast.success("Design & Tracking access revoked.");
+                                  loadWorkspaceUsers();
+                                } else {
+                                  toast.error(res.error || "Could not revoke access.");
+                                }
+                              }}
+                              className="px-2.5 py-1 text-xs font-semibold text-danger-text bg-surface hover:bg-danger-soft border border-border rounded-lg cursor-pointer"
+                            >
+                              Revoke
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
@@ -1730,20 +1895,46 @@ export const DesignRbacGovernance: React.FC = () => {
                 </div>
 
                 {drawerProjectAccessType === "SPECIFIC" && (
-                  <div className="max-h-36 overflow-y-auto space-y-1 custom-scrollbar border border-border rounded-lg p-2 bg-background">
-                    {projects.map(p => (
-                      <label key={p.id} className="flex items-center gap-2 p-1 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={drawerAssignedProjectIds.includes(p.id)}
-                          onChange={() => {
-                            setDrawerAssignedProjectIds(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]);
-                          }}
-                          className="rounded text-accent-soft-text h-3.5 w-3.5"
-                        />
-                        <span className="truncate">{p.name}</span>
-                      </label>
-                    ))}
+                  <div className="space-y-2">
+                    <div className="max-h-36 overflow-y-auto space-y-1 custom-scrollbar border border-border rounded-lg p-2 bg-background">
+                      {projects.map(p => (
+                        <label key={p.id} className="flex items-center gap-2 p-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={drawerAssignedProjectIds.includes(p.id)}
+                            onChange={() => {
+                              setDrawerAssignedProjectIds(prev => prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]);
+                            }}
+                            className="rounded text-accent-soft-text h-3.5 w-3.5"
+                          />
+                          <span className="truncate">{p.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {drawerAssignedProjectIds.length > 0 && (
+                      <div className="space-y-1">
+                        <div className="text-[11px] font-semibold text-muted-foreground">
+                          Sub-project / Tower Scope (leave empty for all sub-projects in selected projects)
+                        </div>
+                        <div className="max-h-32 overflow-y-auto space-y-1 custom-scrollbar border border-border rounded-lg p-2 bg-background">
+                          {storeState.towers
+                            .filter(t => drawerAssignedProjectIds.includes(t.projectId))
+                            .map(t => (
+                              <label key={t.id} className="flex items-center gap-2 p-1 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={drawerAssignedSubProjectIds.includes(t.id)}
+                                  onChange={() => {
+                                    setDrawerAssignedSubProjectIds(prev => prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]);
+                                  }}
+                                  className="rounded text-accent-soft-text h-3.5 w-3.5"
+                                />
+                                <span className="truncate">{t.towerName}</span>
+                              </label>
+                            ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

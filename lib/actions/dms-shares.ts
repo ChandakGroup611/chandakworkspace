@@ -45,6 +45,7 @@ export interface ShareRegisterRow {
   viewCount: number;
   lastAccessAt: string | null;
   failedAttempts: number;
+  oneTimeView?: boolean;
   documents: { id: string; title: string }[];
 }
 
@@ -129,7 +130,11 @@ export async function createShareAction(params: {
   expiresInMinutes?: number;
   allowDownload: boolean;
   maxDownloads?: number | null;
+  oneTimeView?: boolean;
   usePassword: boolean;
+  passwordMode?: "AUTO" | "MANUAL";
+  manualPassword?: string;
+  sendPasswordInEmail?: boolean;
   title?: string;
   message?: string;
   workspaceId?: string;
@@ -148,7 +153,18 @@ export async function createShareAction(params: {
     const totalMinutes = Math.min(Math.max(rawMinutes, 1), 365 * 1440);
     const expiresAt = new Date(Date.now() + totalMinutes * 60_000).toISOString();
     const token = newLinkToken();
-    const password = params.usePassword ? newSharePassword() : null;
+    let password: string | null = null;
+    if (params.usePassword) {
+      if (params.passwordMode === "MANUAL") {
+        const manual = String(params.manualPassword || "").trim();
+        if (manual.length < 6) {
+          return { success: false, error: "Manual password must be at least 6 characters." };
+        }
+        password = manual;
+      } else {
+        password = newSharePassword();
+      }
+    }
     const maxDl = params.allowDownload && params.maxDownloads ? Math.max(Math.round(Number(params.maxDownloads)), 1) : null;
 
     const { data: shareId, error } = await supabaseAdmin.rpc("fn_dms_create_share", {
@@ -169,6 +185,18 @@ export async function createShareAction(params: {
     });
     if (error) throw error;
 
+    if (params.oneTimeView && shareId) {
+      await supabaseAdmin.from("core_module_settings").upsert(
+        {
+          module_key: "dms_share_meta",
+          key: String(shareId),
+          value_json: { oneTimeView: true },
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "module_key,key" }
+      );
+    }
+
     const url = `${siteUrl()}/share/${token}`;
     const [{ data: me }, { data: docs }] = await Promise.all([
       supabaseAdmin.from("user_master").select("full_name, email").eq("id", actor.id).maybeSingle(),
@@ -185,7 +213,8 @@ export async function createShareAction(params: {
         `${params.message ? `<p style="white-space:pre-wrap;border-left:3px solid #cbd5e1;padding-left:10px">${escapeHtml(params.message)}</p>` : ""}
 <ul>${list}${more}</ul>
 <p><a href="${url}" style="display:inline-block;background:#1d4ed8;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none">Open the documents</a></p>
-<p style="font-size:12px;color:#64748b">You will be asked for this email address and a one-time code that we send here.${password ? " You also need a password, which the sender will give you separately." : ""} The link works until ${new Date(expiresAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })} IST. Do not forward it: it only works for you.</p>`
+${password && params.sendPasswordInEmail !== false ? `<p style="font-size:13px;background:#f8fafc;border:1px solid #cbd5e1;padding:10px 12px;border-radius:6px"><b>Access password:</b> <code style="font-size:14px">${escapeHtml(password)}</code></p>` : ""}
+<p style="font-size:12px;color:#64748b">You will be asked for this email address and a one-time code that we send here.${password && params.sendPasswordInEmail === false ? " You also need a password, which the sender will give you separately." : ""}${params.oneTimeView ? " <b>One-time view only:</b> this link expires immediately after your first view." : ""} The link works until ${new Date(expiresAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })} IST. Do not forward it: opening with any other email immediately locks the link and alerts the sender.</p>`
       )
     );
     return { success: true, shareId: shareId as string, url, password, expiresAt };
@@ -232,6 +261,18 @@ export async function fetchShareRegisterAction(params: {
     if (error) throw error;
 
     const names = await namesFor((data || []).map((s: any) => s.created_by));
+    const shareIdList = (data || []).map((s: any) => String(s.id));
+    const oneTimeSet = new Set<string>();
+    if (shareIdList.length > 0) {
+      const { data: metaRows } = await supabaseAdmin
+        .from("core_module_settings")
+        .select("key, value_json")
+        .eq("module_key", "dms_share_meta")
+        .in("key", shareIdList);
+      for (const m of metaRows || []) {
+        if ((m.value_json as any)?.oneTimeView) oneTimeSet.add(String(m.key));
+      }
+    }
     return {
       success: true,
       isAdmin: actor.base.admin,
@@ -254,6 +295,7 @@ export async function fetchShareRegisterAction(params: {
         viewCount: s.view_count || 0,
         lastAccessAt: s.last_access_at,
         failedAttempts: (s.failed_otp_attempts || 0) + (s.failed_password_attempts || 0) + (s.failed_email_attempts || 0),
+        oneTimeView: oneTimeSet.has(String(s.id)),
         documents: (s.dms_share_items || [])
           .map((i: any) => (Array.isArray(i.dms_documents) ? i.dms_documents[0] : i.dms_documents))
           .filter(Boolean)

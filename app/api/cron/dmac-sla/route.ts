@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { queueBusinessEvent } from "@/lib/actions/notification-engine";
 import { notifyDrawingEvent, projectReviewers } from "@/lib/dmac/notify";
+import { processDueDrawingCoordinationTasksAndSlaAction } from "@/lib/actions/drawing-coordination";
 
 /**
  * DMAC drawing review SLA job.
@@ -164,7 +165,8 @@ export async function GET(request: Request) {
     }
     const mode = new URL(request.url).searchParams.get("mode");
     const result = mode === "digest" ? await digest(today) : await escalate(today);
-    return NextResponse.json({ success: true, mode: mode || "escalate", today, ...result });
+    const coordination = mode === "digest" ? undefined : await processDueDrawingCoordinationTasksAndSlaAction();
+    return NextResponse.json({ success: true, mode: mode || "escalate", today, ...result, coordination });
   } catch (err: any) {
     console.error("[dmac-sla] failed:", err);
     return NextResponse.json({ success: false, error: err?.message || "DMAC SLA job failed" }, { status: 500 });

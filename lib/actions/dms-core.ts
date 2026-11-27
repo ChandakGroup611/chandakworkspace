@@ -3,6 +3,7 @@
 import { createHash } from "crypto";
 import { safeStorageSegment } from "@/lib/permissions/design-guard";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { readDmsShareSettings, type DmsShareSettings } from "@/lib/actions/dms-groups";
 import {
   dmsActor,
   dmsError,
@@ -31,6 +32,8 @@ export interface DmsFolderPermissionItem {
   folderId: string;
   userId?: string | null;
   groupId?: string | null;
+  departmentId?: string | null;
+  departmentName?: string;
   userEmail?: string;
   userName?: string;
   roleCode?: string | null;
@@ -1102,6 +1105,8 @@ export async function fetchFolderPermissionsAction(folderId: string): Promise<{
   canManage?: boolean;
   permissions?: DmsFolderPermissionItem[];
   groups?: { id: string; name: string }[];
+  departments?: { id: string; code: string; name: string }[];
+  shareSettings?: DmsShareSettings["folder"];
   error?: string;
 }> {
   try {
@@ -1109,27 +1114,41 @@ export async function fetchFolderPermissionsAction(folderId: string): Promise<{
     if (!isUuid(folderId)) return { success: false, error: "Folder not found." };
     const fr = await folderRights(actor, folderId);
     if (!fr.view) return { success: false, error: "You don't have access to this folder." };
-    const [{ data: folder }, { data: perms, error }] = await Promise.all([
+    const [{ data: folder }, { data: perms, error }, shareSettings] = await Promise.all([
       supabaseAdmin.from("dms_folders").select("inherit_permissions, workspace_id").eq("id", folderId).single(),
       supabaseAdmin.from("dms_folder_permissions").select("*").eq("folder_id", folderId).order("created_at", { ascending: true }),
+      readDmsShareSettings(),
     ]);
     if (error) throw error;
-    const { data: groups } = await supabaseAdmin
-      .from("dms_groups")
-      .select("id, name")
-      .eq("workspace_id", folder?.workspace_id)
-      .is("deleted_at", null)
-      .order("name");
+    const [{ data: groups }, { data: departments }] = await Promise.all([
+      supabaseAdmin
+        .from("dms_groups")
+        .select("id, name")
+        .eq("workspace_id", folder?.workspace_id)
+        .is("deleted_at", null)
+        .or("is_active.is.null,is_active.eq.true")
+        .order("name"),
+      supabaseAdmin
+        .from("departments")
+        .select("id, code, name")
+        .or("is_deleted.is.null,is_deleted.eq.false")
+        .order("name"),
+    ]);
+    const deptMap = new Map<string, string>((departments || []).map((d: any) => [d.id, d.name]));
     return {
       success: true,
       inheritPermissions: folder?.inherit_permissions !== false,
       canManage: !!(fr.admin || fr.manage),
       groups: groups || [],
+      departments: (departments || []).map((d: any) => ({ id: d.id, code: d.code || "", name: d.name })),
+      shareSettings: shareSettings.folder,
       permissions: (perms || []).map((p: any) => ({
         id: p.id,
         folderId: p.folder_id,
         userId: p.user_id,
         groupId: p.group_id,
+        departmentId: p.department_id,
+        departmentName: p.department_id ? deptMap.get(p.department_id) : undefined,
         userEmail: p.user_email || undefined,
         userName: p.user_name || undefined,
         roleCode: p.role_code,
@@ -1152,6 +1171,7 @@ export async function saveFolderPermissionsAction(params: {
     id?: string;
     userId?: string | null;
     groupId?: string | null;
+    departmentId?: string | null;
     userEmail?: string;
     userName?: string;
     roleCode?: string | null;
@@ -1164,13 +1184,28 @@ export async function saveFolderPermissionsAction(params: {
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const actor = await dmsActor();
-    const grants = (params.permissions || []).map((p) => ({
+    const shareSettings = await readDmsShareSettings();
+    const rows = params.permissions || [];
+    for (const p of rows) {
+      if ((isUuid(p.userId) || p.userEmail) && !shareSettings.folder.userWise) {
+        return { success: false, error: "User-wise folder sharing is currently disabled in Share Settings." };
+      }
+      if (isUuid(p.groupId) && !shareSettings.folder.groupWise) {
+        return { success: false, error: "Group-wise folder sharing is currently disabled in Share Settings." };
+      }
+      if (isUuid(p.departmentId) && !shareSettings.folder.departmentWise) {
+        return { success: false, error: "Department-wise folder sharing is currently disabled in Share Settings." };
+      }
+    }
+
+    const grants = rows.map((p) => ({
       user_id: isUuid(p.userId) ? p.userId : null,
       group_id: isUuid(p.groupId) ? p.groupId : null,
+      department_id: isUuid(p.departmentId) ? p.departmentId : null,
       user_email: p.userEmail || null,
       user_name: p.userName || null,
-      // A role row only applies when it names no person or group
-      role_code: !isUuid(p.userId) && !isUuid(p.groupId) && !p.userEmail ? p.roleCode || null : null,
+      // A role row only applies when it names no person, group, or department
+      role_code: !isUuid(p.userId) && !isUuid(p.groupId) && !isUuid(p.departmentId) && !p.userEmail ? p.roleCode || null : null,
       can_view: !!p.canView,
       can_upload: !!p.canUpload,
       can_download: !!p.canDownload,
@@ -1306,8 +1341,10 @@ export async function saveDocTypePermissionAction(params: {
 
 export interface DmsEligiblePrincipal {
   key: string;
-  kind: "USER" | "ROLE";
+  kind: "USER" | "GROUP" | "DEPARTMENT" | "ROLE";
   userId?: string;
+  groupId?: string;
+  departmentId?: string;
   roleCode?: string;
   label: string;
   email?: string;
@@ -1315,6 +1352,8 @@ export interface DmsEligiblePrincipal {
 
 export interface DmsDocumentPermissionItem {
   userId?: string;
+  groupId?: string;
+  departmentId?: string;
   roleCode?: string;
   label: string;
   email?: string;
@@ -1334,7 +1373,7 @@ const DESIGN_ROLES = [
 ];
 
 export async function fetchFolderEligiblePrincipalsAction(folderId: string): Promise<
-  Result<{ principals: DmsEligiblePrincipal[]; restricted: boolean }>
+  Result<{ principals: DmsEligiblePrincipal[]; restricted: boolean; shareSettings?: DmsShareSettings["document"] }>
 > {
   try {
     const actor = await dmsActor();
@@ -1350,11 +1389,29 @@ export async function fetchFolderEligiblePrincipalsAction(folderId: string): Pro
       .single();
     if (!folder) return { success: false, error: "Folder not found." };
 
-    const { data: allFolders } = await supabaseAdmin
-      .from("dms_folders")
-      .select("id, parent_id, inherit_permissions")
-      .eq("workspace_id", folder.workspace_id)
-      .is("deleted_at", null);
+    const [{ data: allFolders }, shareSettings, { data: groups }, { data: departments }] = await Promise.all([
+      supabaseAdmin
+        .from("dms_folders")
+        .select("id, parent_id, inherit_permissions")
+        .eq("workspace_id", folder.workspace_id)
+        .is("deleted_at", null),
+      readDmsShareSettings(),
+      supabaseAdmin
+        .from("dms_groups")
+        .select("id, name")
+        .eq("workspace_id", folder.workspace_id)
+        .is("deleted_at", null)
+        .or("is_active.is.null,is_active.eq.true")
+        .order("name"),
+      supabaseAdmin
+        .from("departments")
+        .select("id, code, name")
+        .or("is_deleted.is.null,is_deleted.eq.false")
+        .order("name"),
+    ]);
+    const groupMap = new Map<string, string>((groups || []).map((g: any) => [g.id, g.name]));
+    const deptMap = new Map<string, string>((departments || []).map((d: any) => [d.id, d.name]));
+
     const byId = new Map<string, any>((allFolders || []).map((f: any) => [f.id, f]));
     const chain: string[] = [];
     let cur: any = folder;
@@ -1375,41 +1432,75 @@ export async function fetchFolderEligiblePrincipalsAction(folderId: string): Pro
 
     const { data: users } = await supabaseAdmin
       .from("user_master")
-      .select("id, full_name, email")
+      .select("id, full_name, email, is_active")
       .in("id", Array.from(new Set((designAccess || []).map((a: any) => a.user_id).concat((fPerms || []).map((p: any) => p.user_id).filter(Boolean)))));
-    const uMap = new Map<string, any>((users || []).map((u: any) => [u.id, u]));
+    const uMap = new Map<string, any>((users || []).filter((u: any) => u.is_active !== false).map((u: any) => [u.id, u]));
     const roleByUser = new Map<string, string>((designAccess || []).map((a: any) => [a.user_id, String(a.design_role || "").toUpperCase()]));
 
     const restricted = stopInherit || (fPerms || []).length > 0;
     const out = new Map<string, DmsEligiblePrincipal>();
 
     if (!restricted) {
+      if (shareSettings.document.groupWise) {
+        for (const g of groups || []) {
+          out.set(`GROUP:${g.id}`, { key: `GROUP:${g.id}`, kind: "GROUP", groupId: g.id, label: `Group: ${g.name}` });
+        }
+      }
+      if (shareSettings.document.departmentWise) {
+        for (const d of departments || []) {
+          out.set(`DEPT:${d.id}`, { key: `DEPT:${d.id}`, kind: "DEPARTMENT", departmentId: d.id, label: `Dept: ${d.name}` });
+        }
+      }
       for (const r of DESIGN_ROLES) {
         out.set(`ROLE:${r.code}`, { key: `ROLE:${r.code}`, kind: "ROLE", roleCode: r.code, label: `Role: ${r.label}` });
       }
-      for (const a of designAccess || []) {
-        const u = uMap.get(a.user_id);
-        if (!u) continue;
-        out.set(`USER:${u.id}`, {
-          key: `USER:${u.id}`,
-          kind: "USER",
-          userId: u.id,
-          label: u.full_name || u.email || u.id,
-          email: u.email,
-        });
+      if (shareSettings.document.userWise) {
+        for (const a of designAccess || []) {
+          const u = uMap.get(a.user_id);
+          if (!u) continue;
+          out.set(`USER:${u.id}`, {
+            key: `USER:${u.id}`,
+            kind: "USER",
+            userId: u.id,
+            label: u.full_name || u.email || u.id,
+            email: u.email,
+          });
+        }
       }
     } else {
       const allowedRoles = new Set<string>();
       for (const p of fPerms || []) {
-        if (p.user_id) {
+        if (p.user_id && shareSettings.document.userWise) {
           const u = uMap.get(p.user_id);
-          out.set(`USER:${p.user_id}`, {
-            key: `USER:${p.user_id}`,
-            kind: "USER",
-            userId: p.user_id,
-            label: u?.full_name || p.user_name || p.user_email || p.user_id,
-            email: u?.email || p.user_email || undefined,
-          });
+          if (u) {
+            out.set(`USER:${p.user_id}`, {
+              key: `USER:${p.user_id}`,
+              kind: "USER",
+              userId: p.user_id,
+              label: u.full_name || p.user_name || p.user_email || p.user_id,
+              email: u.email || p.user_email || undefined,
+            });
+          }
+        } else if (p.group_id && shareSettings.document.groupWise) {
+          const gName = groupMap.get(p.group_id);
+          if (gName) {
+            out.set(`GROUP:${p.group_id}`, {
+              key: `GROUP:${p.group_id}`,
+              kind: "GROUP",
+              groupId: p.group_id,
+              label: `Group: ${gName}`,
+            });
+          }
+        } else if (p.department_id && shareSettings.document.departmentWise) {
+          const dName = deptMap.get(p.department_id);
+          if (dName) {
+            out.set(`DEPT:${p.department_id}`, {
+              key: `DEPT:${p.department_id}`,
+              kind: "DEPARTMENT",
+              departmentId: p.department_id,
+              label: `Dept: ${dName}`,
+            });
+          }
         } else if (p.role_code) {
           const rc = String(p.role_code).toUpperCase();
           allowedRoles.add(rc);
@@ -1422,7 +1513,7 @@ export async function fetchFolderEligiblePrincipalsAction(folderId: string): Pro
           });
         }
       }
-      if (allowedRoles.size > 0) {
+      if (allowedRoles.size > 0 && shareSettings.document.userWise) {
         for (const [uid, rc] of roleByUser.entries()) {
           if (allowedRoles.has(rc)) {
             const u = uMap.get(uid);
@@ -1440,7 +1531,7 @@ export async function fetchFolderEligiblePrincipalsAction(folderId: string): Pro
       }
     }
 
-    return { success: true, principals: Array.from(out.values()), restricted };
+    return { success: true, principals: Array.from(out.values()), restricted, shareSettings: shareSettings.document };
   } catch (err: any) {
     return { success: false, error: dmsError(err, "Could not load folder-eligible users.") };
   }
@@ -1463,20 +1554,39 @@ export async function fetchDocumentPermissionsAction(documentId: string): Promis
     if (error) throw error;
 
     const uids = (data || []).map((r: any) => r.user_id).filter(Boolean);
-    const { data: users } = uids.length
-      ? await supabaseAdmin.from("user_master").select("id, full_name, email").in("id", uids)
-      : { data: [] as any[] };
+    const gids = (data || []).map((r: any) => r.group_id).filter(Boolean);
+    const dids = (data || []).map((r: any) => r.department_id).filter(Boolean);
+
+    const [{ data: users }, { data: groups }, { data: depts }] = await Promise.all([
+      uids.length ? supabaseAdmin.from("user_master").select("id, full_name, email").in("id", uids) : Promise.resolve({ data: [] as any[] }),
+      gids.length ? supabaseAdmin.from("dms_groups").select("id, name").in("id", gids) : Promise.resolve({ data: [] as any[] }),
+      dids.length ? supabaseAdmin.from("departments").select("id, name").in("id", dids) : Promise.resolve({ data: [] as any[] }),
+    ]);
+
     const uMap = new Map<string, any>((users || []).map((u: any) => [u.id, u]));
+    const gMap = new Map<string, any>((groups || []).map((g: any) => [g.id, g]));
+    const dMap = new Map<string, any>((depts || []).map((d: any) => [d.id, d]));
 
     return {
       success: true,
       grants: (data || []).map((r: any) => {
         const u = r.user_id ? uMap.get(r.user_id) : null;
+        const g = r.group_id ? gMap.get(r.group_id) : null;
+        const dep = r.department_id ? dMap.get(r.department_id) : null;
         const roleMeta = r.role_code ? DESIGN_ROLES.find((d) => d.code === String(r.role_code).toUpperCase()) : null;
+        const label = r.user_id
+          ? u?.full_name || u?.email || r.user_id
+          : r.group_id
+          ? `Group: ${g?.name || r.group_id}`
+          : r.department_id
+          ? `Dept: ${dep?.name || r.department_id}`
+          : `Role: ${roleMeta?.label || r.role_code}`;
         return {
           userId: r.user_id || undefined,
+          groupId: r.group_id || undefined,
+          departmentId: r.department_id || undefined,
           roleCode: r.role_code || undefined,
-          label: r.user_id ? (u?.full_name || u?.email || r.user_id) : `Role: ${roleMeta?.label || r.role_code}`,
+          label,
           email: u?.email || undefined,
           canView: !!r.can_view,
           canEdit: !!r.can_edit,
@@ -1495,6 +1605,8 @@ export async function saveDocumentPermissionsAction(params: {
   documentId: string;
   grants: {
     userId?: string;
+    groupId?: string;
+    departmentId?: string;
     roleCode?: string;
     canView: boolean;
     canEdit: boolean;
@@ -1506,9 +1618,27 @@ export async function saveDocumentPermissionsAction(params: {
   try {
     const actor = await dmsActor();
     if (!isUuid(params.documentId)) return { success: false, error: "Invalid document." };
+    const shareSettings = await readDmsShareSettings();
+    if (!shareSettings.allowDocumentRestriction && (params.grants || []).length > 0) {
+      return { success: false, error: "Document-level permission restrictions are disabled in Share Settings." };
+    }
+    for (const g of params.grants || []) {
+      if (isUuid(g.userId) && !shareSettings.document.userWise) {
+        return { success: false, error: "User-wise document sharing is disabled in Share Settings." };
+      }
+      if (isUuid(g.groupId) && !shareSettings.document.groupWise) {
+        return { success: false, error: "Group-wise document sharing is disabled in Share Settings." };
+      }
+      if (isUuid(g.departmentId) && !shareSettings.document.departmentWise) {
+        return { success: false, error: "Department-wise document sharing is disabled in Share Settings." };
+      }
+    }
+
     const payload = (params.grants || []).map((g) => ({
       user_id: isUuid(g.userId) ? g.userId : null,
-      role_code: !isUuid(g.userId) && g.roleCode ? String(g.roleCode).toUpperCase() : null,
+      group_id: isUuid(g.groupId) ? g.groupId : null,
+      department_id: isUuid(g.departmentId) ? g.departmentId : null,
+      role_code: !isUuid(g.userId) && !isUuid(g.groupId) && !isUuid(g.departmentId) && g.roleCode ? String(g.roleCode).toUpperCase() : null,
       can_view: !!g.canView,
       can_edit: !!g.canEdit,
       can_download: !!g.canDownload,

@@ -27,7 +27,11 @@ const CAP_PERMISSION_MAP: Record<DesignCap, string> = {
   rfis: "RFIS_RAISE",
 };
 
-export async function requireDesign(cap: DesignCap, projectIds?: (string | null | undefined)[] | string | null) {
+export async function requireDesign(
+  cap: DesignCap,
+  projectIds?: (string | null | undefined)[] | string | null,
+  subProjectIds?: (string | null | undefined)[] | string | null
+) {
   const { getCachedUser } = await import("@/lib/auth/cached-user");
   const { user } = await getCachedUser();
   if (!user) throw new Error("Please sign in again.");
@@ -36,19 +40,37 @@ export async function requireDesign(cap: DesignCap, projectIds?: (string | null 
 
   const { can } = await import("@/lib/permissions/module-access");
   const ids = (Array.isArray(projectIds) ? projectIds : [projectIds]).filter((x): x is string => !!x && x !== "ALL");
+  const subIds = (Array.isArray(subProjectIds) ? subProjectIds : [subProjectIds]).filter((x): x is string => !!x && x !== "ALL");
   const reqPerm = CAP_PERMISSION_MAP[cap] || "DESIGN_PROJECTS_VIEW";
 
   let allowedByModule = false;
-  if (ids.length > 0) {
-    const checks = await Promise.all(ids.map((id) => can(user.id, "DESIGN_TRACKING", reqPerm, { project_id: id })));
-    allowedByModule = checks.every(Boolean);
+  if (ids.length > 0 || subIds.length > 0) {
+    const pairs = ids.length > 0 ? ids : [null];
+    const subPairs = subIds.length > 0 ? subIds : [null];
+    const checks: Promise<boolean>[] = [];
+    for (const pid of pairs) {
+      for (const sid of subPairs) {
+        checks.push(can(user.id, "DESIGN_TRACKING", reqPerm, { project_id: pid, sub_project_id: sid }));
+      }
+    }
+    allowedByModule = (await Promise.all(checks)).every(Boolean);
   } else {
     allowedByModule = await can(user.id, "DESIGN_TRACKING", reqPerm);
   }
 
-  if (allowedByModule) return user;
-
   const { data: access } = await supabaseAdmin.from("design_user_access").select("*").eq("user_id", user.id).maybeSingle();
+  if (allowedByModule) {
+    // Also enforce sub-project isolation if design_user_access restricts sub-projects
+    if (access && subIds.length > 0) {
+      const isDesignAdmin = String(access.design_role || "").toUpperCase() === "DESIGN_ADMIN";
+      const assignedSubs: string[] = access.assigned_sub_project_ids || [];
+      if (!isDesignAdmin && assignedSubs.length > 0 && subIds.some((sid) => !assignedSubs.includes(sid))) {
+        throw new Error("This sub-project is outside your assigned Design sub-projects.");
+      }
+    }
+    return user;
+  }
+
   if (!access) throw new Error("You don't have access to Design Tracking. Ask a Design administrator to add you.");
   const isDesignAdmin = String(access.design_role || "").toUpperCase() === "DESIGN_ADMIN";
   if (cap === "admin" && !isDesignAdmin) throw new Error(`Only a Design administrator can ${CAP_LABEL.admin}.`);
@@ -58,6 +80,12 @@ export async function requireDesign(cap: DesignCap, projectIds?: (string | null 
   if (!isDesignAdmin && ids.length && String(access.project_access_type || "ALL").toUpperCase() === "SPECIFIC") {
     const allowed: string[] = access.assigned_project_ids || [];
     if (ids.some((id) => !allowed.includes(id))) throw new Error("This project is outside your assigned Design projects.");
+  }
+  if (!isDesignAdmin && subIds.length > 0) {
+    const allowedSubs: string[] = access.assigned_sub_project_ids || [];
+    if (allowedSubs.length > 0 && subIds.some((sid) => !allowedSubs.includes(sid))) {
+      throw new Error("This sub-project is outside your assigned Design sub-projects.");
+    }
   }
   return user;
 }

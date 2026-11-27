@@ -17,6 +17,7 @@ export type ModuleCode =
 export interface ModuleScope {
   type: "all" | "projects" | "departments" | "workspaces" | "vehicles" | "companies";
   project_ids?: (string | number)[];
+  sub_project_ids?: string[];
   department_ids?: string[];
   workspace_ids?: string[];
   vehicle_ids?: string[];
@@ -35,6 +36,7 @@ export interface UserModuleRole {
 
 export interface RecordScopeConstraint {
   project_id?: string | number | null;
+  sub_project_id?: string | null;
   department_id?: string | null;
   workspace_id?: string | null;
   vehicle_id?: string | null;
@@ -297,9 +299,16 @@ export async function can(
 
   const scope = access.scope;
 
-  if (scope.type === "projects" && record.project_id !== undefined && record.project_id !== null) {
-    const allowedProjects = (scope.project_ids || []).map(String);
-    return allowedProjects.includes(String(record.project_id));
+  if (scope.type === "projects") {
+    if (record.project_id !== undefined && record.project_id !== null) {
+      const allowedProjects = (scope.project_ids || []).map(String);
+      if (!allowedProjects.includes(String(record.project_id))) return false;
+    }
+    if (record.sub_project_id && (scope.sub_project_ids || []).length > 0) {
+      const allowedSubProjects = (scope.sub_project_ids || []).map(String);
+      if (!allowedSubProjects.includes(String(record.sub_project_id))) return false;
+    }
+    return true;
   }
 
   if (scope.type === "departments" && record.department_id) {

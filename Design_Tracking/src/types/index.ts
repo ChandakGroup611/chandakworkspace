@@ -33,6 +33,10 @@ export interface DrawingItem {
   fileName?: string;
   fileType?: string;
   description?: string;
+  referenceNumber?: string;
+  drawingDate?: string;
+  drawingType?: string;
+  subPackage?: string;
 }
 
 export interface DrawingRevision {

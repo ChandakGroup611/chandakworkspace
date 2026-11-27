@@ -290,6 +290,8 @@ export interface DesignUserAccessRecord {
   designRole: DesignRoleCode;
   projectAccessType: DesignProjectAccessType;
   assignedProjectIds: string[]; // Array of project IDs
+  assignedSubProjectIds?: string[]; // Array of tower / sub-project IDs
+  projectRoleOverrides?: { projectId: string; subProjectIds?: string[]; roleCode: string }[];
   canMatrixEdit: boolean;
   canDrawingsUpload: boolean;
   canDrawingsApproveGfc: boolean;
@@ -300,6 +302,8 @@ export interface DesignUserAccessRecord {
   updatedAt?: string;
   updatedBy?: string;
 }
+
+export type DesignInviteStatus = "PENDING_INVITE" | "ACTIVE" | "DEACTIVATED" | "REVOKED";
 
 export interface DesignWorkspaceUser {
   id: string;
@@ -316,6 +320,9 @@ export interface DesignWorkspaceUser {
   designationId?: string;
   designationName?: string;
   hasModuleAccess: boolean;
+  inviteStatus?: DesignInviteStatus;
+  assignedAt?: string | null;
+  assignedByName?: string | null;
   designAccess?: DesignUserAccessRecord | null;
 }
 

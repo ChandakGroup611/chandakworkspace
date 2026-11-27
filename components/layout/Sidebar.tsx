@@ -24,7 +24,7 @@ import {
   ChevronsLeft, ShieldCheck, ChevronsRight, UserCheck, Users, ChevronDown, BookOpen, LineChart,
   Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2,
   FileText, CheckCircle2, RotateCcw, Building2, Send, HelpCircle, Key, FolderTree, X, Tag,
-  Video, StickyNote, Wallet, DoorOpen, Zap, Search,
+  Video, StickyNote, Wallet, DoorOpen, Zap, Search, Bell, Award, PauseCircle,
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFleetPermissions } from "@/hooks/useFleetPermissions";
@@ -220,6 +220,9 @@ const designNavGroups: NavGroup[] = [
   {
     label: "Tender and pre-construction",
     items: [
+      { label: "Management cockpit", href: "/design/cockpit", icon: LineChart },
+      { label: "Design intelligence", href: "/design/intelligence", icon: Zap },
+      { label: "Expected deliverables", href: "/design/expected", icon: Calendar },
       { label: "Building section matrix", href: "/design/building-matrix", icon: Building2 },
       { label: "Tender design matrix", href: "/design/matrix", icon: Layers },
       { label: "Look-ahead forecast", href: "/design/look-ahead", icon: Clock },
@@ -231,7 +234,11 @@ const designNavGroups: NavGroup[] = [
     label: "Drawings and site execution",
     items: [
       { label: "DMS folders", href: "/design/dms", icon: FolderTree },
+      { label: "DMS Approval", href: "/design/dms-approvals", icon: CheckCircle2 },
       { label: "Drawing register", href: "/design/drawings", icon: FileText },
+      { label: "Drawing tracker", href: "/design/tracker", icon: FileCheck2 },
+      { label: "SLA & holiday calendar", href: "/design/sla-calendar", icon: PauseCircle },
+      { label: "Design notifications", href: "/design/notifications", icon: Bell },
       { label: "Design approvals", href: "/design/approvals", icon: CheckCircle2 },
       { label: "Revision history", href: "/design/revisions", icon: RotateCcw },
       { label: "GFC site handover", href: "/design/handover", icon: Building2 },
@@ -244,8 +251,9 @@ const designNavGroups: NavGroup[] = [
     items: [
       { label: "Learning and lifecycle guide", href: "/design/learning", icon: BookOpen },
       { label: "Consultant directory", href: "/design/consultants", icon: Users },
+      { label: "Consultant scorecard", href: "/design/consultant-performance", icon: Award },
       { label: "Design analytics", href: "/design/reports", icon: LineChart },
-      { label: "Access policies", href: "/design/rbac", icon: Key, permission: "USERS_VIEW" },
+      { label: "Users & Access", href: "/design/rbac", icon: Key, permission: "USERS_VIEW" },
       { 
         label: "Masters setup", 
         href: "/design/masters", 

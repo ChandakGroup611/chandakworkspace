@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { Copy, ExternalLink, Link2, ShieldOff, X } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, Link2, ShieldAlert, ShieldOff, X } from "lucide-react";
 import { toast } from "react-toastify";
 import {
   createShareAction,
@@ -47,10 +47,12 @@ export function DmsShareDialog({
   documents,
   onClose,
   onCreated,
+  inline = false,
 }: {
   documents: { id: string; title: string }[];
   onClose: () => void;
   onCreated?: () => void;
+  inline?: boolean;
 }) {
   const [policy, setPolicy] = useState<SharePolicy | null>(null);
   const [configured, setConfigured] = useState(true);
@@ -59,14 +61,18 @@ export function DmsShareDialog({
   const [days, setDays] = useState(7);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
+  const [oneTimeView, setOneTimeView] = useState(false);
   const [allowDownload, setAllowDownload] = useState(false);
   const [maxDownloads, setMaxDownloads] = useState<string>("");
   const [usePassword, setUsePassword] = useState(false);
+  const [passwordMode, setPasswordMode] = useState<"AUTO" | "MANUAL">("AUTO");
+  const [manualPassword, setManualPassword] = useState("");
+  const [sendPasswordInEmail, setSendPasswordInEmail] = useState(true);
   const [title, setTitle] = useState(documents.length === 1 ? documents[0].title : "");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [created, setCreated] = useState<{ url: string; password: string | null; expiresAt: string } | null>(null);
+  const [created, setCreated] = useState<{ url: string; password: string | null; expiresAt: string; sentInEmail: boolean } | null>(null);
 
   useEffect(() => {
     fetchSharePolicyAction().then((r) => {
@@ -90,6 +96,10 @@ export function DmsShareDialog({
       setError(`Link duration cannot exceed ${maxDays} days.`);
       return;
     }
+    if (usePassword && passwordMode === "MANUAL" && manualPassword.trim().length < 6) {
+      setError("Manual password must be at least 6 characters.");
+      return;
+    }
     setBusy(true);
     setError("");
     const r = await createShareAction({
@@ -102,111 +112,154 @@ export function DmsShareDialog({
       allowDownload,
       maxDownloads: allowDownload && maxDownloads ? Number(maxDownloads) : null,
       usePassword,
+      oneTimeView,
+      passwordMode: usePassword ? passwordMode : undefined,
+      manualPassword: usePassword && passwordMode === "MANUAL" ? manualPassword.trim() : undefined,
+      sendPasswordInEmail: usePassword ? sendPasswordInEmail : undefined,
       title,
       message,
     });
     setBusy(false);
     if (!r.success) return setError(r.error);
-    setCreated({ url: r.url, password: r.password, expiresAt: r.expiresAt });
+    setCreated({
+      url: r.url,
+      password: r.password,
+      expiresAt: r.expiresAt,
+      sentInEmail: Boolean(usePassword && sendPasswordInEmail),
+    });
     onCreated?.();
   };
 
   const copy = (text: string, what: string) => navigator.clipboard?.writeText(text).then(() => toast.success(`${what} copied.`));
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-[var(--overlay)]" role="dialog" aria-modal="true" aria-label="Share outside the company">
-      <div className="w-full max-w-lg bg-surface border border-border rounded-lg shadow-lg flex flex-col max-h-[92vh] overflow-hidden text-xs">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-sunken">
-          <span className="font-semibold text-sm flex items-center gap-2">
-            <Link2 className="h-4 w-4 text-primary" /> Share outside the company
-          </span>
-          <button type="button" onClick={onClose} aria-label="Close" className="p-1 rounded hover:bg-surface">
-            <X className="h-4 w-4" />
+  const header = (
+    <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 py-3 border-b border-border bg-sunken">
+      <div className="flex flex-wrap items-center gap-2 min-w-0">
+        <span className="font-semibold text-sm flex items-center gap-2 text-foreground">
+          <Link2 className="h-4 w-4 text-primary shrink-0" /> Share outside the company
+        </span>
+        <span className="px-2 py-0.5 rounded-full bg-surface border border-border text-[11px] font-medium text-muted-foreground">
+          {documents.length === 1 ? documents[0].title : `${documents.length} documents`}
+        </span>
+      </div>
+      {inline ? (
+        <button type="button" onClick={onClose} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-sunken font-semibold text-foreground cursor-pointer">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+      ) : (
+        <button type="button" onClick={onClose} aria-label="Close" className="p-1 rounded hover:bg-surface">
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+
+  const body = created ? (
+    <div className={inline ? "p-5 space-y-4 max-w-3xl" : "p-4 space-y-3 overflow-y-auto"}>
+      <p className="text-foreground">
+        The link was emailed to <strong>{email.trim().toLowerCase()}</strong>. It works until {fmt(created.expiresAt)}
+        {oneTimeView ? " (expires immediately after first view)" : ""} and only after they confirm a code sent to that address.
+      </p>
+      <div className="space-y-1">
+        <span className="font-semibold text-muted-foreground">Link</span>
+        <div className="flex gap-2">
+          <input readOnly value={created.url} className={`${input} font-mono`} onFocus={(e) => e.currentTarget.select()} />
+          <button type="button" onClick={() => copy(created.url, "Link")} className="px-2.5 rounded-lg border border-border hover:bg-sunken" aria-label="Copy link">
+            <Copy className="h-3.5 w-3.5" />
           </button>
         </div>
-
-        {created ? (
-          <div className="p-4 space-y-3 overflow-y-auto">
-            <p>
-              The link was emailed to <strong>{email.trim().toLowerCase()}</strong>. It works until {fmt(created.expiresAt)} and only after they confirm a code sent to that address.
-            </p>
-            <div className="space-y-1">
-              <span className="font-semibold text-muted-foreground">Link</span>
-              <div className="flex gap-2">
-                <input readOnly value={created.url} className={`${input} font-mono`} onFocus={(e) => e.currentTarget.select()} />
-                <button type="button" onClick={() => copy(created.url, "Link")} className="px-2.5 rounded-lg border border-border" aria-label="Copy link">
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-            {created.password && (
-              <div className="p-3 rounded-lg border border-warning-border bg-warning-soft space-y-1.5">
-                <span className="font-semibold text-warning-text">Password, shown only now</span>
-                <div className="flex gap-2 items-center">
-                  <code className="text-base font-mono font-semibold tracking-wider select-all">{created.password}</code>
-                  <button type="button" onClick={() => copy(created.password!, "Password")} className="px-2 py-1 rounded border border-border" aria-label="Copy password">
-                    <Copy className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <p className="text-warning-text">Send it by SMS or phone{phone ? ` to ${phone}` : ""}, not by email, so the link and password never travel together.</p>
-              </div>
-            )}
-            <div className="flex justify-end">
-              <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold">
-                Done
-              </button>
-            </div>
+      </div>
+      {created.password && (
+        <div className="p-3 rounded-lg border border-warning-border bg-warning-soft space-y-1.5">
+          <span className="font-semibold text-warning-text">
+            {created.sentInEmail ? "Password (also sent in the share email)" : "Password, shown only now"}
+          </span>
+          <div className="flex gap-2 items-center">
+            <code className="text-base font-mono font-semibold tracking-wider select-all">{created.password}</code>
+            <button type="button" onClick={() => copy(created.password!, "Password")} className="px-2 py-1 rounded border border-border bg-surface" aria-label="Copy password">
+              <Copy className="h-3.5 w-3.5" />
+            </button>
           </div>
-        ) : (
-          <form onSubmit={submit} className="p-4 space-y-3 overflow-y-auto">
-            {!configured && (
-              <p className="p-2.5 rounded-lg border border-danger-border bg-danger-soft text-danger-text">
-                Sharing is not set up on this server yet (SHARE_SECRET_SALT is missing). Ask IT to add it.
-              </p>
-            )}
-            <div className="text-muted-foreground">
-              {documents.length === 1 ? (
-                <>Sharing <strong className="text-foreground">{documents[0].title}</strong></>
-              ) : (
-                <>Sharing {documents.length} documents</>
-              )}
-            </div>
+          {!created.sentInEmail && (
+            <p className="text-warning-text">Send it by SMS or phone{phone ? ` to ${phone}` : ""}, not by email, so the link and password never travel together.</p>
+          )}
+        </div>
+      )}
+      <div className="flex justify-end">
+        <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold">
+          Done
+        </button>
+      </div>
+    </div>
+  ) : (
+    <form onSubmit={submit} className={inline ? "p-5 space-y-4" : "p-4 space-y-3 overflow-y-auto"}>
+      {!configured && (
+        <p className="p-2.5 rounded-lg border border-danger-border bg-danger-soft text-danger-text">
+          Sharing is not set up on this server yet (SHARE_SECRET_SALT is missing). Ask IT to add it.
+        </p>
+      )}
+      <div className={inline ? "grid grid-cols-1 lg:grid-cols-12 gap-5 items-start" : "space-y-3"}>
+        <div className={inline ? "lg:col-span-7 space-y-3.5" : "space-y-3"}>
+          <div className={inline ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "space-y-3"}>
             <label className="block space-y-1">
               <span className="font-semibold text-muted-foreground">Recipient email</span>
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={input} placeholder="name@consultant.com" autoFocus />
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <span className="font-semibold text-muted-foreground block">Link works for (days / hrs / mins)</span>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <label className="block">
-                    <span className="text-[10px] text-muted-foreground">Days</span>
-                    <input type="number" min={0} max={policy?.maxDays || 30} value={days} onChange={(e) => setDays(Math.max(0, Number(e.target.value) || 0))} className={input} aria-label="Link duration days" />
-                  </label>
-                  <label className="block">
-                    <span className="text-[10px] text-muted-foreground">Hours</span>
-                    <input type="number" min={0} max={23} value={hours} onChange={(e) => setHours(Math.min(23, Math.max(0, Number(e.target.value) || 0)))} className={input} aria-label="Link duration hours" />
-                  </label>
-                  <label className="block">
-                    <span className="text-[10px] text-muted-foreground">Mins</span>
-                    <input type="number" min={0} max={59} value={minutes} onChange={(e) => setMinutes(Math.min(59, Math.max(0, Number(e.target.value) || 0)))} className={input} aria-label="Link duration minutes" />
-                  </label>
-                </div>
-              </div>
-              <label className="block space-y-1">
-                <span className="font-semibold text-muted-foreground">Recipient phone (optional)</span>
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} className={input} placeholder="+91…" />
+            <label className="block space-y-1">
+              <span className="font-semibold text-muted-foreground">Recipient phone (optional)</span>
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} className={input} placeholder="+91…" />
+            </label>
+          </div>
+
+          <div className="space-y-1">
+            <span className="font-semibold text-muted-foreground block">Link works for (days / hrs / mins)</span>
+            <div className="grid grid-cols-3 gap-2 max-w-sm">
+              <label className="block">
+                <span className="text-[10px] text-muted-foreground">Days</span>
+                <input type="number" min={0} max={policy?.maxDays || 30} value={days} onChange={(e) => setDays(Math.max(0, Number(e.target.value) || 0))} className={input} aria-label="Link duration days" />
+              </label>
+              <label className="block">
+                <span className="text-[10px] text-muted-foreground">Hours</span>
+                <input type="number" min={0} max={23} value={hours} onChange={(e) => setHours(Math.min(23, Math.max(0, Number(e.target.value) || 0)))} className={input} aria-label="Link duration hours" />
+              </label>
+              <label className="block">
+                <span className="text-[10px] text-muted-foreground">Mins</span>
+                <input type="number" min={0} max={59} value={minutes} onChange={(e) => setMinutes(Math.min(59, Math.max(0, Number(e.target.value) || 0)))} className={input} aria-label="Link duration minutes" />
               </label>
             </div>
-            <label className="block space-y-1">
-              <span className="font-semibold text-muted-foreground">Title</span>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} className={input} placeholder="What these documents are" />
-            </label>
-            <label className="block space-y-1">
-              <span className="font-semibold text-muted-foreground">Message (optional)</span>
-              <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={3} className={input} />
-            </label>
-            <label className={`flex items-start gap-2 ${policy && !policy.allowDownload ? "opacity-50" : ""}`}>
+          </div>
+
+          <label className="block space-y-1">
+            <span className="font-semibold text-muted-foreground">Title</span>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} className={input} placeholder="What these documents are" />
+          </label>
+          <label className="block space-y-1">
+            <span className="font-semibold text-muted-foreground">Message (optional)</span>
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={inline ? 4 : 3} className={input} />
+          </label>
+        </div>
+
+        <div className={inline ? "lg:col-span-5 space-y-3.5" : "space-y-3"}>
+          <div className="rounded-lg border border-border bg-sunken/40 p-3.5 space-y-2.5">
+            <div className="font-semibold text-foreground">Access &amp; View Options</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer ${!oneTimeView ? "border-primary bg-accent-soft/40" : "border-border bg-surface"}`}>
+                <input type="radio" name="viewMode" checked={!oneTimeView} onChange={() => setOneTimeView(false)} className="mt-0.5" />
+                <span>
+                  <span className="font-semibold block text-foreground">Multiple views</span>
+                  <span className="text-[11px] text-muted-foreground">Active until expiry</span>
+                </span>
+              </label>
+              <label className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer ${oneTimeView ? "border-primary bg-accent-soft/40" : "border-border bg-surface"}`}>
+                <input type="radio" name="viewMode" checked={oneTimeView} onChange={() => setOneTimeView(true)} className="mt-0.5" />
+                <span>
+                  <span className="font-semibold block text-foreground">One-time view only</span>
+                  <span className="text-[11px] text-muted-foreground">Expires right after 1st view</span>
+                </span>
+              </label>
+            </div>
+
+            <label className={`flex items-start gap-2 pt-1 ${policy && !policy.allowDownload ? "opacity-50" : ""}`}>
               <input type="checkbox" checked={allowDownload} disabled={!!policy && !policy.allowDownload} onChange={(e) => setAllowDownload(e.target.checked)} className="mt-0.5" />
               <span>
                 Allow download{policy && !policy.allowDownload ? " (turned off by the share policy)" : ""}
@@ -219,24 +272,78 @@ export function DmsShareDialog({
                 <input type="number" min={1} value={maxDownloads} onChange={(e) => setMaxDownloads(e.target.value)} className={input} />
               </label>
             )}
+          </div>
+
+          <div className="rounded-lg border border-border bg-sunken/40 p-3.5 space-y-2.5">
             <label className={`flex items-start gap-2 ${policy?.requirePassword ? "opacity-70" : ""}`}>
               <input type="checkbox" checked={usePassword} disabled={!!policy?.requirePassword} onChange={(e) => setUsePassword(e.target.checked)} className="mt-0.5" />
               <span>
-                Also require a password{policy?.requirePassword ? " (required by the share policy)" : ""}
-                <span className="block text-muted-foreground">We generate it and show it once, for you to send by SMS or phone.</span>
+                <span className="font-semibold text-foreground">Require a password</span>{policy?.requirePassword ? " (required by the share policy)" : ""}
+                <span className="block text-muted-foreground">Choose system-generated or manual password.</span>
               </span>
             </label>
-            {error && <p className="p-2.5 rounded-lg border border-danger-border bg-danger-soft text-danger-text">{error}</p>}
-            <div className="flex justify-end gap-2 pt-1">
-              <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg border border-border">
-                Cancel
-              </button>
-              <button type="submit" disabled={busy || !configured} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold disabled:opacity-50">
-                {busy ? "Creating…" : "Create link and email it"}
-              </button>
-            </div>
-          </form>
-        )}
+
+            {usePassword && (
+              <div className="pl-5 space-y-2.5 border-l-2 border-border">
+                <div className="flex flex-wrap gap-3">
+                  <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" name="pwMode" checked={passwordMode === "AUTO"} onChange={() => setPasswordMode("AUTO")} />
+                    <span className="font-medium">System generated</span>
+                  </label>
+                  <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" name="pwMode" checked={passwordMode === "MANUAL"} onChange={() => setPasswordMode("MANUAL")} />
+                    <span className="font-medium">Manual password</span>
+                  </label>
+                </div>
+                {passwordMode === "MANUAL" && (
+                  <label className="block space-y-1">
+                    <span className="text-[11px] font-semibold text-muted-foreground">Enter password (min 6 characters)</span>
+                    <input type="text" required minLength={6} value={manualPassword} onChange={(e) => setManualPassword(e.target.value)} className={input} placeholder="Enter password…" />
+                  </label>
+                )}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={sendPasswordInEmail} onChange={(e) => setSendPasswordInEmail(e.target.checked)} />
+                  <span className="text-foreground font-medium">Send password along with share email</span>
+                </label>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-warning-border bg-warning-soft/60 p-3 flex items-start gap-2 text-[11px] text-warning-text">
+            <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>
+              <strong>Strict email lock:</strong> Only the exact recipient email can open this link. If forwarded or opened with any different email, the link expires immediately and sends an escalation email back to you.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {error && <p className="p-2.5 rounded-lg border border-danger-border bg-danger-soft text-danger-text">{error}</p>}
+      <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-border">
+        <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border bg-surface hover:bg-sunken font-semibold cursor-pointer">
+          Cancel
+        </button>
+        <button type="submit" disabled={busy || !configured} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold disabled:opacity-50 cursor-pointer">
+          {busy ? "Creating…" : "Create link and email it"}
+        </button>
+      </div>
+    </form>
+  );
+
+  if (inline) {
+    return (
+      <div className="bg-surface border border-border rounded-lg shadow-sm overflow-hidden text-xs">
+        {header}
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-[var(--overlay)]" role="dialog" aria-modal="true" aria-label="Share outside the company">
+      <div className="w-full max-w-2xl bg-surface border border-border rounded-lg shadow-lg flex flex-col max-h-[92vh] overflow-hidden text-xs">
+        {header}
+        {body}
       </div>
     </div>
   );
@@ -315,11 +422,16 @@ function ShareRow({ s, showSharer, onChanged }: { s: ShareRegisterRow; showShare
         </div>
         <RevokeButton share={s} onDone={onChanged} />
       </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-muted-foreground">
+      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-muted-foreground items-center">
         {showSharer && <span>By {s.sharedByMe ? "you" : s.sharedByName}</span>}
         <span>Created {fmt(s.createdAt)}</span>
         <span>{s.status === "ACTIVE" ? "Expires" : "Expiry"} {fmt(s.expiresAt)}</span>
         <span>{s.allowDownload ? `Downloads ${s.downloadCount}${s.maxDownloads ? ` of ${s.maxDownloads}` : ""}` : "View only"}</span>
+        {s.oneTimeView && (
+          <span className="px-1.5 py-0.5 rounded bg-warning-soft text-warning-text border border-warning-border font-semibold">
+            One-time view
+          </span>
+        )}
         <span>Views {s.viewCount}</span>
         {s.hasPassword && <span>Password</span>}
         {s.failedAttempts > 0 && <span className="text-danger-text">{s.failedAttempts} failed check{s.failedAttempts === 1 ? "" : "s"}</span>}
@@ -441,6 +553,7 @@ export function DmsSharesView() {
   const [shares, setShares] = useState<ShareRegisterRow[] | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [filter, setFilter] = useState<"ALL" | ShareStatus>("ALL");
+  const [optionFilter, setOptionFilter] = useState<"ALL" | "ONE_TIME" | "VIEW_ONLY" | "DOWNLOAD" | "PASSWORD">("ALL");
   const [q, setQ] = useState("");
   const [editPolicy, setEditPolicy] = useState(false);
   const [error, setError] = useState("");
@@ -455,11 +568,22 @@ export function DmsSharesView() {
   useEffect(load, [load]);
 
   const needle = q.trim().toLowerCase();
-  const rows = (shares || []).filter(
-    (s) =>
-      (filter === "ALL" || s.status === filter) &&
-      (!needle || s.recipientEmail.includes(needle) || (s.title || "").toLowerCase().includes(needle) || s.documents.some((d) => d.title.toLowerCase().includes(needle)))
-  );
+  const rows = (shares || []).filter((s) => {
+    if (filter !== "ALL" && s.status !== filter) return false;
+    if (optionFilter === "ONE_TIME" && !s.oneTimeView) return false;
+    if (optionFilter === "VIEW_ONLY" && s.allowDownload) return false;
+    if (optionFilter === "DOWNLOAD" && !s.allowDownload) return false;
+    if (optionFilter === "PASSWORD" && !s.hasPassword) return false;
+    if (
+      needle &&
+      !s.recipientEmail.includes(needle) &&
+      !(s.title || "").toLowerCase().includes(needle) &&
+      !s.documents.some((d) => d.title.toLowerCase().includes(needle))
+    ) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-3 text-xs">
@@ -476,6 +600,13 @@ export function DmsSharesView() {
           <option value="EXPIRED">Expired</option>
           <option value="REVOKED">Revoked</option>
           <option value="LOCKED">Locked</option>
+        </select>
+        <select value={optionFilter} onChange={(e) => setOptionFilter(e.target.value as any)} className="rounded-lg border border-border bg-surface px-2 py-1.5" aria-label="Share option">
+          <option value="ALL">All options</option>
+          <option value="ONE_TIME">One-time view only</option>
+          <option value="VIEW_ONLY">View only</option>
+          <option value="DOWNLOAD">Download allowed</option>
+          <option value="PASSWORD">Password protected</option>
         </select>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find by email, title or document" className="rounded-lg border border-border bg-surface px-2.5 py-1.5 flex-1 min-w-40" />
         {isAdmin && !editPolicy && (
