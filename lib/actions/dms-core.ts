@@ -691,6 +691,24 @@ export async function addDmsDocumentAction(formData: FormData): Promise<Result<{
     });
     if (error) throw error;
     storedKey = null;
+
+    const rawDocPerms = formData.get("documentPermissions");
+    if (rawDocPerms) {
+      try {
+        const parsed = JSON.parse(String(rawDocPerms));
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          await supabaseAdmin.rpc("fn_dms_set_document_permissions", {
+            p_actor: actor.id,
+            p_base: actor.base,
+            p_document: documentId,
+            p_grants: parsed,
+          });
+        }
+      } catch {
+        // Ignore malformed optional RBAC payload
+      }
+    }
+
     const { data: doc } = await supabaseAdmin.from("dms_documents").select("approval_status").eq("id", documentId).single();
     return { success: true, documentId: documentId as string, approvalStatus: doc?.approval_status || "PENDING" };
   } catch (err: any) {
@@ -1209,5 +1227,229 @@ export async function saveDocTypePermissionAction(params: {
     return { success: true };
   } catch (err: any) {
     return { success: false, error: dmsError(err, "Could not save document-type rights.") };
+  }
+}
+
+export interface DmsEligiblePrincipal {
+  key: string;
+  kind: "USER" | "ROLE";
+  userId?: string;
+  roleCode?: string;
+  label: string;
+  email?: string;
+}
+
+export interface DmsDocumentPermissionItem {
+  userId?: string;
+  roleCode?: string;
+  label: string;
+  email?: string;
+  canView: boolean;
+  canEdit: boolean;
+  canDownload: boolean;
+  canManage: boolean;
+  canDelete: boolean;
+}
+
+const DESIGN_ROLES = [
+  { code: "DESIGN_ADMIN", label: "Design Admin" },
+  { code: "DESIGN_ARCHITECT", label: "Architect" },
+  { code: "DESIGN_ENGINEER", label: "Engineer" },
+  { code: "DESIGN_REVIEWER", label: "Reviewer / QC" },
+  { code: "DESIGN_VIEWER", label: "Viewer" },
+];
+
+export async function fetchFolderEligiblePrincipalsAction(folderId: string): Promise<
+  Result<{ principals: DmsEligiblePrincipal[]; restricted: boolean }>
+> {
+  try {
+    const actor = await dmsActor();
+    if (!isUuid(folderId)) return { success: false, error: "Invalid folder." };
+    const fr = await folderRights(actor, folderId);
+    if (!fr.view) return { success: false, error: "Access denied." };
+
+    const { data: folder } = await supabaseAdmin
+      .from("dms_folders")
+      .select("id, workspace_id, parent_id, inherit_permissions")
+      .eq("id", folderId)
+      .is("deleted_at", null)
+      .single();
+    if (!folder) return { success: false, error: "Folder not found." };
+
+    const { data: allFolders } = await supabaseAdmin
+      .from("dms_folders")
+      .select("id, parent_id, inherit_permissions")
+      .eq("workspace_id", folder.workspace_id)
+      .is("deleted_at", null);
+    const byId = new Map<string, any>((allFolders || []).map((f: any) => [f.id, f]));
+    const chain: string[] = [];
+    let cur: any = folder;
+    let stopInherit = false;
+    while (cur) {
+      chain.push(cur.id);
+      if (cur.inherit_permissions === false) {
+        stopInherit = true;
+        break;
+      }
+      cur = cur.parent_id ? byId.get(cur.parent_id) : null;
+    }
+
+    const [{ data: fPerms }, { data: designAccess }] = await Promise.all([
+      supabaseAdmin.from("dms_folder_permissions").select("*").in("folder_id", chain).eq("can_view", true),
+      supabaseAdmin.from("design_user_access").select("user_id, design_role"),
+    ]);
+
+    const { data: users } = await supabaseAdmin
+      .from("user_master")
+      .select("id, full_name, email")
+      .in("id", Array.from(new Set((designAccess || []).map((a: any) => a.user_id).concat((fPerms || []).map((p: any) => p.user_id).filter(Boolean)))));
+    const uMap = new Map<string, any>((users || []).map((u: any) => [u.id, u]));
+    const roleByUser = new Map<string, string>((designAccess || []).map((a: any) => [a.user_id, String(a.design_role || "").toUpperCase()]));
+
+    const restricted = stopInherit || (fPerms || []).length > 0;
+    const out = new Map<string, DmsEligiblePrincipal>();
+
+    if (!restricted) {
+      for (const r of DESIGN_ROLES) {
+        out.set(`ROLE:${r.code}`, { key: `ROLE:${r.code}`, kind: "ROLE", roleCode: r.code, label: `Role: ${r.label}` });
+      }
+      for (const a of designAccess || []) {
+        const u = uMap.get(a.user_id);
+        if (!u) continue;
+        out.set(`USER:${u.id}`, {
+          key: `USER:${u.id}`,
+          kind: "USER",
+          userId: u.id,
+          label: u.full_name || u.email || u.id,
+          email: u.email,
+        });
+      }
+    } else {
+      const allowedRoles = new Set<string>();
+      for (const p of fPerms || []) {
+        if (p.user_id) {
+          const u = uMap.get(p.user_id);
+          out.set(`USER:${p.user_id}`, {
+            key: `USER:${p.user_id}`,
+            kind: "USER",
+            userId: p.user_id,
+            label: u?.full_name || p.user_name || p.user_email || p.user_id,
+            email: u?.email || p.user_email || undefined,
+          });
+        } else if (p.role_code) {
+          const rc = String(p.role_code).toUpperCase();
+          allowedRoles.add(rc);
+          const roleMeta = DESIGN_ROLES.find((r) => r.code === rc);
+          out.set(`ROLE:${rc}`, {
+            key: `ROLE:${rc}`,
+            kind: "ROLE",
+            roleCode: rc,
+            label: `Role: ${roleMeta?.label || rc}`,
+          });
+        }
+      }
+      if (allowedRoles.size > 0) {
+        for (const [uid, rc] of roleByUser.entries()) {
+          if (allowedRoles.has(rc)) {
+            const u = uMap.get(uid);
+            if (u && !out.has(`USER:${uid}`)) {
+              out.set(`USER:${uid}`, {
+                key: `USER:${uid}`,
+                kind: "USER",
+                userId: uid,
+                label: u.full_name || u.email || uid,
+                email: u.email,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return { success: true, principals: Array.from(out.values()), restricted };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not load folder-eligible users.") };
+  }
+}
+
+export async function fetchDocumentPermissionsAction(documentId: string): Promise<
+  Result<{ grants: DmsDocumentPermissionItem[] }>
+> {
+  try {
+    const actor = await dmsActor();
+    if (!isUuid(documentId)) return { success: false, error: "Invalid document." };
+    const dr = await documentRights(actor, documentId);
+    if (!dr.view) return { success: false, error: "Access denied." };
+
+    const { data, error } = await supabaseAdmin
+      .from("dms_document_permissions")
+      .select("*")
+      .eq("document_id", documentId)
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+
+    const uids = (data || []).map((r: any) => r.user_id).filter(Boolean);
+    const { data: users } = uids.length
+      ? await supabaseAdmin.from("user_master").select("id, full_name, email").in("id", uids)
+      : { data: [] as any[] };
+    const uMap = new Map<string, any>((users || []).map((u: any) => [u.id, u]));
+
+    return {
+      success: true,
+      grants: (data || []).map((r: any) => {
+        const u = r.user_id ? uMap.get(r.user_id) : null;
+        const roleMeta = r.role_code ? DESIGN_ROLES.find((d) => d.code === String(r.role_code).toUpperCase()) : null;
+        return {
+          userId: r.user_id || undefined,
+          roleCode: r.role_code || undefined,
+          label: r.user_id ? (u?.full_name || u?.email || r.user_id) : `Role: ${roleMeta?.label || r.role_code}`,
+          email: u?.email || undefined,
+          canView: !!r.can_view,
+          canEdit: !!r.can_edit,
+          canDownload: !!r.can_download,
+          canManage: !!r.can_manage,
+          canDelete: !!r.can_delete,
+        };
+      }),
+    };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not load document permissions.") };
+  }
+}
+
+export async function saveDocumentPermissionsAction(params: {
+  documentId: string;
+  grants: {
+    userId?: string;
+    roleCode?: string;
+    canView: boolean;
+    canEdit: boolean;
+    canDownload: boolean;
+    canManage: boolean;
+    canDelete: boolean;
+  }[];
+}): Promise<Result> {
+  try {
+    const actor = await dmsActor();
+    if (!isUuid(params.documentId)) return { success: false, error: "Invalid document." };
+    const payload = (params.grants || []).map((g) => ({
+      user_id: isUuid(g.userId) ? g.userId : null,
+      role_code: !isUuid(g.userId) && g.roleCode ? String(g.roleCode).toUpperCase() : null,
+      can_view: !!g.canView,
+      can_edit: !!g.canEdit,
+      can_download: !!g.canDownload,
+      can_manage: !!g.canManage,
+      can_delete: !!g.canDelete,
+    }));
+    const { error } = await supabaseAdmin.rpc("fn_dms_set_document_permissions", {
+      p_actor: actor.id,
+      p_base: actor.base,
+      p_document: params.documentId,
+      p_grants: payload,
+    });
+    if (error) throw error;
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not save document permissions.") };
   }
 }

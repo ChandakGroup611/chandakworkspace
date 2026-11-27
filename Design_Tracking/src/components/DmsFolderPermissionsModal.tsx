@@ -521,14 +521,49 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setIsUserPickerOpen(!isUserPickerOpen)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity shadow-xs cursor-pointer self-start sm:self-center"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>{isUserPickerOpen ? "Hide User Picker" : "Add Users (Multi-Select)"}</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+                <select
+                  aria-label="Add role to folder"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const rc = e.target.value;
+                    e.target.value = "";
+                    if (!rc) return;
+                    if (assignedPermissions.some((p) => !p.userId && String(p.roleCode || "").toUpperCase() === rc)) return;
+                    setAssignedPermissions((prev) => [
+                      ...prev,
+                      {
+                        id: `role-${rc}-${Date.now()}`,
+                        folderId: folder.id,
+                        roleCode: rc,
+                        userName: `Role: ${rc}`,
+                        userEmail: "Design Role",
+                        canView: true,
+                        canUpload: rc !== "DESIGN_VIEWER" && rc !== "DESIGN_REVIEWER",
+                        canDownload: true,
+                        canDelete: rc === "DESIGN_ADMIN",
+                        canManage: rc === "DESIGN_ADMIN",
+                      },
+                    ]);
+                  }}
+                  className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground"
+                >
+                  <option value="">+ Add Role…</option>
+                  <option value="DESIGN_ADMIN">Design Admin</option>
+                  <option value="DESIGN_ARCHITECT">Architect</option>
+                  <option value="DESIGN_ENGINEER">Engineer</option>
+                  <option value="DESIGN_REVIEWER">Reviewer / QC</option>
+                  <option value="DESIGN_VIEWER">Viewer</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setIsUserPickerOpen(!isUserPickerOpen)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{isUserPickerOpen ? "Hide User Picker" : "Add Users (Multi-Select)"}</span>
+                </button>
+              </div>
             </div>
 
             {/* Multi-Select User Picker Popover */}

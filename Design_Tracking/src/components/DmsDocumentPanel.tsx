@@ -6,13 +6,18 @@ import { toast } from "react-toastify";
 import {
   deleteDocumentAction,
   fetchDocumentDetailAction,
+  fetchDocumentPermissionsAction,
+  fetchFolderEligiblePrincipalsAction,
   lockUnlockDocumentAction,
   moveDocumentAction,
+  saveDocumentPermissionsAction,
   submitQcDecisionAction,
   updateDocumentAction,
   uploadDocumentVersionAction,
   type DmsActivityItem,
+  type DmsDocumentPermissionItem,
   type DmsDocumentSummary,
+  type DmsEligiblePrincipal,
   type DmsVersionItem,
 } from "@/lib/actions/dms-core";
 import {
@@ -86,6 +91,9 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], on
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editFields, setEditFields] = useState<Record<string, string>>({});
+  const [eligiblePrincipals, setEligiblePrincipals] = useState<DmsEligiblePrincipal[]>([]);
+  const [docGrants, setDocGrants] = useState<DmsDocumentPermissionItem[]>([]);
+  const [pickPrincipalKey, setPickPrincipalKey] = useState("");
 
   const load = useCallback(async () => {
     const [res, favs, fTags, dLinks] = await Promise.all([
@@ -106,6 +114,12 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], on
     if (favs.success) setIsFav(favs.ids.includes(documentId));
     if (fTags.success) setTaggedFolders(fTags.folderIds);
     if (dLinks.success) setDocLinks(dLinks.links);
+    const [elig, perms] = await Promise.all([
+      fetchFolderEligiblePrincipalsAction(res.document.folderId),
+      fetchDocumentPermissionsAction(documentId),
+    ]);
+    if (elig.success) setEligiblePrincipals(elig.principals);
+    if (perms.success) setDocGrants(perms.grants);
     return res.document;
   }, [documentId]);
 
@@ -570,6 +584,122 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], on
           </div>
         )}
         {tab === "details" && <DmsDocumentShares documentId={doc.id} refreshKey={sharesKey} />}
+        {tab === "details" && (r.manage || r.admin || r.own) && (
+          <div className="rounded-lg border border-border p-2.5 space-y-2 bg-surface/60">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11px] font-semibold text-muted-foreground">Document access (RBAC)</div>
+              <span className="text-[10px] text-muted-foreground">
+                {docGrants.length === 0 ? "All folder users" : `${docGrants.length} custom`}
+              </span>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Only users &amp; roles with access to this folder are listed.
+            </p>
+            <div className="flex items-center gap-1">
+              <select
+                aria-label="Add folder user or role to document RBAC"
+                value={pickPrincipalKey}
+                onChange={(e) => setPickPrincipalKey(e.target.value)}
+                className="flex-1 min-w-0 rounded border border-border bg-background px-2 py-1 text-[11px]"
+              >
+                <option value="">Choose folder user or role…</option>
+                {eligiblePrincipals
+                  .filter(
+                    (p) =>
+                      !docGrants.some((g) =>
+                        p.kind === "USER" ? g.userId === p.userId : !g.userId && g.roleCode === p.roleCode
+                      )
+                  )
+                  .map((p) => (
+                    <option key={p.key} value={p.key}>
+                      {p.label}{p.email ? ` (${p.email})` : ""}
+                    </option>
+                  ))}
+              </select>
+              <button
+                type="button"
+                disabled={busy || !pickPrincipalKey}
+                onClick={() => {
+                  const p = eligiblePrincipals.find((x) => x.key === pickPrincipalKey);
+                  if (!p) return;
+                  setDocGrants((prev) => [
+                    ...prev,
+                    {
+                      userId: p.userId,
+                      roleCode: p.roleCode,
+                      label: p.label,
+                      email: p.email,
+                      canView: true,
+                      canEdit: false,
+                      canDownload: true,
+                      canManage: false,
+                      canDelete: false,
+                    },
+                  ]);
+                  setPickPrincipalKey("");
+                }}
+                className="px-2 py-1 rounded bg-primary text-primary-foreground text-[11px] font-semibold disabled:opacity-50"
+              >
+                Add
+              </button>
+            </div>
+            {docGrants.length > 0 && (
+              <div className="space-y-1.5">
+                {docGrants.map((g, idx) => (
+                  <div key={`${g.userId || g.roleCode}-${idx}`} className="p-1.5 rounded border border-border bg-background space-y-1 text-[10px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold truncate">{g.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => setDocGrants((prev) => prev.filter((_, i) => i !== idx))}
+                        className="text-danger-text hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(
+                        [
+                          ["canView", "View"],
+                          ["canEdit", "Edit"],
+                          ["canDownload", "Download"],
+                          ["canManage", "Manage"],
+                          ["canDelete", "Delete"],
+                        ] as const
+                      ).map(([k, lbl]) => (
+                        <label key={k} className="inline-flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={g[k]}
+                            onChange={(e) =>
+                              setDocGrants((prev) => prev.map((row, i) => (i === idx ? { ...row, [k]: e.target.checked } : row)))
+                            }
+                          />
+                          <span>{lbl}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  run(
+                    () => saveDocumentPermissionsAction({ documentId: doc.id, grants: docGrants }),
+                    "Document RBAC saved."
+                  )
+                }
+                className="px-2.5 py-1 rounded bg-primary text-primary-foreground text-[11px] font-semibold disabled:opacity-50"
+              >
+                Save Document RBAC
+              </button>
+            </div>
+          </div>
+        )}
         {tab === "details" && r.edit && folders.length > 1 && (
           <div className="rounded-lg border border-border p-2.5 space-y-1.5 bg-surface/60">
             <div className="text-[11px] font-semibold text-muted-foreground">Move to another folder</div>

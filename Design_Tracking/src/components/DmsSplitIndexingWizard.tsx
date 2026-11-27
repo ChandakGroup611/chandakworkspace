@@ -29,9 +29,11 @@ import {
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import {
   DmsDocTypeItem,
+  DmsEligiblePrincipal,
   DmsFolderNode,
   addDmsDocumentAction,
   fetchDocTypesAndFieldsAction,
+  fetchFolderEligiblePrincipalsAction,
   createDocTypeAction
 } from "@/lib/actions/dms-core";
 import { parseAutoIndexFilename, type AutoIndexSeparator } from "@/lib/dms/auto-index";
@@ -87,21 +89,37 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
   // Page split ranges for SPLIT_PDF mode
   const [splitPageRanges, setSplitPageRanges] = useState<string>("1-5");
 
+  // Document-level RBAC (filtered to folder-eligible users & roles)
+  const [eligiblePrincipals, setEligiblePrincipals] = useState<DmsEligiblePrincipal[]>([]);
+  const [docRbacGrants, setDocRbacGrants] = useState<
+    { key: string; userId?: string; roleCode?: string; label: string; canView: boolean; canEdit: boolean; canDownload: boolean; canManage: boolean }[]
+  >([]);
+  const [selectedPrincipalKey, setSelectedPrincipalKey] = useState<string>("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hydrate doc types and custom field definitions
   useEffect(() => {
     if (isOpen) {
       const loadSchema = async () => {
-        const res = await fetchDocTypesAndFieldsAction(workspaceId);
+        const [res, elig] = await Promise.all([
+          fetchDocTypesAndFieldsAction(workspaceId),
+          targetFolder?.id ? fetchFolderEligiblePrincipalsAction(targetFolder.id) : Promise.resolve(null),
+        ]);
         if (res.success && res.docTypes && res.docTypes.length > 0) {
           setDocTypes(res.docTypes);
           setSelectedDocTypeId(res.docTypes[0].id);
         }
+        if (elig && elig.success) {
+          setEligiblePrincipals(elig.principals || []);
+        } else {
+          setEligiblePrincipals([]);
+        }
+        setDocRbacGrants([]);
       };
       loadSchema();
     }
-  }, [isOpen, workspaceId]);
+  }, [isOpen, workspaceId, targetFolder?.id]);
 
   // Handle Quick Create Document Type Master
   const handleCreateDocTypeMaster = async (e?: React.FormEvent) => {
@@ -217,6 +235,22 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
       formData.append("docTypeId", selectedDocTypeId);
       formData.append("title", docTitle.trim());
       formData.append("fieldValues", JSON.stringify(customFieldValues));
+      if (docRbacGrants.length > 0) {
+        formData.append(
+          "documentPermissions",
+          JSON.stringify(
+            docRbacGrants.map((g) => ({
+              user_id: g.userId || null,
+              role_code: g.roleCode || null,
+              can_view: g.canView,
+              can_edit: g.canEdit,
+              can_download: g.canDownload,
+              can_manage: g.canManage,
+              can_delete: g.canManage,
+            }))
+          )
+        );
+      }
       const res = await addDmsDocumentAction(formData);
 
       if (res.success) {
@@ -597,6 +631,93 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Document-level RBAC (filtered by folder access) */}
+              <div className="pt-3 border-t border-border space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground">Document access (RBAC)</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {docRbacGrants.length === 0 ? "Default: all folder users" : `${docRbacGrants.length} restricted`}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Only users and roles with access to this folder are listed. Leave empty to allow everyone in the folder.
+                </p>
+                {eligiblePrincipals.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      aria-label="Select folder user or role for document RBAC"
+                      value={selectedPrincipalKey}
+                      onChange={(e) => setSelectedPrincipalKey(e.target.value)}
+                      className="flex-1 min-w-0 text-xs rounded-md border border-border bg-surface px-2 py-1.5"
+                    >
+                      <option value="">Choose folder user or role…</option>
+                      {eligiblePrincipals
+                        .filter((p) => !docRbacGrants.some((g) => g.key === p.key))
+                        .map((p) => (
+                          <option key={p.key} value={p.key}>
+                            {p.label}{p.email ? ` (${p.email})` : ""}
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      type="button"
+                      disabled={!selectedPrincipalKey}
+                      onClick={() => {
+                        const p = eligiblePrincipals.find((x) => x.key === selectedPrincipalKey);
+                        if (!p) return;
+                        setDocRbacGrants((prev) => [
+                          ...prev,
+                          { key: p.key, userId: p.userId, roleCode: p.roleCode, label: p.label, canView: true, canEdit: false, canDownload: true, canManage: false },
+                        ]);
+                        setSelectedPrincipalKey("");
+                      }}
+                      className="px-2.5 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50"
+                    >
+                      Add
+                    </button>
+                  </div>
+                )}
+                {docRbacGrants.length > 0 && (
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                    {docRbacGrants.map((g, idx) => (
+                      <div key={g.key} className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-md border border-border bg-surface text-[11px]">
+                        <span className="font-medium truncate max-w-[140px]">{g.label}</span>
+                        <div className="flex items-center gap-2">
+                          {(
+                            [
+                              ["canView", "View"],
+                              ["canEdit", "Edit"],
+                              ["canDownload", "Download"],
+                              ["canManage", "Manage"],
+                            ] as const
+                          ).map(([k, lbl]) => (
+                            <label key={k} className="inline-flex items-center gap-1 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={g[k]}
+                                onChange={(e) =>
+                                  setDocRbacGrants((prev) =>
+                                    prev.map((row, i) => (i === idx ? { ...row, [k]: e.target.checked } : row))
+                                  )
+                                }
+                              />
+                              <span>{lbl}</span>
+                            </label>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => setDocRbacGrants((prev) => prev.filter((_, i) => i !== idx))}
+                            className="text-danger-text hover:underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Quality Control gate: set on the folder, not by the uploader */}
               <div className="pt-3 border-t border-border">
