@@ -8,6 +8,7 @@ import {
   fetchRecycleBinAction,
   purgeDocumentAction,
   restoreDocumentAction,
+  submitQcDecisionAction,
   type DmsQcItem,
   type DmsRecycleItem,
 } from "@/lib/actions/dms-core";
@@ -132,12 +133,31 @@ export function DmsRecycleBinView({ workspaceId, onRestored }: { workspaceId: st
   );
 }
 
-/** Documents waiting for this person's QC decision, oldest first. */
-export function DmsQcQueueView({ workspaceId, onOpen }: { workspaceId: string; onOpen: (item: DmsQcItem) => void }) {
+/** Documents waiting for approval, oldest first, with inline Approve / Reject / Bulk Approve. */
+export function DmsQcQueueView({
+  workspaceId,
+  folderId,
+  folderName,
+  onOpen,
+  onChanged,
+}: {
+  workspaceId: string;
+  folderId?: string;
+  folderName?: string;
+  onOpen: (item: DmsQcItem) => void;
+  onChanged?: () => void;
+}) {
   const [items, setItems] = useState<DmsQcItem[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkComment, setBulkComment] = useState("");
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [scopeFolderOnly, setScopeFolderOnly] = useState<boolean>(!!folderId);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setScopeFolderOnly(!!folderId);
+  }, [folderId]);
 
   const load = useCallback(() => {
     fetchQcQueueAction(workspaceId).then((res) => {
@@ -153,11 +173,44 @@ export function DmsQcQueueView({ workspaceId, onOpen }: { workspaceId: string; o
     load();
   }, [load]);
 
-  if (!items) return <p className="py-12 text-center text-xs text-muted-foreground">Loading the QC queue…</p>;
-  if (!items.length) return <p className="py-12 text-center text-xs text-muted-foreground">Nothing is waiting for QC.</p>;
+  if (!items) return <p className="py-12 text-center text-xs text-muted-foreground">Loading document approval queue…</p>;
+
+  const visibleItems = scopeFolderOnly && folderId ? items.filter((x) => x.folderId === folderId) : items;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      {folderId && (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setScopeFolderOnly(true)}
+              className={`px-2.5 py-1 rounded-md border font-semibold ${
+                scopeFolderOnly ? "bg-accent-soft border-primary text-primary" : "border-border bg-surface text-foreground"
+              }`}
+            >
+              This folder{folderName ? ` (${folderName})` : ""}
+            </button>
+            <button
+              type="button"
+              onClick={() => setScopeFolderOnly(false)}
+              className={`px-2.5 py-1 rounded-md border font-semibold ${
+                !scopeFolderOnly ? "bg-accent-soft border-primary text-primary" : "border-border bg-surface text-foreground"
+              }`}
+            >
+              All folders ({items.length})
+            </button>
+          </div>
+          <span className="text-[11px] text-muted-foreground">{visibleItems.length} pending approval</span>
+        </div>
+      )}
+
+      {!visibleItems.length ? (
+        <p className="py-12 text-center text-xs text-muted-foreground">
+          {scopeFolderOnly && folderId ? "No documents waiting for approval in this folder." : "Nothing is waiting for approval."}
+        </p>
+      ) : (
+      <>
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-accent-soft/40 p-2.5 text-xs">
           <span className="font-semibold">{selected.size} selected</span>
@@ -179,6 +232,7 @@ export function DmsQcQueueView({ workspaceId, onOpen }: { workspaceId: string; o
                 setSelected(new Set());
                 setBulkComment("");
                 load();
+                onChanged?.();
               } else toast.error(res.error);
             }}
             className="px-3 py-1 rounded bg-primary text-primary-foreground font-semibold disabled:opacity-50"
@@ -194,10 +248,10 @@ export function DmsQcQueueView({ workspaceId, onOpen }: { workspaceId: string; o
               <th className="py-2.5 px-3 w-8">
                 <input
                   type="checkbox"
-                  aria-label="Select all QC items"
-                  checked={items.filter((x) => !x.ownUpload).length > 0 && selected.size === items.filter((x) => !x.ownUpload).length}
+                  aria-label="Select all approval items"
+                  checked={visibleItems.length > 0 && selected.size === visibleItems.length}
                   onChange={(e) => {
-                    if (e.target.checked) setSelected(new Set(items.filter((x) => !x.ownUpload).map((x) => x.documentId)));
+                    if (e.target.checked) setSelected(new Set(visibleItems.map((x) => x.documentId)));
                     else setSelected(new Set());
                   }}
                 />
@@ -205,13 +259,14 @@ export function DmsQcQueueView({ workspaceId, onOpen }: { workspaceId: string; o
               <th className="py-2.5 px-3">Document</th>
               <th className="py-2.5 px-3">Folder</th>
               <th className="py-2.5 px-3">Uploaded</th>
+              <th className="py-2.5 px-3 text-right">Approval Decision</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {items.map((i) => (
-              <tr key={i.documentId} onClick={() => onOpen(i)} className="hover:bg-surface/50 cursor-pointer">
-                <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
-                  {!i.ownUpload && (
+            {visibleItems.map((i) => (
+              <React.Fragment key={i.documentId}>
+                <tr onClick={() => onOpen(i)} className="hover:bg-surface/50 cursor-pointer">
+                  <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       aria-label={`Select ${i.title}`}
@@ -225,23 +280,114 @@ export function DmsQcQueueView({ workspaceId, onOpen }: { workspaceId: string; o
                         })
                       }
                     />
-                  )}
-                </td>
-                <td className="py-2.5 px-3">
-                  <span className="font-semibold text-foreground">{i.title}</span>
-                  <span className="ml-1.5 font-mono text-[11px] text-muted-foreground">v{i.versionNo}</span>
-                  {i.ownUpload && <span className="ml-1.5 text-[11px] text-muted-foreground">(your upload)</span>}
-                </td>
-                <td className="py-2.5 px-3">{i.folderName}</td>
-                <td className="py-2.5 px-3">
-                  {when(i.uploadedAt)}
-                  <div className="text-[11px] text-muted-foreground">{i.uploadedByName}</div>
-                </td>
-              </tr>
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <span className="font-semibold text-foreground">{i.title}</span>
+                    <span className="ml-1.5 font-mono text-[11px] text-muted-foreground">v{i.versionNo}</span>
+                    {i.ownUpload && <span className="ml-1.5 text-[11px] text-muted-foreground">(your upload)</span>}
+                  </td>
+                  <td className="py-2.5 px-3">{i.folderName}</td>
+                  <td className="py-2.5 px-3">
+                    {when(i.uploadedAt)}
+                    <div className="text-[11px] text-muted-foreground">{i.uploadedByName}</div>
+                  </td>
+                  <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true);
+                          const res = await submitQcDecisionAction({
+                            documentId: i.documentId,
+                            versionNo: i.versionNo,
+                            status: "APPROVED",
+                            decisionComment: "Approved",
+                          });
+                          setBusy(false);
+                          if (res.success) {
+                            toast.success(`Approved "${i.title}"`);
+                            load();
+                            onChanged?.();
+                          } else toast.error(res.error);
+                        }}
+                        className="px-2.5 py-1 rounded bg-success-solid text-white text-[11px] font-semibold hover:brightness-95 disabled:opacity-50 cursor-pointer"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => {
+                          setRejectingId((cur) => (cur === i.documentId ? null : i.documentId));
+                          setRejectReason("");
+                        }}
+                        className="px-2.5 py-1 rounded border border-danger-border/60 text-danger-text text-[11px] font-semibold hover:bg-danger-soft/40 disabled:opacity-50 cursor-pointer"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onOpen(i)}
+                        className="px-2.5 py-1 rounded border border-border bg-surface text-[11px] font-medium hover:bg-sunken cursor-pointer"
+                      >
+                        Details
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {rejectingId === i.documentId && (
+                  <tr className="bg-danger-soft/20">
+                    <td colSpan={5} className="px-3 py-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          value={rejectReason}
+                          onChange={(e) => setRejectReason(e.target.value)}
+                          placeholder="Rejection reason (minimum 5 characters)…"
+                          className="flex-1 min-w-[200px] rounded border border-border bg-surface px-2.5 py-1 text-xs"
+                        />
+                        <button
+                          type="button"
+                          disabled={busy || rejectReason.trim().length < 5}
+                          onClick={async () => {
+                            setBusy(true);
+                            const res = await submitQcDecisionAction({
+                              documentId: i.documentId,
+                              versionNo: i.versionNo,
+                              status: "REJECTED",
+                              decisionComment: rejectReason.trim(),
+                            });
+                            setBusy(false);
+                            if (res.success) {
+                              toast.success(`Rejected "${i.title}"`);
+                              setRejectingId(null);
+                              setRejectReason("");
+                              load();
+                              onChanged?.();
+                            } else toast.error(res.error);
+                          }}
+                          className="px-3 py-1 rounded bg-danger-solid text-white text-xs font-semibold disabled:opacity-50"
+                        >
+                          Confirm Reject
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRejectingId(null)}
+                          className="px-2.5 py-1 rounded border border-border bg-surface text-xs"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>
       </div>
+      </>
+      )}
     </div>
   );
 }

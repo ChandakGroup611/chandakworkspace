@@ -165,12 +165,12 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
   const ownUpload = !!current?.uploadedByMe;
 
   return (
-    <div className="flex flex-col h-full text-xs">
-      {/* Status strip */}
-      <div className="p-3 border-b border-border space-y-2">
+    <div className="flex flex-col text-xs space-y-4">
+      {/* Status & Primary Action Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border">
         <div className="flex flex-wrap items-center gap-1.5">
           <span
-            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
               doc.approvalStatus === "APPROVED"
                 ? "bg-success-soft text-success-text"
                 : doc.approvalStatus === "REJECTED"
@@ -180,25 +180,22 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
           >
             {doc.approvalStatus === "PENDING" ? "Waiting for QC" : doc.approvalStatus === "APPROVED" ? "Approved" : "Rejected"}
           </span>
-          <span className="px-1.5 py-0.5 rounded text-[11px] font-mono bg-surface border border-border text-muted-foreground">
-            v{doc.currentVersionNo}
+          <span className="px-2 py-1 rounded text-[11px] font-mono bg-sunken border border-border text-muted-foreground">
+            v{doc.currentVersionNo} Live
           </span>
           {doc.isLocked && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-warning-soft text-warning-text">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-warning-soft text-warning-text">
               <Lock className="h-3 w-3" />
               {doc.lockedByMe ? "Checked out by you" : `Checked out by ${doc.lockedByName}`}
             </span>
           )}
+          {current?.qcStatus === "REJECTED" && current.qcComment && (
+            <span className="text-[11px] text-danger-text ml-2">
+              Rejected by {current.qcByName}: {current.qcComment}
+            </span>
+          )}
         </div>
-        {current?.qcStatus === "REJECTED" && current.qcComment && (
-          <p className="text-[11px] text-danger-text">
-            Rejected by {current.qcByName}: {current.qcComment}
-          </p>
-        )}
-      </div>
 
-      {/* Actions */}
-      <div className="p-3 border-b border-border space-y-3">
         <div className="flex flex-wrap gap-2">
           {r.download && (
             <a
@@ -213,7 +210,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
               type="button"
               disabled={busy}
               onClick={() => run(() => lockUnlockDocumentAction({ documentId: doc.id, action: "LOCK" }), "Checked out to you for 8 hours.")}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-sunken font-semibold disabled:opacity-50 cursor-pointer"
             >
               <Lock className="h-3.5 w-3.5" /> Check out
             </button>
@@ -228,7 +225,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
                 setEditing((v) => !v);
                 setTab("details");
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-sunken font-semibold disabled:opacity-50 cursor-pointer"
             >
               <Pencil className="h-3.5 w-3.5" /> {editing ? "Close edit" : "Edit details"}
             </button>
@@ -238,7 +235,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
               type="button"
               disabled={busy}
               onClick={() => run(() => lockUnlockDocumentAction({ documentId: doc.id, action: "UNLOCK" }), "Check-out released.")}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-sunken font-semibold disabled:opacity-50 cursor-pointer"
             >
               <Unlock className="h-3.5 w-3.5" /> {doc.lockedByMe ? "Release check-out" : "Force release"}
             </button>
@@ -253,7 +250,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
                   ? "Send a secure link to someone outside the company"
                   : "Approve QC first to share outside the company"
               }
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-sunken font-semibold disabled:opacity-50 cursor-pointer"
             >
               <Link2 className="h-3.5 w-3.5" /> {doc.approvalStatus === "APPROVED" ? "Share" : "Share (QC pending)"}
             </button>
@@ -263,13 +260,16 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
               type="button"
               disabled={busy}
               onClick={() => setConfirmDelete(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-danger-text font-semibold disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-danger-border/60 bg-surface hover:bg-danger-soft/40 text-danger-text font-semibold disabled:opacity-50 cursor-pointer"
             >
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </button>
           )}
         </div>
+      </div>
 
+      {/* Confirm delete + Version upload & QC row */}
+      <div className="space-y-3">
         {confirmDelete && (
           <div className="p-2.5 rounded-lg border border-border bg-danger-soft/40 space-y-2">
             <p>Move this document to the recycle bin? It can be restored from there.</p>
@@ -289,9 +289,10 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
           </div>
         )}
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Check in a new version */}
         {canWrite && !lockedByOther && (
-          <div className="space-y-1.5">
+          <div className="rounded-lg border border-border bg-sunken/30 p-3 space-y-2">
             <div className="font-semibold text-foreground">Upload a new version (locks v{doc.currentVersionNo})</div>
             <input
               type="file"
@@ -299,20 +300,22 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
               onChange={(e) => setNewFile(e.target.files?.[0] || null)}
               className="block w-full text-[11px]"
             />
-            <input
-              type="text"
-              value={whatChanged}
-              onChange={(e) => setWhatChanged(e.target.value)}
-              placeholder="What changed in document? *"
-              className="w-full rounded-lg bg-surface border border-border px-2.5 py-1.5"
-            />
-            <input
-              type="text"
-              value={remark}
-              onChange={(e) => setRemark(e.target.value)}
-              placeholder="Remark *"
-              className="w-full rounded-lg bg-surface border border-border px-2.5 py-1.5"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input
+                type="text"
+                value={whatChanged}
+                onChange={(e) => setWhatChanged(e.target.value)}
+                placeholder="What changed in document? *"
+                className="w-full rounded-lg bg-surface border border-border px-2.5 py-1.5"
+              />
+              <input
+                type="text"
+                value={remark}
+                onChange={(e) => setRemark(e.target.value)}
+                placeholder="Remark *"
+                className="w-full rounded-lg bg-surface border border-border px-2.5 py-1.5"
+              />
+            </div>
             <button
               type="button"
               disabled={busy || !newFile || !whatChanged.trim() || !remark.trim()}
@@ -332,7 +335,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
                   setRemark("");
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-sunken font-semibold disabled:opacity-50 cursor-pointer"
             >
               <Upload className="h-3.5 w-3.5" /> Check in v{doc.currentVersionNo + 1}
             </button>
@@ -342,7 +345,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
 
         {/* QC decision */}
         {r.qc && awaitingQc && (
-          <div className="space-y-1.5 pt-2 border-t border-border">
+          <div className="rounded-lg border border-border bg-sunken/30 p-3 space-y-2">
             <div className="font-semibold text-foreground">QC decision on v{doc.currentVersionNo}</div>
             {ownUpload && !r.admin ? (
               <p className="text-[11px] text-muted-foreground">You uploaded this version, so another QC approver has to decide.</p>
@@ -365,7 +368,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
                         "Approved."
                       )
                     }
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success text-white font-semibold disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success text-white font-semibold disabled:opacity-50 cursor-pointer"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" /> Approve
                   </button>
@@ -378,7 +381,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
                         "Rejected. The uploader can check in a corrected version."
                       )
                     }
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-danger-text font-semibold disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-danger-text font-semibold disabled:opacity-50 cursor-pointer"
                   >
                     <XCircle className="h-3.5 w-3.5" /> Reject
                   </button>
@@ -387,6 +390,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
             )}
           </div>
         )}
+        </div>
       </div>
 
       {sharing && (

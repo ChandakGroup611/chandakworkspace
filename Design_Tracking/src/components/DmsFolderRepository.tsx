@@ -417,59 +417,46 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      {/* 1. TOP HEADER & METRIC STRIP */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface border border-border p-4 rounded-lg shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-[20px] sm:text-[22px] font-semibold tracking-[-0.01em] text-heading flex items-center gap-2">
-              <FolderTree className="h-5 w-5 text-primary" />
-              <span>DMS folders</span>
-            </h2>
-
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Folders, versions, check-out, QC approval and a recycle bin. You only see the folders and documents your access allows.
-          </p>
+    <div className="space-y-3">
+      {/* 1. CLEAN TOP NAVIGATION & PRIMARY ACTIONS */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-surface border border-border px-3.5 py-2.5 rounded-xl shadow-xs">
+        <div className="flex flex-wrap items-center gap-1 bg-sunken p-1 rounded-lg border border-border">
+          {(
+            [
+              { id: "FOLDER", label: "Folders", icon: FolderTree },
+              { id: "QC", label: "Document Approval", icon: CheckCircle2 },
+              { id: "SEARCH", label: "Search", icon: Search },
+              { id: "MASTERS", label: "Master tables", icon: Layers },
+              { id: "SHARES", label: "Shared links", icon: Link2 },
+              { id: "BIN", label: "Recycle bin", icon: Trash2 },
+            ] as const
+          ).map((t) => {
+            const Icon = t.icon;
+            const active = view === t.id && !(selectedDoc && docModalMode === "DETAILS");
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => {
+                  setSelectedDoc(null);
+                  setView(t.id);
+                }}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
+                  active
+                    ? "bg-surface text-primary shadow-xs border border-border"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className={`h-3.5 w-3.5 ${t.id === "BIN" ? "text-danger-text" : active ? "text-primary" : ""}`} />
+                <span>{t.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button"
-            onClick={() => setView(view === "SEARCH" ? "FOLDER" : "SEARCH")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border transition-colors cursor-pointer ${view === "SEARCH" ? "bg-accent-soft text-primary" : "bg-surface text-foreground"}`}
-          >
-            <Search className="h-3.5 w-3.5 text-primary" />
-            <span>Search</span>
-          </button>
-          <button type="button"
-            onClick={() => setView(view === "MASTERS" ? "FOLDER" : "MASTERS")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border transition-colors cursor-pointer ${view === "MASTERS" ? "bg-accent-soft text-primary" : "bg-surface text-foreground"}`}
-          >
-            <Layers className="h-3.5 w-3.5 text-primary" />
-            <span>Master tables</span>
-          </button>
-          <button type="button"
-            onClick={() => setView(view === "QC" ? "FOLDER" : "QC")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border transition-colors cursor-pointer ${view === "QC" ? "bg-accent-soft text-primary" : "bg-surface text-foreground"}`}
-          >
-            <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-            <span>QC queue</span>
-          </button>
-          <button type="button"
-            onClick={() => setView(view === "SHARES" ? "FOLDER" : "SHARES")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border transition-colors cursor-pointer ${view === "SHARES" ? "bg-accent-soft text-primary" : "bg-surface text-foreground"}`}
-          >
-            <Link2 className="h-3.5 w-3.5 text-primary" />
-            <span>Shared links</span>
-          </button>
-          <button type="button"
-            onClick={() => setView(view === "BIN" ? "FOLDER" : "BIN")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border transition-colors cursor-pointer ${view === "BIN" ? "bg-accent-soft text-primary" : "bg-surface text-foreground"}`}
-          >
-            <Trash2 className="h-3.5 w-3.5 text-danger-text" />
-            <span>Recycle bin</span>
-          </button>
-          <button type="button"
+          <button
+            type="button"
             onClick={() => {
               if (selectedFolder) {
                 setFolderForPermissions(selectedFolder);
@@ -477,35 +464,37 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               }
             }}
             disabled={!selectedFolder}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-surface text-foreground transition-colors disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-sunken text-foreground transition-colors disabled:opacity-50 cursor-pointer"
             title="Configure folder access & user permissions"
           >
             <ShieldCheck className="h-3.5 w-3.5 text-primary" />
             <span>Folder access</span>
           </button>
-          <button type="button"
+          <button
+            type="button"
             onClick={() => setShowCreateFolderModal(true)}
             disabled={!selectedFolder || !folderRights?.create_folder}
             title={selectedFolder && !folderRights?.create_folder ? "You can't create folders here" : undefined}
-            className="disabled:opacity-50 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-surface text-foreground transition-colors cursor-pointer"
+            className="disabled:opacity-50 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-sunken text-foreground transition-colors cursor-pointer"
           >
             <FolderPlus className="h-3.5 w-3.5 text-warning-text" />
             <span>New folder</span>
           </button>
-          <button type="button"
+          <button
+            type="button"
             onClick={() => setShowIndexingWizard(true)}
             disabled={!selectedFolder || !folderRights?.upload}
             title={selectedFolder && !folderRights?.upload ? "You can't add documents to this folder" : undefined}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs transition-all disabled:opacity-50 cursor-pointer"
           >
             <Upload className="h-3.5 w-3.5" />
-            <span>Upload & index</span>
+            <span>Upload &amp; index</span>
           </button>
         </div>
       </div>
 
-      {/* 2. FULL-WIDTH FOLDER NAVIGATOR (BREADCRUMB + SUBFOLDERS) & DOCUMENT REGISTER / DEDICATED DOCUMENT PAGE */}
-      <div className="space-y-4">
+      {/* 2. UNIFIED WORKSPACE CONTAINER */}
+      <div>
         {selectedDoc && docModalMode === "DETAILS" ? (
           <section className="w-full bg-surface border border-border rounded-lg shadow-xs overflow-hidden">
             <div className="px-4 py-3 border-b border-border bg-sunken flex flex-wrap items-center justify-between gap-3">
@@ -570,8 +559,9 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           </section>
         ) : (
         <>
+        <div className="w-full bg-surface border border-border rounded-xl shadow-xs overflow-hidden">
         {view === "FOLDER" && (
-          <section className="bg-surface border border-border rounded-lg p-3.5 space-y-3 shadow-xs">
+          <section className="bg-sunken/40 border-b border-border px-4 py-3 space-y-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-border">
               <div className="flex flex-wrap items-center gap-1 text-xs">
                 <FolderTree className="h-3.5 w-3.5 text-primary mr-1" />
@@ -693,12 +683,12 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
         )}
 
         {/* MAIN STAGE: FULL-WIDTH DOCUMENT REGISTER TABLE */}
-        <main className="w-full bg-surface border border-border rounded-lg p-4 space-y-4 shadow-xs">
+        <main className="w-full p-4 space-y-4">
           {view !== "FOLDER" ? (
             <>
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <h2 className="text-sm font-semibold text-foreground">
-                  {view === "SEARCH" ? "Search documents" : view === "MASTERS" ? "Master tables" : view === "SHARES" ? "Shared outside the company" : view === "QC" ? "Waiting for your QC decision" : "Recycle bin"}
+                  {view === "SEARCH" ? "Search documents" : view === "MASTERS" ? "Master tables" : view === "SHARES" ? "Shared outside the company" : view === "QC" ? "Document Approval" : "Recycle bin"}
                 </h2>
                 <button
                   type="button"
@@ -717,7 +707,16 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               ) : view === "QC" ? (
                 <DmsQcQueueView
                   workspaceId={workspaceId}
-                  onOpen={(item) =>
+                  folderId={selectedFolder?.id}
+                  folderName={selectedFolder?.name}
+                  onChanged={() => {
+                    loadFolderDocuments();
+                    loadFolderTree();
+                  }}
+                  onOpen={(item) => {
+                    setDocModalMode("DETAILS");
+                    setPanelInitialTab("details");
+                    setPanelInitialEditing(false);
                     setSelectedDoc({
                       id: item.documentId,
                       folderId: item.folderId,
@@ -734,8 +733,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                       isLocked: false,
                       createdAt: item.uploadedAt,
                       updatedAt: item.uploadedAt,
-                    })
-                  }
+                    });
+                  }}
                 />
               ) : (
                 <DmsRecycleBinView
@@ -960,6 +959,18 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                     </button>
                   )}
                 </div>
+              )}
+
+              {selectedFolder && (
+                <button
+                  type="button"
+                  onClick={() => setView("QC")}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-sunken cursor-pointer"
+                  title="Review and approve pending documents in this folder"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  <span>Document Approval</span>
+                </button>
               )}
 
               <button
@@ -1464,6 +1475,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           </>
           )}
         </main>
+        </div>
         </>
         )}
       </div>
