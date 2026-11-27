@@ -190,13 +190,17 @@ export function DmsSearchView({
             <button
               type="button"
               onClick={() => set({ fields: [...(filters.fields || []), { fieldId: fieldDefs[0].id, op: "eq", value: "" }] })}
-              className="inline-flex items-center gap-1 text-primary font-semibold"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-sunken text-xs font-medium text-foreground cursor-pointer"
             >
-              <Plus className="h-3.5 w-3.5" /> Add a field filter
+              <Plus className="h-3.5 w-3.5 text-primary" /> Add a field filter
             </button>
           )}
-          <button type="button" onClick={() => setShowSave((v) => !v)} className="inline-flex items-center gap-1 text-primary font-semibold">
-            <Bookmark className="h-3.5 w-3.5" /> Save this search
+          <button
+            type="button"
+            onClick={() => setShowSave((v) => !v)}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-sunken text-xs font-medium text-foreground cursor-pointer"
+          >
+            <Bookmark className="h-3.5 w-3.5 text-primary" /> Save this search
           </button>
           <button
             type="button"
@@ -204,7 +208,7 @@ export function DmsSearchView({
               setFilters({ includeSubfolders: true, fields: [] });
               setHits(null);
             }}
-            className="text-muted-foreground"
+            className="px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-sunken text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer"
           >
             Clear
           </button>

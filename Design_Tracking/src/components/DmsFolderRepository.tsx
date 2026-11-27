@@ -94,6 +94,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [favouriteIds, setFavouriteIds] = useState<Set<string>>(new Set());
   const [favouritesOnly, setFavouritesOnly] = useState<boolean>(false);
   const [bulkSharing, setBulkSharing] = useState<boolean>(false);
+  const [shareSingleDoc, setShareSingleDoc] = useState<DmsDocumentSummary | null>(null);
   const [showFieldsMenu, setShowFieldsMenu] = useState<boolean>(false);
   const [visibleCols, setVisibleCols] = useState({
     docId: true,
@@ -503,8 +504,72 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
         </div>
       </div>
 
-      {/* 2. FULL-WIDTH FOLDER NAVIGATOR (BREADCRUMB + SUBFOLDERS) & DOCUMENT REGISTER */}
+      {/* 2. FULL-WIDTH FOLDER NAVIGATOR (BREADCRUMB + SUBFOLDERS) & DOCUMENT REGISTER / DEDICATED DOCUMENT PAGE */}
       <div className="space-y-4">
+        {selectedDoc && docModalMode === "DETAILS" ? (
+          <section className="w-full bg-surface border border-border rounded-lg shadow-xs overflow-hidden">
+            <div className="px-4 py-3 border-b border-border bg-sunken flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDoc(null)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-sunken text-foreground cursor-pointer"
+                >
+                  &larr; Back to folder
+                </button>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-sm font-semibold text-foreground truncate">{selectedDoc.title}</h2>
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-primary">
+                      {selectedDoc.docTypeCode}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[11px] font-mono bg-surface border border-border text-muted-foreground">
+                      v{selectedDoc.currentVersionNo} Live
+                    </span>
+                  </div>
+                  <p className="text-[11px] font-mono text-muted-foreground truncate">
+                    {selectedDoc.originalFileName} &bull; {formatBytes(selectedDoc.fileSizeBytes)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setDocModalMode("PREVIEW")}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-sunken text-foreground inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Eye className="h-3.5 w-3.5 text-primary" />
+                  <span>Preview Document</span>
+                </button>
+                <a
+                  href={`/api/proxy-attachment/${selectedDoc.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-sunken text-foreground inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>Open in tab</span>
+                </a>
+              </div>
+            </div>
+            <div className="p-4 sm:p-6">
+              <DmsDocumentPanel
+                documentId={selectedDoc.id}
+                folders={flatFolders}
+                folderDocs={documents.filter((d) => d.id !== selectedDoc.id).map((d) => ({ id: d.id, title: d.title }))}
+                initialTab={panelInitialTab}
+                initialEditing={panelInitialEditing}
+                onChanged={(updated) => {
+                  loadFolderDocuments();
+                  loadFolderTree();
+                  if (updated) setSelectedDoc(updated);
+                  else setSelectedDoc(null);
+                }}
+              />
+            </div>
+          </section>
+        ) : (
+        <>
         {view === "FOLDER" && (
           <section className="bg-surface border border-border rounded-lg p-3.5 space-y-3 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-border">
@@ -635,8 +700,12 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                 <h2 className="text-sm font-semibold text-foreground">
                   {view === "SEARCH" ? "Search documents" : view === "MASTERS" ? "Master tables" : view === "SHARES" ? "Shared outside the company" : view === "QC" ? "Waiting for your QC decision" : "Recycle bin"}
                 </h2>
-                <button type="button" onClick={() => setView("FOLDER")} className="text-xs text-primary font-semibold">
-                  Back to folders
+                <button
+                  type="button"
+                  onClick={() => setView("FOLDER")}
+                  className="px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-sunken text-xs font-semibold text-foreground cursor-pointer"
+                >
+                  &larr; Back to folders
                 </button>
               </div>
               {view === "SHARES" ? (
@@ -700,8 +769,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                       onChange={(e) => setRenaming(e.target.value)}
                       className="text-xs rounded-lg bg-surface border border-border px-2 py-1"
                     />
-                    <button type="submit" className="text-[11px] font-semibold text-primary">Save</button>
-                    <button type="button" onClick={() => setRenaming(null)} className="text-[11px] text-muted-foreground">Cancel</button>
+                    <button type="submit" className="px-2.5 py-1 rounded-md bg-primary text-primary-foreground text-[11px] font-semibold">Save</button>
+                    <button type="button" onClick={() => setRenaming(null)} className="px-2.5 py-1 rounded-md border border-border bg-surface text-[11px] font-medium text-muted-foreground hover:bg-sunken">Cancel</button>
                   </form>
                 ) : (
                   <h2 className="text-sm font-semibold text-foreground">
@@ -715,9 +784,19 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                 )}
               </div>
               {selectedFolder && (folderRights?.admin || folderRights?.manage) && renaming === null && (
-                <div className="flex flex-wrap gap-3 mt-1 text-[11px] font-semibold">
-                  <button type="button" onClick={() => setRenaming(selectedFolder.name)} className="text-primary">Rename</button>
-                  <button type="button" onClick={() => handleToggleFolderQc(selectedFolder)} className="text-primary">
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setRenaming(selectedFolder.name)}
+                    className="px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-sunken text-[11px] font-medium text-foreground cursor-pointer"
+                  >
+                    Rename
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleFolderQc(selectedFolder)}
+                    className="px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-sunken text-[11px] font-medium text-foreground cursor-pointer"
+                  >
                     {selectedFolder.approvalRequired ? "Stop requiring QC" : "Require QC"}
                   </button>
                   <button
@@ -727,12 +806,16 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                       setRenameParts((selectedFolder.renamePattern?.parts || ["docType", "title", "version"]).join(","));
                       setEditingRenamePattern((v) => !v);
                     }}
-                    className="text-primary"
+                    className="px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-sunken text-[11px] font-medium text-foreground cursor-pointer"
                   >
                     Download rename
                   </button>
                   {selectedFolder.parentId && (
-                    <button type="button" onClick={() => handleDeleteFolder(selectedFolder)} className="text-danger-text">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFolder(selectedFolder)}
+                      className="px-2.5 py-1 rounded-md border border-danger-border/60 bg-surface hover:bg-danger-soft/40 text-[11px] font-medium text-danger-text cursor-pointer"
+                    >
                       Delete folder
                     </button>
                   )}
@@ -1323,6 +1406,20 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                                 >
                                   <Clock className="h-3.5 w-3.5 text-primary" /> File Status / Audit
                                 </button>
+                                <button
+                                  type="button"
+                                  disabled={!doc.rights?.email || doc.approvalStatus !== "APPROVED"}
+                                  onClick={() => {
+                                    setOpenActionMenuId(null);
+                                    setActionMenuPos(null);
+                                    setShareSingleDoc(doc);
+                                  }}
+                                  className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground disabled:opacity-50"
+                                  title={doc.approvalStatus !== "APPROVED" ? "Approve QC first to share outside the company" : "Share outside the company"}
+                                >
+                                  <Link2 className="h-3.5 w-3.5 text-primary" />
+                                  <span>{doc.approvalStatus === "APPROVED" ? "Share" : "Share (Approve QC first)"}</span>
+                                </button>
                                 {doc.rights?.download && (
                                   <a
                                     href={`/api/proxy-attachment/${doc.id}?download=1`}
@@ -1367,6 +1464,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           </>
           )}
         </main>
+        </>
+        )}
       </div>
 
       {/* CREATE SUBFOLDER MODAL */}
@@ -1493,8 +1592,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
         />
       )}
 
-      {/* IN-APP UPLOADED DOCUMENT VIEWER MODAL */}
-      {selectedDoc && (
+      {/* IN-APP UPLOADED DOCUMENT PREVIEW MODAL */}
+      {selectedDoc && docModalMode === "PREVIEW" && (
         <div className="fixed inset-0 z-60 bg-[var(--overlay)] flex flex-col overflow-hidden animate-in fade-in duration-150">
           {/* Header */}
           <header className="h-14 border-b border-border bg-surface px-6 flex items-center justify-between gap-4 shrink-0">
@@ -1531,53 +1630,40 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
             {/* Actions */}
             <div className="flex items-center gap-2 shrink-0">
-              {docModalMode === "PREVIEW" ? (
-                <>
-                  <div className="flex items-center gap-1 bg-surface border border-border rounded-lg px-2 py-1 mr-1">
-                    <button aria-label="Zoom out" type="button"
-                      onClick={() => setDocViewerZoom((z) => Math.max(0.4, Number((z - 0.15).toFixed(2))))}
-                      className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
-                      title="Zoom out"
-                    >
-                      <ZoomOut className="h-3.5 w-3.5" />
-                    </button>
-                    <span className="text-[11px] font-mono font-medium px-1 text-foreground min-w-[36px] text-center">
-                      {Math.round(docViewerZoom * 100)}%
-                    </span>
-                    <button aria-label="Zoom in" type="button"
-                      onClick={() => setDocViewerZoom((z) => Math.min(2.5, Number((z + 0.15).toFixed(2))))}
-                      className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
-                      title="Zoom in"
-                    >
-                      <ZoomIn className="h-3.5 w-3.5" />
-                    </button>
-                    <button aria-label="Reset (100%)" type="button"
-                      onClick={() => setDocViewerZoom(1)}
-                      className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
-                      title="Reset (100%)"
-                    >
-                      <Maximize2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setDocModalMode("DETAILS")}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-sunken text-foreground inline-flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Info className="h-3.5 w-3.5 text-primary" />
-                    <span>Information &amp; Audit</span>
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setDocModalMode("PREVIEW")}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-sunken text-foreground inline-flex items-center gap-1.5 cursor-pointer"
+              <div className="flex items-center gap-1 bg-surface border border-border rounded-lg px-2 py-1 mr-1">
+                <button aria-label="Zoom out" type="button"
+                  onClick={() => setDocViewerZoom((z) => Math.max(0.4, Number((z - 0.15).toFixed(2))))}
+                  className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
+                  title="Zoom out"
                 >
-                  <Eye className="h-3.5 w-3.5 text-primary" />
-                  <span>Preview Document</span>
+                  <ZoomOut className="h-3.5 w-3.5" />
                 </button>
-              )}
+                <span className="text-[11px] font-mono font-medium px-1 text-foreground min-w-[36px] text-center">
+                  {Math.round(docViewerZoom * 100)}%
+                </span>
+                <button aria-label="Zoom in" type="button"
+                  onClick={() => setDocViewerZoom((z) => Math.min(2.5, Number((z + 0.15).toFixed(2))))}
+                  className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
+                  title="Zoom in"
+                >
+                  <ZoomIn className="h-3.5 w-3.5" />
+                </button>
+                <button aria-label="Reset (100%)" type="button"
+                  onClick={() => setDocViewerZoom(1)}
+                  className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
+                  title="Reset (100%)"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDocModalMode("DETAILS")}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-sunken text-foreground inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Info className="h-3.5 w-3.5 text-primary" />
+                <span>Information &amp; Audit</span>
+              </button>
 
               <a
                 href={`/api/proxy-attachment/${selectedDoc.id}`}
@@ -1600,25 +1686,6 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             </div>
           </header>
 
-          {docModalMode === "DETAILS" ? (
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-muted/10 flex justify-center">
-              <div className="w-full max-w-3xl bg-surface border border-border rounded-xl shadow-sm overflow-hidden">
-                <DmsDocumentPanel
-                  documentId={selectedDoc.id}
-                  folders={flatFolders}
-                  folderDocs={documents.filter((d) => d.id !== selectedDoc.id).map((d) => ({ id: d.id, title: d.title }))}
-                  initialTab={panelInitialTab}
-                  initialEditing={panelInitialEditing}
-                  onChanged={(updated) => {
-                    loadFolderDocuments();
-                    loadFolderTree();
-                    if (updated) setSelectedDoc(updated);
-                    else setSelectedDoc(null);
-                  }}
-                />
-              </div>
-            </div>
-          ) : (
           <div className="flex-1 flex flex-col overflow-hidden">
           {/* Viewer Stage */}
           <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-muted/10 relative">
@@ -1709,8 +1776,17 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             })()}
           </div>
           </div>
-          )}
         </div>
+      )}
+
+      {shareSingleDoc && (
+        <DmsShareDialog
+          documents={[{ id: shareSingleDoc.id, title: shareSingleDoc.title }]}
+          onClose={() => setShareSingleDoc(null)}
+          onCreated={() => {
+            setShareSingleDoc(null);
+          }}
+        />
       )}
 
       {bulkSharing && (

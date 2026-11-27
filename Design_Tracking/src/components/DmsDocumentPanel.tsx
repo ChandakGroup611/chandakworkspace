@@ -243,14 +243,19 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
               <Unlock className="h-3.5 w-3.5" /> {doc.lockedByMe ? "Release check-out" : "Force release"}
             </button>
           )}
-          {r.email && doc.approvalStatus === "APPROVED" && (
+          {r.email && (
             <button
               type="button"
+              disabled={doc.approvalStatus !== "APPROVED"}
               onClick={() => setSharing(true)}
-              title="Send a secure link to someone outside the company"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold"
+              title={
+                doc.approvalStatus === "APPROVED"
+                  ? "Send a secure link to someone outside the company"
+                  : "Approve QC first to share outside the company"
+              }
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold disabled:opacity-50"
             >
-              <Link2 className="h-3.5 w-3.5" /> Share
+              <Link2 className="h-3.5 w-3.5" /> {doc.approvalStatus === "APPROVED" ? "Share" : "Share (QC pending)"}
             </button>
           )}
           {r.delete && !lockedByOther && (
