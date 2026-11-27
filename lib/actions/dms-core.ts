@@ -41,6 +41,11 @@ export interface DmsFolderPermissionItem {
   canManage: boolean;
 }
 
+export interface DmsFolderRenamePattern {
+  separator?: "_" | "-" | ".";
+  parts?: string[];
+}
+
 export interface DmsFolderNode {
   id: string;
   workspaceId: string;
@@ -50,6 +55,7 @@ export interface DmsFolderNode {
   depth: number;
   approvalRequired: boolean;
   inheritPermissions: boolean;
+  renamePattern?: DmsFolderRenamePattern | null;
   documentCount?: number;
   /** false when the folder is shown only because something inside it is visible */
   canOpen?: boolean;
@@ -203,6 +209,7 @@ function toNode(f: any, counts: Map<string, number>, rights?: DmsRights, canOpen
     depth: Math.max(0, path.split(".").length - 1),
     approvalRequired: !!f.approval_required,
     inheritPermissions: f.inherit_permissions !== false,
+    renamePattern: (f.rename_pattern as DmsFolderRenamePattern | null) || null,
     documentCount: counts.get(f.id) || 0,
     canOpen,
     rights,
@@ -225,7 +232,7 @@ export async function fetchFolderTreeAction(workspaceId?: string): Promise<{
     const [{ data: folders, error }, { data: rightsRows, error: rErr }, { data: docRows }] = await Promise.all([
       supabaseAdmin
         .from("dms_folders")
-        .select("id, workspace_id, parent_id, name, path, approval_required, inherit_permissions")
+        .select("id, workspace_id, parent_id, name, path, approval_required, inherit_permissions, rename_pattern")
         .eq("workspace_id", wsId)
         .is("deleted_at", null)
         .order("path", { ascending: true }),
@@ -275,6 +282,7 @@ export async function createFolderAction(params: {
   parentId?: string;
   name: string;
   approvalRequired?: boolean;
+  replicateFromFolderId?: string;
 }): Promise<{ success: boolean; folder?: DmsFolderNode; error?: string }> {
   try {
     const actor = await dmsActor();
@@ -294,17 +302,37 @@ export async function createFolderAction(params: {
     }
     if (!parentId) return { success: false, error: "Choose the parent folder." };
 
+    let sourceSettings: { approval_required?: boolean; auto_index_pattern?: any; rename_pattern?: any } | null = null;
+    if (isUuid(params.replicateFromFolderId)) {
+      const { data: src } = await supabaseAdmin
+        .from("dms_folders")
+        .select("approval_required, auto_index_pattern, rename_pattern")
+        .eq("id", params.replicateFromFolderId)
+        .is("deleted_at", null)
+        .maybeSingle();
+      sourceSettings = src || null;
+    }
+
     const { data: id, error } = await supabaseAdmin.rpc("fn_dms_create_folder", {
       p_actor: actor.id,
       p_base: actor.base,
       p_parent: parentId,
       p_name: params.name,
-      p_approval_required: params.approvalRequired ?? true,
+      p_approval_required: sourceSettings ? !!sourceSettings.approval_required : (params.approvalRequired ?? true),
     });
     if (error) throw error;
+    if (sourceSettings && (sourceSettings.auto_index_pattern || sourceSettings.rename_pattern)) {
+      await supabaseAdmin
+        .from("dms_folders")
+        .update({
+          auto_index_pattern: sourceSettings.auto_index_pattern || null,
+          rename_pattern: sourceSettings.rename_pattern || null,
+        })
+        .eq("id", id as string);
+    }
     const { data: f } = await supabaseAdmin
       .from("dms_folders")
-      .select("id, workspace_id, parent_id, name, path, approval_required, inherit_permissions")
+      .select("id, workspace_id, parent_id, name, path, approval_required, inherit_permissions, rename_pattern")
       .eq("id", id)
       .single();
     return { success: true, folder: toNode(f, new Map(), await folderRights(actor, id as string)) };
@@ -313,17 +341,40 @@ export async function createFolderAction(params: {
   }
 }
 
-export async function updateFolderAction(params: { folderId: string; name?: string; approvalRequired?: boolean }): Promise<Result> {
+export async function updateFolderAction(params: {
+  folderId: string;
+  name?: string;
+  approvalRequired?: boolean;
+  renamePattern?: DmsFolderRenamePattern | null;
+}): Promise<Result> {
   try {
     const actor = await dmsActor();
-    const { error } = await supabaseAdmin.rpc("fn_dms_update_folder", {
-      p_actor: actor.id,
-      p_base: actor.base,
-      p_folder: params.folderId,
-      p_name: params.name ?? null,
-      p_approval_required: params.approvalRequired ?? null,
-    });
-    if (error) throw error;
+    if (params.name !== undefined || params.approvalRequired !== undefined) {
+      const { error } = await supabaseAdmin.rpc("fn_dms_update_folder", {
+        p_actor: actor.id,
+        p_base: actor.base,
+        p_folder: params.folderId,
+        p_name: params.name ?? null,
+        p_approval_required: params.approvalRequired ?? null,
+      });
+      if (error) throw error;
+    }
+    if (params.renamePattern !== undefined) {
+      const fr = await folderRights(actor, params.folderId);
+      if (!fr.admin && !fr.manage) return { success: false, error: "You cannot change download rename settings for this folder." };
+      const clean =
+        params.renamePattern && params.renamePattern.parts?.length
+          ? {
+              separator: (["_", "-", "."].includes(String(params.renamePattern.separator)) ? params.renamePattern.separator : "_") as "_" | "-" | ".",
+              parts: params.renamePattern.parts.map((p) => String(p).trim()).filter(Boolean).slice(0, 5),
+            }
+          : null;
+      const { error: rpErr } = await supabaseAdmin
+        .from("dms_folders")
+        .update({ rename_pattern: clean, updated_at: new Date().toISOString() })
+        .eq("id", params.folderId);
+      if (rpErr) throw rpErr;
+    }
     return { success: true };
   } catch (err: any) {
     return { success: false, error: dmsError(err, "Could not update the folder.") };
@@ -1045,5 +1096,118 @@ export async function saveFolderPermissionsAction(params: {
     return { success: true };
   } catch (err: any) {
     return { success: false, error: dmsError(err, "Could not save folder access.") };
+  }
+}
+
+export interface DmsDocTypePermissionRow {
+  groupId: string;
+  groupName: string;
+  docTypeId: string;
+  docTypeCode: string;
+  docTypeName: string;
+  canAdd: boolean;
+  canView: boolean;
+  canPrint: boolean;
+  canEditFields: boolean;
+  canDelete: boolean;
+  canDownload: boolean;
+  canEmail: boolean;
+  isPrivateView: boolean;
+}
+
+export async function fetchDocTypePermissionsAction(workspaceId?: string): Promise<{
+  success: boolean;
+  groups?: { id: string; code: string; name: string }[];
+  docTypes?: { id: string; code: string; name: string }[];
+  rows?: DmsDocTypePermissionRow[];
+  error?: string;
+}> {
+  try {
+    const actor = await dmsActor();
+    if (!actor.base.admin) return { success: false, error: "Only Design administrators can manage document-type rights." };
+    const wsId = await resolveWorkspaceId(workspaceId);
+    if (!wsId) return { success: false, error: "Workspace not found." };
+
+    let { data: groups } = await supabaseAdmin
+      .from("dms_groups")
+      .select("id, code, name")
+      .eq("workspace_id", wsId)
+      .is("deleted_at", null)
+      .order("name");
+    if (!groups || groups.length === 0) {
+      const defaults = [
+        { workspace_id: wsId, code: "USERS", name: "Users", description: "Standard DMS users", is_system: true },
+        { workspace_id: wsId, code: "QC_APPROVERS", name: "QC Approvers", description: "Quality control reviewers", is_system: true },
+        { workspace_id: wsId, code: "DEAL_MANAGERS", name: "Deal Managers", description: "Workspace managers", is_system: true },
+      ];
+      await supabaseAdmin.from("dms_groups").insert(defaults);
+      const res = await supabaseAdmin.from("dms_groups").select("id, code, name").eq("workspace_id", wsId).is("deleted_at", null).order("name");
+      groups = res.data || [];
+    }
+
+    const [{ data: docTypes }, { data: perms }] = await Promise.all([
+      supabaseAdmin.from("dms_doc_types").select("id, code, name").is("deleted_at", null).order("name"),
+      supabaseAdmin.from("dms_doc_type_permissions").select("*").in("group_id", (groups || []).map((g: any) => g.id)),
+    ]);
+
+    const dtMap = new Map<string, any>((docTypes || []).map((d: any) => [d.id, d]));
+    const gMap = new Map<string, any>((groups || []).map((g: any) => [g.id, g]));
+    const rows: DmsDocTypePermissionRow[] = (perms || []).map((p: any) => ({
+      groupId: p.group_id,
+      groupName: gMap.get(p.group_id)?.name || "",
+      docTypeId: p.doc_type_id,
+      docTypeCode: dtMap.get(p.doc_type_id)?.code || "",
+      docTypeName: dtMap.get(p.doc_type_id)?.name || "",
+      canAdd: !!p.can_add,
+      canView: !!p.can_view,
+      canPrint: !!p.can_print,
+      canEditFields: !!p.can_edit_fields,
+      canDelete: !!p.can_delete,
+      canDownload: !!p.can_download,
+      canEmail: !!p.can_email,
+      isPrivateView: !!p.is_private_view,
+    }));
+
+    return { success: true, groups: groups || [], docTypes: docTypes || [], rows };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not load document-type rights.") };
+  }
+}
+
+export async function saveDocTypePermissionAction(params: {
+  groupId: string;
+  docTypeId: string;
+  canAdd: boolean;
+  canView: boolean;
+  canPrint: boolean;
+  canEditFields: boolean;
+  canDelete: boolean;
+  canDownload: boolean;
+  canEmail: boolean;
+  isPrivateView: boolean;
+}): Promise<Result> {
+  try {
+    const actor = await dmsActor();
+    if (!actor.base.admin) return { success: false, error: "Only Design administrators can change document-type rights." };
+    if (!isUuid(params.groupId) || !isUuid(params.docTypeId)) return { success: false, error: "Invalid group or document type." };
+    const { error } = await supabaseAdmin.from("dms_doc_type_permissions").upsert(
+      {
+        group_id: params.groupId,
+        doc_type_id: params.docTypeId,
+        can_add: !!params.canAdd,
+        can_view: !!params.canView,
+        can_print: !!params.canPrint,
+        can_edit_fields: !!params.canEditFields,
+        can_delete: !!params.canDelete,
+        can_download: !!params.canDownload,
+        can_email: !!params.canEmail,
+        is_private_view: !!params.isPrivateView,
+      },
+      { onConflict: "group_id,doc_type_id" }
+    );
+    if (error) throw error;
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not save document-type rights.") };
   }
 }

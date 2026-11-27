@@ -422,6 +422,36 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       } catch {
         return new NextResponse('Forbidden', { status: 403 });
       }
+      if (isDownload) {
+        try {
+          const { data: docMeta } = await supabaseAdmin
+            .from('dms_documents')
+            .select('title, current_version_no, created_at, folder_id, dms_doc_types ( code ), dms_folders ( rename_pattern )')
+            .eq('id', dmsDocumentId)
+            .maybeSingle();
+          const folderRel: any = Array.isArray((docMeta as any)?.dms_folders) ? (docMeta as any).dms_folders[0] : (docMeta as any)?.dms_folders;
+          const rp = folderRel?.rename_pattern as { separator?: string; parts?: string[] } | null;
+          if (docMeta && rp && Array.isArray(rp.parts) && rp.parts.length > 0) {
+            const sep = ['_', '-', '.'].includes(String(rp.separator)) ? String(rp.separator) : '_';
+            const dtRel: any = Array.isArray((docMeta as any).dms_doc_types) ? (docMeta as any).dms_doc_types[0] : (docMeta as any).dms_doc_types;
+            const { data: fvRows } = await supabaseAdmin.from('dms_field_values').select('field_id, field_value').eq('document_id', dmsDocumentId);
+            const fvMap = new Map<string, string>((fvRows || []).map((r: any) => [String(r.field_id), String(r.field_value || '').trim()]));
+            const tokens = rp.parts.slice(0, 5).map((part) => {
+              const p = String(part || '').trim();
+              if (p === 'docType') return dtRel?.code || '[blank]';
+              if (p === 'title') return (docMeta as any).title || '[blank]';
+              if (p === 'version') return `v${(docMeta as any).current_version_no || 1}`;
+              if (p === 'date') return new Date((docMeta as any).created_at || Date.now()).toISOString().slice(0, 10);
+              return fvMap.get(p) || '[blank]';
+            });
+            const origExt = (attachment.file_name || '').includes('.') ? `.${(attachment.file_name || '').split('.').pop()}` : '';
+            const safeStem = tokens.join(sep).replace(/[\r\n"/\\:*?<>|]/g, '_').replace(/\s+/g, ' ').trim();
+            if (safeStem) attachment.file_name = `${safeStem}${origExt}`;
+          }
+        } catch {
+          // Fall back to original file name if rename pattern lookup fails
+        }
+      }
     }
 
     const cleanFileName = (attachment.file_name || 'attachment').replace(/[\r\n"]/g, '_');

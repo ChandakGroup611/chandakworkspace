@@ -23,9 +23,12 @@ import {
   Key
 } from "lucide-react";
 import {
+  DmsDocTypePermissionRow,
   DmsFolderNode,
   DmsFolderPermissionItem,
+  fetchDocTypePermissionsAction,
   fetchFolderPermissionsAction,
+  saveDocTypePermissionAction,
   saveFolderPermissionsAction
 } from "@/lib/actions/dms-core";
 import { fetchDesignWorkspaceUsersAction } from "@/lib/actions/designTracking";
@@ -60,6 +63,12 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [canManage, setCanManage] = useState<boolean>(false);
+  const [permTab, setPermTab] = useState<"FOLDER" | "DOCTYPE">("FOLDER");
+  const [dtGroups, setDtGroups] = useState<{ id: string; code: string; name: string }[]>([]);
+  const [dtTypes, setDtTypes] = useState<{ id: string; code: string; name: string }[]>([]);
+  const [dtRows, setDtRows] = useState<DmsDocTypePermissionRow[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>("");
+  const [dtLoaded, setDtLoaded] = useState<boolean>(false);
 
   // Multi-select user picker state
   const [isUserPickerOpen, setIsUserPickerOpen] = useState<boolean>(false);
@@ -319,6 +328,112 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          <div className="flex items-center gap-2 border-b border-border pb-2">
+            <button
+              type="button"
+              onClick={() => setPermTab("FOLDER")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${permTab === "FOLDER" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"}`}
+            >
+              Folder Access
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                setPermTab("DOCTYPE");
+                if (!dtLoaded) {
+                  const res = await fetchDocTypePermissionsAction(folder.workspaceId);
+                  if (res.success) {
+                    setDtGroups(res.groups || []);
+                    setDtTypes(res.docTypes || []);
+                    setDtRows(res.rows || []);
+                    if (res.groups?.[0]) setSelectedGroupId(res.groups[0].id);
+                    setDtLoaded(true);
+                  } else if (res.error) {
+                    setErrorMessage(res.error);
+                  }
+                }
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${permTab === "DOCTYPE" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"}`}
+            >
+              Doc-Type Rights (Layer 4)
+            </button>
+          </div>
+
+          {permTab === "DOCTYPE" ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <p className="text-xs text-muted-foreground">
+                  Configure per-group Document-Type permissions (Add, View, Edit, Download, Print, Email, Delete, Private View).
+                </p>
+                <select
+                  aria-label="User group"
+                  value={selectedGroupId}
+                  onChange={(e) => setSelectedGroupId(e.target.value)}
+                  className="text-xs rounded-lg border border-border bg-surface px-2.5 py-1.5"
+                >
+                  {dtGroups.map((g) => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="overflow-x-auto border border-border rounded-lg">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-sunken border-b border-border text-[11px] font-semibold text-muted-foreground">
+                    <tr>
+                      <th className="py-2 px-3">Document Type</th>
+                      <th className="py-2 px-2 text-center">Add</th>
+                      <th className="py-2 px-2 text-center">View</th>
+                      <th className="py-2 px-2 text-center">Edit</th>
+                      <th className="py-2 px-2 text-center">Download</th>
+                      <th className="py-2 px-2 text-center">Print</th>
+                      <th className="py-2 px-2 text-center">Email</th>
+                      <th className="py-2 px-2 text-center">Delete</th>
+                      <th className="py-2 px-2 text-center">Private</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {dtTypes.map((dt) => {
+                      const cur = dtRows.find((r) => r.groupId === selectedGroupId && r.docTypeId === dt.id) || {
+                        groupId: selectedGroupId,
+                        groupName: "",
+                        docTypeId: dt.id,
+                        docTypeCode: dt.code,
+                        docTypeName: dt.name,
+                        canAdd: false,
+                        canView: false,
+                        canPrint: false,
+                        canEditFields: false,
+                        canDelete: false,
+                        canDownload: false,
+                        canEmail: false,
+                        isPrivateView: false,
+                      };
+                      const toggle = async (key: keyof Pick<DmsDocTypePermissionRow, "canAdd" | "canView" | "canEditFields" | "canDownload" | "canPrint" | "canEmail" | "canDelete" | "isPrivateView">) => {
+                        const updated = { ...cur, [key]: !cur[key] };
+                        setDtRows((prev) => {
+                          const exists = prev.some((r) => r.groupId === selectedGroupId && r.docTypeId === dt.id);
+                          return exists ? prev.map((r) => (r.groupId === selectedGroupId && r.docTypeId === dt.id ? updated : r)) : [...prev, updated];
+                        });
+                        const res = await saveDocTypePermissionAction(updated);
+                        if (!res.success) setErrorMessage(res.error || "Could not save document-type right.");
+                      };
+                      return (
+                        <tr key={dt.id}>
+                          <td className="py-2 px-3 font-medium">{dt.name} <span className="text-[10px] font-mono text-muted-foreground">({dt.code})</span></td>
+                          {(["canAdd", "canView", "canEditFields", "canDownload", "canPrint", "canEmail", "canDelete", "isPrivateView"] as const).map((k) => (
+                            <td key={k} className="py-2 px-2 text-center">
+                              <input type="checkbox" checked={!!cur[k]} onChange={() => toggle(k)} aria-label={`${dt.name} ${k}`} />
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+          <>
           {/* Notification Messages */}
           {errorMessage && (
             <div className="p-3 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs flex items-center gap-2">
@@ -708,6 +823,8 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
               </table>
             </div>
           </div>
+          </>
+          )}
         </div>
 
         {/* Footer Actions */}

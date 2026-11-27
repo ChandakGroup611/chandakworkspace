@@ -32,6 +32,7 @@ import {
   Maximize2,
   Trash2,
   Link2,
+  Star,
 } from "lucide-react";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
@@ -47,13 +48,19 @@ import {
   type DmsRights
 } from "@/lib/actions/dms-core";
 import { isUploadedWithin24Hours } from "@/lib/dms/filename-rules";
-import { exportFolderIndexCsvAction, importFolderIndexCsvAction } from "@/lib/actions/dms-extras";
+import {
+  bulkApproveQcAction,
+  exportFolderIndexCsvAction,
+  fetchFavouriteIdsAction,
+  importFolderIndexCsvAction,
+  toggleFavouriteAction,
+} from "@/lib/actions/dms-extras";
 import { DmsSplitIndexingWizard } from "./DmsSplitIndexingWizard";
 import { DmsDocumentPanel, formatBytes } from "./DmsDocumentPanel";
 import { DmsQcQueueView, DmsRecycleBinView } from "./DmsBinAndQcViews";
 import { DmsSearchView } from "./DmsSearchView";
 import { DmsMastersView } from "./DmsMastersView";
-import { DmsSharesView } from "./DmsShares";
+import { DmsShareDialog, DmsSharesView } from "./DmsShares";
 import { DmsFolderPermissionsModal } from "./DmsFolderPermissionsModal";
 import { toast } from "react-toastify";
 
@@ -82,6 +89,9 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [docSearchQuery, setDocSearchQuery] = useState<string>("");
   const [docTypeFilter, setDocTypeFilter] = useState<string>("ALL");
   const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
+  const [favouriteIds, setFavouriteIds] = useState<Set<string>>(new Set());
+  const [favouritesOnly, setFavouritesOnly] = useState<boolean>(false);
+  const [bulkSharing, setBulkSharing] = useState<boolean>(false);
   const [showFieldsMenu, setShowFieldsMenu] = useState<boolean>(false);
   const [visibleCols, setVisibleCols] = useState({
     docType: true,
@@ -95,7 +105,11 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [showCreateFolderModal, setShowCreateFolderModal] = useState<boolean>(false);
   const [newFolderName, setNewFolderName] = useState<string>("");
   const [newFolderApprovalRequired, setNewFolderApprovalRequired] = useState<boolean>(true);
+  const [replicateFromFolderId, setReplicateFromFolderId] = useState<string>("");
   const [isCreatingFolder, setIsCreatingFolder] = useState<boolean>(false);
+  const [editingRenamePattern, setEditingRenamePattern] = useState<boolean>(false);
+  const [renameSep, setRenameSep] = useState<"_" | "-" | ".">("_");
+  const [renameParts, setRenameParts] = useState<string>("docType,title,version");
 
   // Split Indexing Wizard Modal State
   const [showIndexingWizard, setShowIndexingWizard] = useState<boolean>(false);
@@ -113,6 +127,30 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [folderRights, setFolderRights] = useState<DmsRights | null>(null);
   const [docsError, setDocsError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
+
+  const flatFolders = useMemo(() => {
+    const out: { id: string; name: string }[] = [];
+    const walk = (nodes: DmsFolderNode[], prefix = "") => {
+      for (const n of nodes) {
+        const label = prefix ? `${prefix} / ${n.name}` : n.name;
+        out.push({ id: n.id, name: label });
+        if (n.children?.length) walk(n.children, label);
+      }
+    };
+    walk(folders);
+    return out;
+  }, [folders]);
+
+  const displayedDocuments = useMemo(
+    () => (favouritesOnly ? documents.filter((d) => favouriteIds.has(d.id)) : documents),
+    [documents, favouritesOnly, favouriteIds]
+  );
+
+  useEffect(() => {
+    fetchFavouriteIdsAction().then((res) => {
+      if (res.success) setFavouriteIds(new Set(res.ids));
+    });
+  }, []);
 
   // Load Folder Hierarchy on mount
   const loadFolderTree = useCallback(async () => {
@@ -200,11 +238,13 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
         parentId,
         name: newFolderName.trim(),
         approvalRequired: newFolderApprovalRequired,
+        replicateFromFolderId: replicateFromFolderId || undefined,
       });
 
       if (res.success && res.folder) {
         setShowCreateFolderModal(false);
         setNewFolderName("");
+        setReplicateFromFolderId("");
         if (parentId) {
           setExpandedFolderIds((prev) => new Set([...prev, parentId, res.folder!.id]));
         }
@@ -562,11 +602,76 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   <button type="button" onClick={() => handleToggleFolderQc(selectedFolder)} className="text-primary">
                     {selectedFolder.approvalRequired ? "Stop requiring QC" : "Require QC"}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRenameSep(selectedFolder.renamePattern?.separator || "_");
+                      setRenameParts((selectedFolder.renamePattern?.parts || ["docType", "title", "version"]).join(","));
+                      setEditingRenamePattern((v) => !v);
+                    }}
+                    className="text-primary"
+                  >
+                    Download rename
+                  </button>
                   {selectedFolder.parentId && (
                     <button type="button" onClick={() => handleDeleteFolder(selectedFolder)} className="text-danger-text">
                       Delete folder
                     </button>
                   )}
+                </div>
+              )}
+              {selectedFolder && editingRenamePattern && (
+                <div className="mt-2 p-2 rounded-lg border border-border bg-surface/60 flex flex-wrap items-center gap-1.5 text-[11px]">
+                  <span className="font-semibold text-muted-foreground">Auto-rename on download:</span>
+                  <select
+                    aria-label="Download rename separator"
+                    value={renameSep}
+                    onChange={(e) => setRenameSep(e.target.value as "_" | "-" | ".")}
+                    className="rounded border border-border bg-background px-1.5 py-0.5"
+                  >
+                    <option value="_">_</option>
+                    <option value="-">-</option>
+                    <option value=".">.</option>
+                  </select>
+                  <input
+                    value={renameParts}
+                    onChange={(e) => setRenameParts(e.target.value)}
+                    placeholder="docType,title,version,date"
+                    className="flex-1 min-w-[160px] rounded border border-border bg-background px-2 py-0.5"
+                    title="Up to 5 tokens: docType, title, version, date, or field UUID"
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const parts = renameParts.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 5);
+                      const res = await updateFolderAction({
+                        folderId: selectedFolder.id,
+                        renamePattern: parts.length ? { separator: renameSep, parts } : null,
+                      });
+                      if (res.success) {
+                        toast.success(parts.length ? "Download rename pattern saved" : "Download rename cleared");
+                        setEditingRenamePattern(false);
+                        await loadFolderTree();
+                      } else toast.error(res.error);
+                    }}
+                    className="px-2 py-0.5 rounded bg-primary text-primary-foreground font-semibold"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const res = await updateFolderAction({ folderId: selectedFolder.id, renamePattern: null });
+                      if (res.success) {
+                        toast.success("Download rename cleared");
+                        setEditingRenamePattern(false);
+                        await loadFolderTree();
+                      }
+                    }}
+                    className="px-2 py-0.5 rounded border border-border text-muted-foreground"
+                  >
+                    Clear
+                  </button>
                 </div>
               )}
             </div>
@@ -607,6 +712,33 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   >
                     Print
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const approved = documents.filter((d) => selectedDocIds.has(d.id) && d.approvalStatus === "APPROVED" && d.rights?.email);
+                      if (approved.length === 0) return toast.info("Select at least one QC-approved document you can share.");
+                      setBulkSharing(true);
+                    }}
+                    className="px-2 py-0.5 rounded bg-surface border border-border font-medium hover:bg-surface/80"
+                  >
+                    Share
+                  </button>
+                  {folderRights?.qc && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const res = await bulkApproveQcAction(Array.from(selectedDocIds), "Bulk approved from folder");
+                        if (res.success) {
+                          toast.success(`Approved ${res.approved} document(s)${res.skipped ? ` (${res.skipped} skipped)` : ""}`);
+                          setSelectedDocIds(new Set());
+                          loadFolderDocuments();
+                        } else toast.error(res.error || "Bulk QC approval failed");
+                      }}
+                      className="px-2 py-0.5 rounded bg-success-solid text-white font-medium hover:brightness-95"
+                    >
+                      Approve QC
+                    </button>
+                  )}
                   {folderRights?.delete && (
                     <button
                       type="button"
@@ -628,6 +760,20 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   )}
                 </div>
               )}
+
+              <button
+                type="button"
+                onClick={() => setFavouritesOnly((v) => !v)}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium ${
+                  favouritesOnly
+                    ? "border-amber-500/50 bg-amber-500/10 text-amber-600"
+                    : "border-border bg-surface text-foreground hover:bg-surface/80"
+                }`}
+                title="Show only favourite documents"
+              >
+                <Star className={`h-3.5 w-3.5 ${favouritesOnly ? "fill-amber-500 text-amber-500" : "text-muted-foreground"}`} />
+                <span>Favourites</span>
+              </button>
 
               <div className="relative">
                 <button
@@ -779,12 +925,12 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                       Loading folder documents…
                     </td>
                   </tr>
-                ) : documents.length === 0 ? (
+                  ) : displayedDocuments.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-muted-foreground space-y-2">
                       <FileText className="h-8 w-8 mx-auto opacity-40" />
-                      <p className="font-medium text-xs">No documents in this folder.</p>
-                      {folderRights?.upload && (
+                      <p className="font-medium text-xs">{favouritesOnly ? "No favourite documents in this folder." : "No documents in this folder."}</p>
+                      {!favouritesOnly && folderRights?.upload && (
                         <button type="button"
                           onClick={() => setShowIndexingWizard(true)}
                           className="text-[11px] text-primary font-semibold hover:underline"
@@ -795,7 +941,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                     </td>
                   </tr>
                 ) : (
-                  documents.map((doc) => (
+                  displayedDocuments.map((doc) => (
                     <tr
                       key={doc.id}
                       onClick={() => setSelectedDoc(doc)}
@@ -885,6 +1031,26 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
                       <td className="py-2.5 px-3 text-right">
                         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const res = await toggleFavouriteAction(doc.id);
+                              if (res.success) {
+                                setFavouriteIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (res.isFavourite) next.add(doc.id);
+                                  else next.delete(doc.id);
+                                  return next;
+                                });
+                                toast.success(res.isFavourite ? "Added to Favourites" : "Removed from Favourites");
+                              } else toast.error(res.error);
+                            }}
+                            className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-amber-500 cursor-pointer"
+                            title={favouriteIds.has(doc.id) ? "Remove favourite" : "Mark favourite"}
+                            aria-label={favouriteIds.has(doc.id) ? "Remove favourite" : "Mark favourite"}
+                          >
+                            <Star className={`h-3.5 w-3.5 ${favouriteIds.has(doc.id) ? "fill-amber-500 text-amber-500" : ""}`} />
+                          </button>
                           <button aria-label="View document preview"
                             type="button"
                             onClick={() => setSelectedDoc(doc)}
@@ -968,6 +1134,27 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   onChange={(e) => setNewFolderApprovalRequired(e.target.checked)}
                   className="h-4 w-4 rounded-sm border-border text-primary focus:ring-ring"
                 />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground">
+                  Copy settings from folder (optional)
+                </label>
+                <select
+                  value={replicateFromFolderId}
+                  onChange={(e) => setReplicateFromFolderId(e.target.value)}
+                  className="w-full mt-1 text-xs rounded-lg bg-surface border border-border p-2 text-foreground"
+                >
+                  <option value="">None (start with defaults)</option>
+                  {flatFolders.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Copies QC, auto-index, and download rename settings (user permissions are not copied).
+                </p>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
@@ -1236,7 +1423,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           <aside className="w-full lg:w-[360px] shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-surface overflow-y-auto">
             <DmsDocumentPanel
               documentId={selectedDoc.id}
-              folders={folders.map((f) => ({ id: f.id, name: f.name }))}
+              folders={flatFolders}
+              folderDocs={documents.filter((d) => d.id !== selectedDoc.id).map((d) => ({ id: d.id, title: d.title }))}
               onChanged={(updated) => {
                 loadFolderDocuments();
                 loadFolderTree();
@@ -1247,6 +1435,19 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           </aside>
           </div>
         </div>
+      )}
+
+      {bulkSharing && (
+        <DmsShareDialog
+          documents={documents
+            .filter((d) => selectedDocIds.has(d.id) && d.approvalStatus === "APPROVED" && d.rights?.email)
+            .map((d) => ({ id: d.id, title: d.title }))}
+          onClose={() => setBulkSharing(false)}
+          onCreated={() => {
+            setBulkSharing(false);
+            setSelectedDocIds(new Set());
+          }}
+        />
       )}
     </div>
   );

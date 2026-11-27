@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Clock, Download, EyeOff, History, Link2, Lock, Star, Trash2, Unlock, Upload, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Download, EyeOff, History, Link2, Lock, Pencil, Star, Trash2, Unlock, Upload, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import {
   deleteDocumentAction,
@@ -9,6 +9,7 @@ import {
   lockUnlockDocumentAction,
   moveDocumentAction,
   submitQcDecisionAction,
+  updateDocumentAction,
   uploadDocumentVersionAction,
   type DmsActivityItem,
   type DmsDocumentSummary,
@@ -55,12 +56,13 @@ const ACTION_LABEL: Record<string, string> = {
 interface Props {
   documentId: string;
   folders?: { id: string; name: string }[];
+  folderDocs?: { id: string; title: string }[];
   /** called after any change, with the refreshed summary (or null when the document left the folder) */
   onChanged: (doc: DmsDocumentSummary | null) => void;
 }
 
 /** Side panel for one document: details, versions, check-out and check-in, QC and delete. */
-export function DmsDocumentPanel({ documentId, folders = [], onChanged }: Props) {
+export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], onChanged }: Props) {
   const [doc, setDoc] = useState<DmsDocumentSummary | null>(null);
   const [versions, setVersions] = useState<DmsVersionItem[]>([]);
   const [fields, setFields] = useState<{ id: string; label: string; value: string }[]>([]);
@@ -81,6 +83,9 @@ export function DmsDocumentPanel({ documentId, folders = [], onChanged }: Props)
   const [docLinks, setDocLinks] = useState<DmsDocumentLinkItem[]>([]);
   const [linkTargetId, setLinkTargetId] = useState("");
   const [linkNote, setLinkNote] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editFields, setEditFields] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     const [res, favs, fTags, dLinks] = await Promise.all([
@@ -191,6 +196,21 @@ export function DmsDocumentPanel({ documentId, folders = [], onChanged }: Props)
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold disabled:opacity-50"
             >
               <Lock className="h-3.5 w-3.5" /> Check out
+            </button>
+          )}
+          {r.edit && !lockedByOther && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setEditTitle(doc.title);
+                setEditFields(Object.fromEntries(fields.map((f) => [f.id, f.value || ""])));
+                setEditing((v) => !v);
+                setTab("details");
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold disabled:opacity-50"
+            >
+              <Pencil className="h-3.5 w-3.5" /> {editing ? "Close edit" : "Edit details"}
             </button>
           )}
           {doc.isLocked && (doc.lockedByMe || r.admin) && (
@@ -358,6 +378,53 @@ export function DmsDocumentPanel({ documentId, folders = [], onChanged }: Props)
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {tab === "details" && editing && r.edit && !lockedByOther && (
+          <div className="rounded-lg border border-primary/40 bg-accent-soft/30 p-2.5 space-y-2">
+            <div className="text-[11px] font-semibold text-foreground">Edit document details</div>
+            <label className="block space-y-1">
+              <span className="text-[11px] text-muted-foreground">Title</span>
+              <input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
+              />
+            </label>
+            {fields.map((f) => (
+              <label key={f.id} className="block space-y-1">
+                <span className="text-[11px] text-muted-foreground">{f.label}</span>
+                <input
+                  value={editFields[f.id] ?? ""}
+                  onChange={(e) => setEditFields((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                  className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
+                />
+              </label>
+            ))}
+            <div className="flex justify-end gap-1.5">
+              <button type="button" onClick={() => setEditing(false)} className="px-2.5 py-1 rounded border border-border text-[11px]">
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busy || !editTitle.trim()}
+                onClick={async () => {
+                  const ok = await run(
+                    () =>
+                      updateDocumentAction({
+                        documentId: doc.id,
+                        title: editTitle.trim(),
+                        fieldValues: fields.length ? editFields : undefined,
+                      }),
+                    "Document details updated."
+                  );
+                  if (ok) setEditing(false);
+                }}
+                className="px-2.5 py-1 rounded bg-primary text-primary-foreground text-[11px] font-semibold disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        )}
         {tab === "details" && (
           <div className="flex flex-wrap items-center gap-1.5 pb-1">
             <button
@@ -457,17 +524,33 @@ export function DmsDocumentPanel({ documentId, folders = [], onChanged }: Props)
             )}
             {r.edit && (
               <div className="flex items-center gap-1 pt-1">
-                <input
-                  value={linkTargetId}
-                  onChange={(e) => setLinkTargetId(e.target.value)}
-                  placeholder="Target Document UUID"
-                  className="flex-1 min-w-0 rounded border border-border bg-background px-2 py-1 text-[11px]"
-                />
+                {folderDocs.length > 0 ? (
+                  <select
+                    value={linkTargetId}
+                    onChange={(e) => setLinkTargetId(e.target.value)}
+                    aria-label="Target document"
+                    className="flex-1 min-w-0 rounded border border-border bg-background px-2 py-1 text-[11px]"
+                  >
+                    <option value="">Choose document to link…</option>
+                    {folderDocs.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.title}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    value={linkTargetId}
+                    onChange={(e) => setLinkTargetId(e.target.value)}
+                    placeholder="Target Document UUID"
+                    className="flex-1 min-w-0 rounded border border-border bg-background px-2 py-1 text-[11px]"
+                  />
+                )}
                 <input
                   value={linkNote}
                   onChange={(e) => setLinkNote(e.target.value)}
-                  placeholder="Note"
-                  className="w-20 rounded border border-border bg-background px-2 py-1 text-[11px]"
+                  placeholder="Type / Note"
+                  className="w-24 rounded border border-border bg-background px-2 py-1 text-[11px]"
                 />
                 <button
                   type="button"
