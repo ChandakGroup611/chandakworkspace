@@ -811,11 +811,21 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
                       </span>
                     )}
                   </span>
-                  {r.download && (
-                    <a href={`/api/proxy-attachment/${v.id}?download=1`} className="inline-flex items-center gap-1 text-primary">
-                      <Download className="h-3 w-3" /> {formatBytes(v.fileSizeBytes)}
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`/api/proxy-attachment/${v.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-foreground hover:text-primary"
+                    >
+                      Open
                     </a>
-                  )}
+                    {r.download && (
+                      <a href={`/api/proxy-attachment/${v.id}?download=1`} className="inline-flex items-center gap-1 text-primary">
+                        <Download className="h-3 w-3" /> {formatBytes(v.fileSizeBytes)}
+                      </a>
+                    )}
+                  </div>
                 </div>
                 <div className="text-muted-foreground truncate">{v.fileName}</div>
                 {v.changeNote && <div className="text-foreground">{v.changeNote}</div>}

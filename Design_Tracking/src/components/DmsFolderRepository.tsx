@@ -130,9 +130,11 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
   // Selected document detail drawer & in-app viewer modal
   const [selectedDoc, setSelectedDoc] = useState<DmsDocumentSummary | null>(null);
+  const [docModalMode, setDocModalMode] = useState<"PREVIEW" | "DETAILS">("PREVIEW");
   const [panelInitialTab, setPanelInitialTab] = useState<"details" | "versions" | "activity">("details");
   const [panelInitialEditing, setPanelInitialEditing] = useState<boolean>(false);
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+  const [actionMenuPos, setActionMenuPos] = useState<{ top: number; right: number } | null>(null);
   const [docViewerZoom, setDocViewerZoom] = useState<number>(1);
 
   // Which list the main area shows, and what the person may do in the open folder
@@ -153,6 +155,28 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
     walk(folders);
     return out;
   }, [folders]);
+
+  const folderBreadcrumb = useMemo(() => {
+    if (!selectedFolder) return [] as DmsFolderNode[];
+    const pathNodes: DmsFolderNode[] = [];
+    const findPath = (nodes: DmsFolderNode[], targetId: string): boolean => {
+      for (const n of nodes) {
+        pathNodes.push(n);
+        if (n.id === targetId) return true;
+        if (n.children?.length && findPath(n.children, targetId)) return true;
+        pathNodes.pop();
+      }
+      return false;
+    };
+    findPath(folders, selectedFolder.id);
+    return pathNodes;
+  }, [folders, selectedFolder]);
+
+  const currentSubfolders = useMemo(() => {
+    const list = selectedFolder ? selectedFolder.children || [] : folders;
+    const q = folderSearchQuery.trim().toLowerCase();
+    return q ? list.filter((f) => f.name.toLowerCase().includes(q)) : list;
+  }, [folders, selectedFolder, folderSearchQuery]);
 
   const displayedDocuments = useMemo(
     () => (favouritesOnly ? documents.filter((d) => favouriteIds.has(d.id)) : documents),
@@ -479,51 +503,132 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
         </div>
       </div>
 
-      {/* 2. MAIN SPLIT REPOSITORY LAYOUT */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-        {/* LEFT PANEL: FOLDER HIERARCHY TREE */}
-        <aside className="md:col-span-4 lg:col-span-3 bg-surface border border-border rounded-lg p-3.5 space-y-3 shadow-xs">
-          <div className="flex items-center justify-between pb-2 border-b border-border">
-            <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-              <FolderTree className="h-3.5 w-3.5 text-primary" />
-              <span>Folder hierarchy</span>
-            </span>
-            <button aria-label="Refresh tree" type="button"
-              onClick={loadFolderTree}
-              className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground"
-              title="Refresh tree"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          {/* Folder Search */}
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <input
-              type="text"
-              value={folderSearchQuery}
-              onChange={(e) => setFolderSearchQuery(e.target.value)}
-              placeholder="Search folders…"
-              className="w-full text-xs rounded-lg bg-surface border border-border pl-8 pr-3 py-1.5 text-foreground focus:ring-1 focus:ring-ring"
-            />
-          </div>
-
-          {/* Folder Tree Scroll Area */}
-          <div className="space-y-0.5 max-h-[600px] overflow-y-auto pr-1">
-            {folders.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground space-y-1">
-                <Folder className="h-6 w-6 mx-auto opacity-40 text-warning-text" />
-                <p className="text-xs">No folders created yet.</p>
+      {/* 2. FULL-WIDTH FOLDER NAVIGATOR (BREADCRUMB + SUBFOLDERS) & DOCUMENT REGISTER */}
+      <div className="space-y-4">
+        {view === "FOLDER" && (
+          <section className="bg-surface border border-border rounded-lg p-3.5 space-y-3 shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-border">
+              <div className="flex flex-wrap items-center gap-1 text-xs">
+                <FolderTree className="h-3.5 w-3.5 text-primary mr-1" />
+                {folderBreadcrumb.length === 0 ? (
+                  <span className="font-semibold text-foreground">All Folders</span>
+                ) : (
+                  folderBreadcrumb.map((node, idx) => (
+                    <React.Fragment key={node.id}>
+                      {idx > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (node.canOpen !== false) setSelectedFolder(node);
+                        }}
+                        className={`px-1.5 py-0.5 rounded hover:bg-sunken transition-colors ${
+                          idx === folderBreadcrumb.length - 1 ? "font-semibold text-primary bg-accent-soft" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {node.name}
+                      </button>
+                    </React.Fragment>
+                  ))
+                )}
               </div>
-            ) : (
-              folders.map((f) => renderFolderNode(f))
-            )}
-          </div>
-        </aside>
+              <div className="flex items-center gap-2">
+                <select
+                  aria-label="Jump to folder"
+                  value={selectedFolder?.id || ""}
+                  onChange={(e) => {
+                    const targetId = e.target.value;
+                    const findNode = (nodes: DmsFolderNode[]): DmsFolderNode | null => {
+                      for (const n of nodes) {
+                        if (n.id === targetId) return n;
+                        const c = n.children?.length ? findNode(n.children) : null;
+                        if (c) return c;
+                      }
+                      return null;
+                    };
+                    const found = findNode(folders);
+                    if (found && found.canOpen !== false) setSelectedFolder(found);
+                  }}
+                  className="text-xs rounded-lg bg-surface border border-border px-2.5 py-1 text-foreground"
+                >
+                  {flatFolders.map((f) => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+                <div className="relative w-40 sm:w-48">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={folderSearchQuery}
+                    onChange={(e) => setFolderSearchQuery(e.target.value)}
+                    placeholder="Filter subfolders…"
+                    className="w-full text-xs rounded-lg bg-surface border border-border pl-8 pr-2.5 py-1 text-foreground focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+                <button
+                  aria-label="Refresh folders"
+                  type="button"
+                  onClick={loadFolderTree}
+                  className="p-1.5 hover:bg-sunken rounded-md text-muted-foreground hover:text-foreground border border-border"
+                  title="Refresh folders"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
 
-        {/* MAIN STAGE: DOCUMENT REGISTER TABLE */}
-        <main className="md:col-span-8 lg:col-span-9 bg-surface border border-border rounded-lg p-4 space-y-4 shadow-xs">
+            {currentSubfolders.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {currentSubfolders.map((sub) => (
+                  <div
+                    key={sub.id}
+                    onClick={() => {
+                      if (sub.canOpen !== false) setSelectedFolder(sub);
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+                        e.preventDefault();
+                        (e.currentTarget as HTMLElement).click();
+                      }
+                    }}
+                    className="group flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border border-border bg-surface hover:bg-sunken hover:border-primary/40 cursor-pointer transition-all text-xs"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Folder className="h-4 w-4 shrink-0 text-warning-text fill-warning" />
+                      <span className="font-medium truncate text-foreground">{sub.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {sub.documentCount !== undefined && sub.documentCount > 0 && (
+                        <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded-full bg-sunken border border-border">
+                          {sub.documentCount}
+                        </span>
+                      )}
+                      {sub.canOpen !== false && (
+                        <button
+                          aria-label="Folder access & permissions"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFolderForPermissions(sub);
+                            setShowPermissionsModal(true);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-accent-soft text-muted-foreground hover:text-primary transition-opacity"
+                          title="Folder access & permissions"
+                        >
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* MAIN STAGE: FULL-WIDTH DOCUMENT REGISTER TABLE */}
+        <main className="w-full bg-surface border border-border rounded-lg p-4 space-y-4 shadow-xs">
           {view !== "FOLDER" ? (
             <>
               <div className="flex items-center justify-between pb-3 border-b border-border">
@@ -1096,107 +1201,160 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() => setOpenActionMenuId((cur) => (cur === doc.id ? null : doc.id))}
+                            onClick={(e) => {
+                              if (openActionMenuId === doc.id) {
+                                setOpenActionMenuId(null);
+                                setActionMenuPos(null);
+                              } else {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const menuHeight = 290;
+                                const openUp = rect.bottom + menuHeight > window.innerHeight - 16;
+                                setActionMenuPos({
+                                  top: openUp ? Math.max(12, rect.top - menuHeight) : rect.bottom + 4,
+                                  right: Math.max(12, window.innerWidth - rect.right),
+                                });
+                                setOpenActionMenuId(doc.id);
+                              }
+                            }}
                             className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-border bg-surface text-[11px] font-semibold text-foreground hover:bg-sunken cursor-pointer"
                             title="Document actions"
                           >
                             <span>Actions</span>
                             <ChevronDown className="h-3 w-3" />
                           </button>
-                          {openActionMenuId === doc.id && (
-                            <div className="absolute right-0 top-full mt-1 z-40 w-48 rounded-lg border border-border bg-elevated shadow-lg py-1 text-left text-xs">
-                              <button
-                                type="button"
+                          {openActionMenuId === doc.id && actionMenuPos && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-50"
                                 onClick={() => {
                                   setOpenActionMenuId(null);
-                                  setPanelInitialTab("details");
-                                  setPanelInitialEditing(false);
-                                  setSelectedDoc(doc);
+                                  setActionMenuPos(null);
                                 }}
-                                className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
+                              />
+                              <div
+                                style={{ top: actionMenuPos.top, right: actionMenuPos.right }}
+                                className="fixed z-50 w-52 rounded-lg border border-border bg-elevated shadow-xl py-1 text-left text-xs"
                               >
-                                <Eye className="h-3.5 w-3.5 text-primary" /> Preview
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenActionMenuId(null);
-                                  setPanelInitialTab("details");
-                                  setPanelInitialEditing(false);
-                                  setSelectedDoc(doc);
-                                }}
-                                className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
-                              >
-                                <Info className="h-3.5 w-3.5 text-primary" /> Information
-                              </button>
-                              {doc.rights?.edit && (!doc.isLocked || doc.lockedByMe) && (
                                 <button
                                   type="button"
                                   onClick={() => {
                                     setOpenActionMenuId(null);
+                                    setActionMenuPos(null);
+                                    setDocModalMode("PREVIEW");
                                     setPanelInitialTab("details");
-                                    setPanelInitialEditing(true);
+                                    setPanelInitialEditing(false);
                                     setSelectedDoc(doc);
                                   }}
                                   className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
                                 >
-                                  <FileText className="h-3.5 w-3.5 text-primary" /> Edit &amp; Indexing
+                                  <Eye className="h-3.5 w-3.5 text-primary" /> Preview
                                 </button>
-                              )}
-                              {(doc.rights?.upload || doc.rights?.edit) && (!doc.isLocked || doc.lockedByMe) && (
                                 <button
                                   type="button"
                                   onClick={() => {
                                     setOpenActionMenuId(null);
-                                    setVersionUploadDoc(doc);
-                                    setVersionFile(null);
-                                    setVersionWhatChanged("");
-                                    setVersionRemark("");
+                                    setActionMenuPos(null);
+                                    setDocModalMode("DETAILS");
+                                    setPanelInitialTab("details");
+                                    setPanelInitialEditing(false);
+                                    setSelectedDoc(doc);
                                   }}
                                   className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
                                 >
-                                  <Upload className="h-3.5 w-3.5 text-primary" /> Data Versioning (+ v{doc.currentVersionNo + 1})
+                                  <Info className="h-3.5 w-3.5 text-primary" /> Information
                                 </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenActionMenuId(null);
-                                  setPanelInitialTab("activity");
-                                  setPanelInitialEditing(false);
-                                  setSelectedDoc(doc);
-                                }}
-                                className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
-                              >
-                                <Clock className="h-3.5 w-3.5 text-primary" /> File Status / Audit
-                              </button>
-                              {doc.rights?.download && (
-                                <a
-                                  href={`/api/proxy-attachment/${doc.id}?download=1`}
-                                  onClick={() => setOpenActionMenuId(null)}
-                                  className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
-                                >
-                                  <Download className="h-3.5 w-3.5 text-primary" /> Download
-                                </a>
-                              )}
-                              {doc.rights?.delete && (!doc.isLocked || doc.lockedByMe) && (
+                                {doc.rights?.edit && (!doc.isLocked || doc.lockedByMe) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenActionMenuId(null);
+                                      setActionMenuPos(null);
+                                      setDocModalMode("DETAILS");
+                                      setPanelInitialTab("details");
+                                      setPanelInitialEditing(true);
+                                      setSelectedDoc(doc);
+                                    }}
+                                    className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
+                                  >
+                                    <FileText className="h-3.5 w-3.5 text-primary" /> Edit &amp; Indexing
+                                  </button>
+                                )}
                                 <button
                                   type="button"
-                                  onClick={async () => {
+                                  onClick={() => {
                                     setOpenActionMenuId(null);
-                                    const res = await deleteDocumentAction(doc.id);
-                                    if (res.success) {
-                                      toast.success("Moved to recycle bin");
-                                      loadFolderDocuments();
-                                      loadFolderTree();
-                                    } else toast.error(res.error || "Could not delete document.");
+                                    setActionMenuPos(null);
+                                    setDocModalMode("DETAILS");
+                                    setPanelInitialTab("versions");
+                                    setPanelInitialEditing(false);
+                                    setSelectedDoc(doc);
                                   }}
-                                  className="w-full px-3 py-1.5 hover:bg-danger-soft/50 flex items-center gap-2 text-danger-text"
+                                  className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                                  <Layers className="h-3.5 w-3.5 text-primary" /> Versions (v{doc.currentVersionNo} Live)
                                 </button>
-                              )}
-                            </div>
+                                {(doc.rights?.upload || doc.rights?.edit) && (!doc.isLocked || doc.lockedByMe) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenActionMenuId(null);
+                                      setActionMenuPos(null);
+                                      setVersionUploadDoc(doc);
+                                      setVersionFile(null);
+                                      setVersionWhatChanged("");
+                                      setVersionRemark("");
+                                    }}
+                                    className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
+                                  >
+                                    <Upload className="h-3.5 w-3.5 text-primary" /> Data Versioning (+ v{doc.currentVersionNo + 1})
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenActionMenuId(null);
+                                    setActionMenuPos(null);
+                                    setDocModalMode("DETAILS");
+                                    setPanelInitialTab("activity");
+                                    setPanelInitialEditing(false);
+                                    setSelectedDoc(doc);
+                                  }}
+                                  className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
+                                >
+                                  <Clock className="h-3.5 w-3.5 text-primary" /> File Status / Audit
+                                </button>
+                                {doc.rights?.download && (
+                                  <a
+                                    href={`/api/proxy-attachment/${doc.id}?download=1`}
+                                    onClick={() => {
+                                      setOpenActionMenuId(null);
+                                      setActionMenuPos(null);
+                                    }}
+                                    className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
+                                  >
+                                    <Download className="h-3.5 w-3.5 text-primary" /> Download
+                                  </a>
+                                )}
+                                {doc.rights?.delete && (!doc.isLocked || doc.lockedByMe) && (
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      setOpenActionMenuId(null);
+                                      setActionMenuPos(null);
+                                      const res = await deleteDocumentAction(doc.id);
+                                      if (res.success) {
+                                        toast.success("Moved to recycle bin");
+                                        loadFolderDocuments();
+                                        loadFolderTree();
+                                      } else toast.error(res.error || "Could not delete document.");
+                                    }}
+                                    className="w-full px-3 py-1.5 hover:bg-danger-soft/50 flex items-center gap-2 text-danger-text"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                                  </button>
+                                )}
+                              </div>
+                            </>
                           )}
                         </div>
                       </td>
@@ -1373,32 +1531,53 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
             {/* Actions */}
             <div className="flex items-center gap-2 shrink-0">
-              <div className="flex items-center gap-1 bg-surface border border-border rounded-lg px-2 py-1 mr-2">
-                <button aria-label="Zoom out" type="button"
-                  onClick={() => setDocViewerZoom((z) => Math.max(0.4, Number((z - 0.15).toFixed(2))))}
-                  className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
-                  title="Zoom out"
+              {docModalMode === "PREVIEW" ? (
+                <>
+                  <div className="flex items-center gap-1 bg-surface border border-border rounded-lg px-2 py-1 mr-1">
+                    <button aria-label="Zoom out" type="button"
+                      onClick={() => setDocViewerZoom((z) => Math.max(0.4, Number((z - 0.15).toFixed(2))))}
+                      className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
+                      title="Zoom out"
+                    >
+                      <ZoomOut className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="text-[11px] font-mono font-medium px-1 text-foreground min-w-[36px] text-center">
+                      {Math.round(docViewerZoom * 100)}%
+                    </span>
+                    <button aria-label="Zoom in" type="button"
+                      onClick={() => setDocViewerZoom((z) => Math.min(2.5, Number((z + 0.15).toFixed(2))))}
+                      className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
+                      title="Zoom in"
+                    >
+                      <ZoomIn className="h-3.5 w-3.5" />
+                    </button>
+                    <button aria-label="Reset (100%)" type="button"
+                      onClick={() => setDocViewerZoom(1)}
+                      className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
+                      title="Reset (100%)"
+                    >
+                      <Maximize2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDocModalMode("DETAILS")}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-sunken text-foreground inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Info className="h-3.5 w-3.5 text-primary" />
+                    <span>Information &amp; Audit</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setDocModalMode("PREVIEW")}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-sunken text-foreground inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  <ZoomOut className="h-3.5 w-3.5" />
+                  <Eye className="h-3.5 w-3.5 text-primary" />
+                  <span>Preview Document</span>
                 </button>
-                <span className="text-[11px] font-mono font-medium px-1 text-foreground min-w-[36px] text-center">
-                  {Math.round(docViewerZoom * 100)}%
-                </span>
-                <button aria-label="Zoom in" type="button"
-                  onClick={() => setDocViewerZoom((z) => Math.min(2.5, Number((z + 0.15).toFixed(2))))}
-                  className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
-                  title="Zoom in"
-                >
-                  <ZoomIn className="h-3.5 w-3.5" />
-                </button>
-                <button aria-label="Reset (100%)" type="button"
-                  onClick={() => setDocViewerZoom(1)}
-                  className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
-                  title="Reset (100%)"
-                >
-                  <Maximize2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              )}
 
               <a
                 href={`/api/proxy-attachment/${selectedDoc.id}`}
@@ -1411,19 +1590,36 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                 <span>Open in tab</span>
               </a>
 
-
-
               <button aria-label="Close viewer" type="button"
                 onClick={() => setSelectedDoc(null)}
-                className="p-1.5 hover:bg-surface text-muted-foreground hover:text-foreground rounded-lg ml-2 cursor-pointer"
-                title="Close viewer"
+                className="p-1.5 hover:bg-surface text-muted-foreground hover:text-foreground rounded-lg ml-1 cursor-pointer"
+                title="Close"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
           </header>
 
-          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          {docModalMode === "DETAILS" ? (
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-muted/10 flex justify-center">
+              <div className="w-full max-w-3xl bg-surface border border-border rounded-xl shadow-sm overflow-hidden">
+                <DmsDocumentPanel
+                  documentId={selectedDoc.id}
+                  folders={flatFolders}
+                  folderDocs={documents.filter((d) => d.id !== selectedDoc.id).map((d) => ({ id: d.id, title: d.title }))}
+                  initialTab={panelInitialTab}
+                  initialEditing={panelInitialEditing}
+                  onChanged={(updated) => {
+                    loadFolderDocuments();
+                    loadFolderTree();
+                    if (updated) setSelectedDoc(updated);
+                    else setSelectedDoc(null);
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+          <div className="flex-1 flex flex-col overflow-hidden">
           {/* Viewer Stage */}
           <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-muted/10 relative">
             {(() => {
@@ -1512,22 +1708,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               );
             })()}
           </div>
-          <aside className="w-full lg:w-[360px] shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-surface overflow-y-auto">
-            <DmsDocumentPanel
-              documentId={selectedDoc.id}
-              folders={flatFolders}
-              folderDocs={documents.filter((d) => d.id !== selectedDoc.id).map((d) => ({ id: d.id, title: d.title }))}
-              initialTab={panelInitialTab}
-              initialEditing={panelInitialEditing}
-              onChanged={(updated) => {
-                loadFolderDocuments();
-                loadFolderTree();
-                if (updated) setSelectedDoc(updated);
-                else setSelectedDoc(null);
-              }}
-            />
-          </aside>
           </div>
+          )}
         </div>
       )}
 
