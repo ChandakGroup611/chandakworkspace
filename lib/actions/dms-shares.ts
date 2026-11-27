@@ -125,6 +125,8 @@ export async function createShareAction(params: {
   recipientEmail: string;
   recipientPhone?: string;
   expiresInDays: number;
+  expiresInHours?: number;
+  expiresInMinutes?: number;
   allowDownload: boolean;
   maxDownloads?: number | null;
   usePassword: boolean;
@@ -139,8 +141,12 @@ export async function createShareAction(params: {
     const wsId = await resolveWorkspaceId(params.workspaceId);
     if (!wsId) return { success: false, error: "Workspace not found." };
     const ids = Array.from(new Set((params.documentIds || []).filter(isUuid)));
-    const days = Math.min(Math.max(Math.round(Number(params.expiresInDays) || 0), 1), 365);
-    const expiresAt = new Date(Date.now() + days * 86400_000).toISOString();
+    const rawMinutes =
+      Math.max(0, Math.round(Number(params.expiresInDays) || 0)) * 1440 +
+      Math.max(0, Math.round(Number(params.expiresInHours) || 0)) * 60 +
+      Math.max(0, Math.round(Number(params.expiresInMinutes) || 0));
+    const totalMinutes = Math.min(Math.max(rawMinutes, 1), 365 * 1440);
+    const expiresAt = new Date(Date.now() + totalMinutes * 60_000).toISOString();
     const token = newLinkToken();
     const password = params.usePassword ? newSharePassword() : null;
     const maxDl = params.allowDownload && params.maxDownloads ? Math.max(Math.round(Number(params.maxDownloads)), 1) : null;
@@ -179,7 +185,7 @@ export async function createShareAction(params: {
         `${params.message ? `<p style="white-space:pre-wrap;border-left:3px solid #cbd5e1;padding-left:10px">${escapeHtml(params.message)}</p>` : ""}
 <ul>${list}${more}</ul>
 <p><a href="${url}" style="display:inline-block;background:#1d4ed8;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none">Open the documents</a></p>
-<p style="font-size:12px;color:#64748b">You will be asked for this email address and a one-time code that we send here.${password ? " You also need a password, which the sender will give you separately." : ""} The link works until ${new Date(expiresAt).toLocaleDateString("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" })}. Do not forward it: it only works for you.</p>`
+<p style="font-size:12px;color:#64748b">You will be asked for this email address and a one-time code that we send here.${password ? " You also need a password, which the sender will give you separately." : ""} The link works until ${new Date(expiresAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })} IST. Do not forward it: it only works for you.</p>`
       )
     );
     return { success: true, shareId: shareId as string, url, password, expiresAt };

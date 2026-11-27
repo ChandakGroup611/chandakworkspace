@@ -57,6 +57,8 @@ export function DmsShareDialog({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [days, setDays] = useState(7);
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
   const [allowDownload, setAllowDownload] = useState(false);
   const [maxDownloads, setMaxDownloads] = useState<string>("");
   const [usePassword, setUsePassword] = useState(false);
@@ -78,6 +80,16 @@ export function DmsShareDialog({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const totalMinutes = days * 1440 + hours * 60 + minutes;
+    if (totalMinutes < 1) {
+      setError("Set a link duration of at least 1 minute.");
+      return;
+    }
+    const maxDays = policy?.maxDays || 30;
+    if (totalMinutes > maxDays * 1440) {
+      setError(`Link duration cannot exceed ${maxDays} days.`);
+      return;
+    }
     setBusy(true);
     setError("");
     const r = await createShareAction({
@@ -85,6 +97,8 @@ export function DmsShareDialog({
       recipientEmail: email,
       recipientPhone: phone,
       expiresInDays: days,
+      expiresInHours: hours,
+      expiresInMinutes: minutes,
       allowDownload,
       maxDownloads: allowDownload && maxDownloads ? Number(maxDownloads) : null,
       usePassword,
@@ -161,11 +175,24 @@ export function DmsShareDialog({
               <span className="font-semibold text-muted-foreground">Recipient email</span>
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={input} placeholder="name@consultant.com" autoFocus />
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block space-y-1">
-                <span className="font-semibold text-muted-foreground">Link works for (days)</span>
-                <input type="number" min={1} max={policy?.maxDays || 30} required value={days} onChange={(e) => setDays(Number(e.target.value))} className={input} />
-              </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <span className="font-semibold text-muted-foreground block">Link works for (days / hrs / mins)</span>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <label className="block">
+                    <span className="text-[10px] text-muted-foreground">Days</span>
+                    <input type="number" min={0} max={policy?.maxDays || 30} value={days} onChange={(e) => setDays(Math.max(0, Number(e.target.value) || 0))} className={input} aria-label="Link duration days" />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] text-muted-foreground">Hours</span>
+                    <input type="number" min={0} max={23} value={hours} onChange={(e) => setHours(Math.min(23, Math.max(0, Number(e.target.value) || 0)))} className={input} aria-label="Link duration hours" />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] text-muted-foreground">Mins</span>
+                    <input type="number" min={0} max={59} value={minutes} onChange={(e) => setMinutes(Math.min(59, Math.max(0, Number(e.target.value) || 0)))} className={input} aria-label="Link duration minutes" />
+                  </label>
+                </div>
+              </div>
               <label className="block space-y-1">
                 <span className="font-semibold text-muted-foreground">Recipient phone (optional)</span>
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} className={input} placeholder="+91…" />

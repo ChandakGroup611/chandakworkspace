@@ -121,7 +121,7 @@ export async function fetchDocumentLinksAction(documentId: string): Promise<Resu
     if (!dr.view) return { success: false, error: "Access denied." };
     const { data, error } = await supabaseAdmin
       .from("dms_document_links")
-      .select("id, target_document_id, link_note, dms_documents!dms_document_links_target_document_id_fkey ( title, original_file_name )")
+      .select("id, target_document_id, link_type, dms_documents!dms_document_links_target_document_id_fkey ( title, original_file_name )")
       .eq("source_document_id", documentId)
       .order("created_at", { ascending: false });
     if (error) throw error;
@@ -134,7 +134,7 @@ export async function fetchDocumentLinksAction(documentId: string): Promise<Resu
           targetDocumentId: r.target_document_id,
           targetTitle: t?.title || "Document",
           targetFileName: t?.original_file_name || "",
-          linkNote: r.link_note || "",
+          linkNote: r.link_type || "",
         };
       }),
     };
@@ -162,8 +162,7 @@ export async function linkDocumentAction(params: {
       {
         source_document_id: sourceDocumentId,
         target_document_id: targetDocumentId,
-        link_note: String(linkNote || "").trim().slice(0, 200) || null,
-        created_by: actor.id,
+        link_type: String(linkNote || "").trim().slice(0, 60) || "RELATED",
       },
       { onConflict: "source_document_id,target_document_id" }
     );
