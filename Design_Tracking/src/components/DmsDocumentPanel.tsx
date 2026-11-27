@@ -62,22 +62,25 @@ interface Props {
   documentId: string;
   folders?: { id: string; name: string }[];
   folderDocs?: { id: string; title: string }[];
+  initialTab?: "details" | "versions" | "activity";
+  initialEditing?: boolean;
   /** called after any change, with the refreshed summary (or null when the document left the folder) */
   onChanged: (doc: DmsDocumentSummary | null) => void;
 }
 
 /** Side panel for one document: details, versions, check-out and check-in, QC and delete. */
-export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], onChanged }: Props) {
+export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], initialTab = "details", initialEditing = false, onChanged }: Props) {
   const [doc, setDoc] = useState<DmsDocumentSummary | null>(null);
   const [versions, setVersions] = useState<DmsVersionItem[]>([]);
   const [fields, setFields] = useState<{ id: string; label: string; value: string }[]>([]);
   const [activity, setActivity] = useState<DmsActivityItem[]>([]);
-  const [tab, setTab] = useState<"details" | "versions" | "activity">("details");
+  const [tab, setTab] = useState<"details" | "versions" | "activity">(initialTab);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [newFile, setNewFile] = useState<File | null>(null);
-  const [changeNote, setChangeNote] = useState("");
+  const [whatChanged, setWhatChanged] = useState("");
+  const [remark, setRemark] = useState("");
   const [qcComment, setQcComment] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -125,11 +128,14 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], on
 
   useEffect(() => {
     setNewFile(null);
-    setChangeNote("");
+    setWhatChanged("");
+    setRemark("");
     setQcComment("");
     setConfirmDelete(false);
+    setTab(initialTab);
+    setEditing(initialEditing);
     load();
-  }, [load]);
+  }, [load, initialTab, initialEditing]);
 
   const run = async (fn: () => Promise<{ success: boolean; error?: string }>, ok: string, leaves = false) => {
     setBusy(true);
@@ -281,7 +287,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], on
         {/* Check in a new version */}
         {canWrite && !lockedByOther && (
           <div className="space-y-1.5">
-            <div className="font-semibold text-foreground">Upload a new version</div>
+            <div className="font-semibold text-foreground">Upload a new version (locks v{doc.currentVersionNo})</div>
             <input
               type="file"
               aria-label="New version file"
@@ -290,26 +296,35 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], on
             />
             <input
               type="text"
-              value={changeNote}
-              onChange={(e) => setChangeNote(e.target.value)}
-              placeholder="What changed in this version?"
+              value={whatChanged}
+              onChange={(e) => setWhatChanged(e.target.value)}
+              placeholder="What changed in document? *"
+              className="w-full rounded-lg bg-surface border border-border px-2.5 py-1.5"
+            />
+            <input
+              type="text"
+              value={remark}
+              onChange={(e) => setRemark(e.target.value)}
+              placeholder="Remark *"
               className="w-full rounded-lg bg-surface border border-border px-2.5 py-1.5"
             />
             <button
               type="button"
-              disabled={busy || !newFile || !changeNote.trim()}
+              disabled={busy || !newFile || !whatChanged.trim() || !remark.trim()}
               onClick={async () => {
                 const fd = new FormData();
                 fd.append("documentId", doc.id);
                 fd.append("file", newFile as File);
-                fd.append("changeNote", changeNote.trim());
+                fd.append("whatChanged", whatChanged.trim());
+                fd.append("remark", remark.trim());
                 const ok = await run(async () => {
                   const res = await uploadDocumentVersionAction(fd);
                   return res.success ? { success: true } : res;
-                }, "New version checked in.");
+                }, `Checked in v${doc.currentVersionNo + 1} (previous version locked).`);
                 if (ok) {
                   setNewFile(null);
-                  setChangeNote("");
+                  setWhatChanged("");
+                  setRemark("");
                 }
               }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border font-semibold disabled:opacity-50"
@@ -386,7 +401,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], on
             onClick={() => setTab(t)}
             className={`flex-1 py-2 font-semibold capitalize ${tab === t ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
           >
-            {t === "versions" ? `Versions (${versions.length})` : t}
+            {t === "versions" ? `Versions (${versions.length})` : t === "activity" ? `Audit History (${activity.length})` : t}
           </button>
         ))}
       </div>
@@ -737,50 +752,85 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], on
           </div>
         )}
         {tab === "details" && (
-          <dl className="space-y-1.5">
-            {[
-              ["Type", doc.docTypeName],
-              ["File", `${doc.originalFileName} · ${formatBytes(doc.fileSizeBytes)}`],
-              ["Added by", doc.createdByName || ""],
-              ["Added", when(doc.createdAt)],
-              ["Last changed", when(doc.updatedAt)],
-              ...fields.map((f) => [f.label, f.value] as [string, string]),
-            ].map(([k, v]) => (
-              <div key={k} className="flex justify-between gap-3">
-                <dt className="text-muted-foreground shrink-0">{k}</dt>
-                <dd className="text-foreground text-right break-all">{v || "–"}</dd>
+          <>
+            <dl className="space-y-1.5">
+              {[
+                ["Type", doc.docTypeName],
+                ["File", `${doc.originalFileName} · ${formatBytes(doc.fileSizeBytes)}`],
+                ["Added by", doc.createdByName || ""],
+                ["Added", when(doc.createdAt)],
+                ["Last changed", when(doc.updatedAt)],
+                ...fields.map((f) => [f.label, f.value] as [string, string]),
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground shrink-0">{k}</dt>
+                  <dd className="text-foreground text-right break-all">{v || "–"}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="rounded-lg border border-border p-2.5 space-y-1.5 bg-surface/60">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-muted-foreground">Recent Audit History</span>
+                <button type="button" onClick={() => setTab("activity")} className="text-[11px] text-primary font-semibold hover:underline">
+                  View all ({activity.length})
+                </button>
               </div>
-            ))}
-          </dl>
+              {activity.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground">No audit entries yet.</p>
+              ) : (
+                activity.slice(0, 4).map((a, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-[11px]">
+                    <Clock className="h-3 w-3 mt-0.5 text-muted-foreground shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-foreground font-medium">{ACTION_LABEL[a.action] || a.action.toLowerCase().replace(/_/g, " ")}</span>
+                      {a.details?.version_no ? ` v${a.details.version_no}` : ""}
+                      <span className="text-muted-foreground"> · {a.actorEmail || "system"} · {when(a.createdAt)}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
         )}
 
         {tab === "versions" &&
-          versions.map((v) => (
-            <div key={v.id} className="p-2.5 rounded-lg border border-border space-y-1">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold">
-                  v{v.versionNo}
-                  {v.versionNo === doc.currentVersionNo && <span className="ml-1.5 text-[11px] text-primary">current</span>}
-                </span>
-                {r.download && (
-                  <a href={`/api/proxy-attachment/${v.id}?download=1`} className="inline-flex items-center gap-1 text-primary">
-                    <Download className="h-3 w-3" /> {formatBytes(v.fileSizeBytes)}
-                  </a>
-                )}
-              </div>
-              <div className="text-muted-foreground truncate">{v.fileName}</div>
-              {v.changeNote && <div className="text-foreground">{v.changeNote}</div>}
-              <div className="text-[11px] text-muted-foreground flex items-center gap-1">
-                <History className="h-3 w-3" /> {v.uploadedByName} · {when(v.createdAt)}
-                {v.qcStatus && (
-                  <span className="ml-auto">
-                    QC: {v.qcStatus === "UNAPPROVED" ? "waiting" : v.qcStatus.toLowerCase()}
-                    {v.qcByName ? ` by ${v.qcByName}` : ""}
+          versions.map((v) => {
+            const isLive = v.versionNo === doc.currentVersionNo;
+            return (
+              <div key={v.id} className="p-2.5 rounded-lg border border-border space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold flex items-center gap-1.5">
+                    v{v.versionNo}
+                    {isLive ? (
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-success-soft text-success-text">
+                        LIVE
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-sunken text-muted-foreground border border-border">
+                        <Lock className="h-2.5 w-2.5" /> LOCKED
+                      </span>
+                    )}
                   </span>
-                )}
+                  {r.download && (
+                    <a href={`/api/proxy-attachment/${v.id}?download=1`} className="inline-flex items-center gap-1 text-primary">
+                      <Download className="h-3 w-3" /> {formatBytes(v.fileSizeBytes)}
+                    </a>
+                  )}
+                </div>
+                <div className="text-muted-foreground truncate">{v.fileName}</div>
+                {v.changeNote && <div className="text-foreground">{v.changeNote}</div>}
+                <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <History className="h-3 w-3" /> {v.uploadedByName} · {when(v.createdAt)}
+                  {v.qcStatus && (
+                    <span className="ml-auto">
+                      QC: {v.qcStatus === "UNAPPROVED" ? "waiting" : v.qcStatus.toLowerCase()}
+                      {v.qcByName ? ` by ${v.qcByName}` : ""}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
         {tab === "activity" &&
           (activity.length === 0 ? (

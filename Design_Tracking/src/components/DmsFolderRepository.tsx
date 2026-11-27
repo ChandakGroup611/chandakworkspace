@@ -44,7 +44,9 @@ import {
   createFolderAction,
   updateFolderAction,
   deleteFolderAction,
+  deleteDocumentAction,
   bulkDeleteDocumentsAction,
+  uploadDocumentVersionAction,
   type DmsRights
 } from "@/lib/actions/dms-core";
 import { isUploadedWithin24Hours } from "@/lib/dms/filename-rules";
@@ -94,6 +96,9 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [bulkSharing, setBulkSharing] = useState<boolean>(false);
   const [showFieldsMenu, setShowFieldsMenu] = useState<boolean>(false);
   const [visibleCols, setVisibleCols] = useState({
+    docId: true,
+    uploadedDate: true,
+    uploadedBy: true,
     docType: true,
     version: true,
     qc: true,
@@ -110,6 +115,11 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [editingRenamePattern, setEditingRenamePattern] = useState<boolean>(false);
   const [renameSep, setRenameSep] = useState<"_" | "-" | ".">("_");
   const [renameParts, setRenameParts] = useState<string>("docType,title,version");
+  const [versionUploadDoc, setVersionUploadDoc] = useState<DmsDocumentSummary | null>(null);
+  const [versionFile, setVersionFile] = useState<File | null>(null);
+  const [versionWhatChanged, setVersionWhatChanged] = useState<string>("");
+  const [versionRemark, setVersionRemark] = useState<string>("");
+  const [isUploadingVersion, setIsUploadingVersion] = useState<boolean>(false);
 
   // Split Indexing Wizard Modal State
   const [showIndexingWizard, setShowIndexingWizard] = useState<boolean>(false);
@@ -120,6 +130,9 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
   // Selected document detail drawer & in-app viewer modal
   const [selectedDoc, setSelectedDoc] = useState<DmsDocumentSummary | null>(null);
+  const [panelInitialTab, setPanelInitialTab] = useState<"details" | "versions" | "activity">("details");
+  const [panelInitialEditing, setPanelInitialEditing] = useState<boolean>(false);
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
   const [docViewerZoom, setDocViewerZoom] = useState<number>(1);
 
   // Which list the main area shows, and what the person may do in the open folder
@@ -787,11 +800,14 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                 {showFieldsMenu && (
                   <div className="absolute right-0 top-full mt-1 z-30 w-44 rounded-lg border border-border bg-elevated p-2 shadow-lg space-y-1 text-xs">
                     {([
-                      ["docType", "Doc type"],
+                      ["docId", "ID"],
+                      ["uploadedDate", "Uploaded Date"],
+                      ["uploadedBy", "Uploaded By"],
+                      ["size", "File size"],
+                      ["docType", "Doc-Set Type"],
                       ["version", "Version"],
-                      ["qc", "QC status"],
+                      ["qc", "Status"],
                       ["lock", "Lock"],
-                      ["size", "Size"],
                     ] as const).map(([key, label]) => (
                       <label key={key} className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-surface cursor-pointer">
                         <input
@@ -905,13 +921,17 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                       }}
                     />
                   </th>
-                  <th className="py-2.5 px-3">Document title</th>
-                  {visibleCols.docType && <th className="py-2.5 px-3">Doc type</th>}
+                  <th className="py-2.5 px-2 w-12 text-center">#</th>
+                  {visibleCols.docId && <th className="py-2.5 px-3">ID</th>}
+                  <th className="py-2.5 px-3">Doc Name</th>
+                  {visibleCols.uploadedDate && <th className="py-2.5 px-3">Uploaded Date</th>}
+                  {visibleCols.uploadedBy && <th className="py-2.5 px-3">Uploaded By</th>}
+                  {visibleCols.size && <th className="py-2.5 px-3">File size</th>}
+                  {visibleCols.docType && <th className="py-2.5 px-3">Doc-Set Type</th>}
                   {visibleCols.version && <th className="py-2.5 px-3">Version</th>}
-                  {visibleCols.qc && <th className="py-2.5 px-3">QC status</th>}
+                  {visibleCols.qc && <th className="py-2.5 px-3">Status</th>}
                   {visibleCols.lock && <th className="py-2.5 px-3">Lock</th>}
-                  {visibleCols.size && <th className="py-2.5 px-3">Size</th>}
-                  <th className="py-2.5 px-3 text-right">Actions</th>
+                  <th className="py-2.5 px-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -941,7 +961,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                     </td>
                   </tr>
                 ) : (
-                  displayedDocuments.map((doc) => (
+                  displayedDocuments.map((doc, rowIdx) => (
                     <tr
                       key={doc.id}
                       onClick={() => setSelectedDoc(doc)}
@@ -962,6 +982,14 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                           }}
                         />
                       </td>
+                      <td className="py-2.5 px-2 text-center font-mono text-[11px] text-muted-foreground tabular-nums">
+                        {rowIdx + 1}
+                      </td>
+                      {visibleCols.docId && (
+                        <td className="py-2.5 px-3 font-mono text-[11px] text-muted-foreground" title={doc.id}>
+                          {doc.id.slice(0, 8)}
+                        </td>
+                      )}
                       <td className="py-2.5 px-3 font-medium text-foreground">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-primary shrink-0" />
@@ -981,9 +1009,27 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                         </div>
                       </td>
 
+                      {visibleCols.uploadedDate && (
+                        <td className="py-2.5 px-3 text-[11px] text-muted-foreground whitespace-nowrap">
+                          {new Date(doc.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}
+                        </td>
+                      )}
+
+                      {visibleCols.uploadedBy && (
+                        <td className="py-2.5 px-3 text-[11px] text-foreground truncate max-w-[140px]">
+                          {doc.createdByName || "–"}
+                        </td>
+                      )}
+
+                      {visibleCols.size && (
+                        <td className="py-2.5 px-3 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                          {formatBytes(doc.fileSizeBytes)}
+                        </td>
+                      )}
+
                       {visibleCols.docType && (
                         <td className="py-2.5 px-3">
-                          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-primary">
+                          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-primary whitespace-nowrap">
                             {doc.docTypeCode}
                           </span>
                         </td>
@@ -991,14 +1037,17 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
                       {visibleCols.version && (
                         <td className="py-2.5 px-3 font-mono text-[11px]">
-                          v{doc.currentVersionNo}
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent-soft text-primary font-semibold">
+                            v{doc.currentVersionNo}
+                            <span className="text-[9px] uppercase">Live</span>
+                          </span>
                         </td>
                       )}
 
                       {visibleCols.qc && (
                         <td className="py-2.5 px-3">
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${
                               doc.approvalStatus === "APPROVED"
                                 ? "bg-success-soft text-success-text"
                                 : doc.approvalStatus === "REJECTED"
@@ -1023,14 +1072,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                         </td>
                       )}
 
-                      {visibleCols.size && (
-                        <td className="py-2.5 px-3 font-mono text-[11px] text-muted-foreground">
-                          {formatBytes(doc.fileSizeBytes)}
-                        </td>
-                      )}
-
                       <td className="py-2.5 px-3 text-right">
-                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             onClick={async () => {
@@ -1051,23 +1094,109 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                           >
                             <Star className={`h-3.5 w-3.5 ${favouriteIds.has(doc.id) ? "fill-amber-500 text-amber-500" : ""}`} />
                           </button>
-                          <button aria-label="View document preview"
+                          <button
                             type="button"
-                            onClick={() => setSelectedDoc(doc)}
-                            className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
-                            title="View document preview"
+                            onClick={() => setOpenActionMenuId((cur) => (cur === doc.id ? null : doc.id))}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-border bg-surface text-[11px] font-semibold text-foreground hover:bg-sunken cursor-pointer"
+                            title="Document actions"
                           >
-                            <Eye className="h-3.5 w-3.5 text-primary" />
+                            <span>Actions</span>
+                            <ChevronDown className="h-3 w-3" />
                           </button>
-                          {doc.rights?.download && (
-                            <a
-                              href={`/api/proxy-attachment/${doc.id}?download=1`}
-                              className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
-                              title="Download document"
-                              aria-label="Download document"
-                            >
-                              <Download className="h-3.5 w-3.5" />
-                            </a>
+                          {openActionMenuId === doc.id && (
+                            <div className="absolute right-0 top-full mt-1 z-40 w-48 rounded-lg border border-border bg-elevated shadow-lg py-1 text-left text-xs">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenActionMenuId(null);
+                                  setPanelInitialTab("details");
+                                  setPanelInitialEditing(false);
+                                  setSelectedDoc(doc);
+                                }}
+                                className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
+                              >
+                                <Eye className="h-3.5 w-3.5 text-primary" /> Preview
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenActionMenuId(null);
+                                  setPanelInitialTab("details");
+                                  setPanelInitialEditing(false);
+                                  setSelectedDoc(doc);
+                                }}
+                                className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
+                              >
+                                <Info className="h-3.5 w-3.5 text-primary" /> Information
+                              </button>
+                              {doc.rights?.edit && (!doc.isLocked || doc.lockedByMe) && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenActionMenuId(null);
+                                    setPanelInitialTab("details");
+                                    setPanelInitialEditing(true);
+                                    setSelectedDoc(doc);
+                                  }}
+                                  className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
+                                >
+                                  <FileText className="h-3.5 w-3.5 text-primary" /> Edit &amp; Indexing
+                                </button>
+                              )}
+                              {(doc.rights?.upload || doc.rights?.edit) && (!doc.isLocked || doc.lockedByMe) && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenActionMenuId(null);
+                                    setVersionUploadDoc(doc);
+                                    setVersionFile(null);
+                                    setVersionWhatChanged("");
+                                    setVersionRemark("");
+                                  }}
+                                  className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
+                                >
+                                  <Upload className="h-3.5 w-3.5 text-primary" /> Data Versioning (+ v{doc.currentVersionNo + 1})
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenActionMenuId(null);
+                                  setPanelInitialTab("activity");
+                                  setPanelInitialEditing(false);
+                                  setSelectedDoc(doc);
+                                }}
+                                className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
+                              >
+                                <Clock className="h-3.5 w-3.5 text-primary" /> File Status / Audit
+                              </button>
+                              {doc.rights?.download && (
+                                <a
+                                  href={`/api/proxy-attachment/${doc.id}?download=1`}
+                                  onClick={() => setOpenActionMenuId(null)}
+                                  className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-foreground"
+                                >
+                                  <Download className="h-3.5 w-3.5 text-primary" /> Download
+                                </a>
+                              )}
+                              {doc.rights?.delete && (!doc.isLocked || doc.lockedByMe) && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    setOpenActionMenuId(null);
+                                    const res = await deleteDocumentAction(doc.id);
+                                    if (res.success) {
+                                      toast.success("Moved to recycle bin");
+                                      loadFolderDocuments();
+                                      loadFolderTree();
+                                    } else toast.error(res.error || "Could not delete document.");
+                                  }}
+                                  className="w-full px-3 py-1.5 hover:bg-danger-soft/50 flex items-center gap-2 text-danger-text"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       </td>
@@ -1388,6 +1517,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               documentId={selectedDoc.id}
               folders={flatFolders}
               folderDocs={documents.filter((d) => d.id !== selectedDoc.id).map((d) => ({ id: d.id, title: d.title }))}
+              initialTab={panelInitialTab}
+              initialEditing={panelInitialEditing}
               onChanged={(updated) => {
                 loadFolderDocuments();
                 loadFolderTree();
@@ -1411,6 +1542,92 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             setSelectedDocIds(new Set());
           }}
         />
+      )}
+
+      {versionUploadDoc && (
+        <div className="fixed inset-0 z-60 bg-[var(--overlay)] flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-lg shadow-lg max-w-md w-full overflow-hidden">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  Upload Version v{versionUploadDoc.currentVersionNo + 1}
+                </h3>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {versionUploadDoc.title} · Locks v{versionUploadDoc.currentVersionNo} and makes v{versionUploadDoc.currentVersionNo + 1} live
+                </p>
+              </div>
+              <button type="button" aria-label="Close" onClick={() => setVersionUploadDoc(null)} className="p-1 rounded hover:bg-sunken">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!versionFile || !versionWhatChanged.trim() || !versionRemark.trim()) return;
+                setIsUploadingVersion(true);
+                const fd = new FormData();
+                fd.append("documentId", versionUploadDoc.id);
+                fd.append("file", versionFile);
+                fd.append("whatChanged", versionWhatChanged.trim());
+                fd.append("remark", versionRemark.trim());
+                const res = await uploadDocumentVersionAction(fd);
+                setIsUploadingVersion(false);
+                if (res.success) {
+                  toast.success(`Uploaded v${res.versionNo} (v${versionUploadDoc.currentVersionNo} locked, v${res.versionNo} live).`);
+                  setVersionUploadDoc(null);
+                  loadFolderDocuments();
+                } else {
+                  toast.error(res.error || "Could not upload version.");
+                }
+              }}
+              className="p-4 space-y-3 text-xs"
+            >
+              <label className="block space-y-1">
+                <span className="font-semibold text-muted-foreground">Select file *</span>
+                <input
+                  type="file"
+                  required
+                  onChange={(e) => setVersionFile(e.target.files?.[0] || null)}
+                  className="block w-full text-xs"
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="font-semibold text-muted-foreground">What changed in document *</span>
+                <input
+                  type="text"
+                  required
+                  value={versionWhatChanged}
+                  onChange={(e) => setVersionWhatChanged(e.target.value)}
+                  placeholder="Describe changes…"
+                  className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5"
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="font-semibold text-muted-foreground">Remark *</span>
+                <input
+                  type="text"
+                  required
+                  value={versionRemark}
+                  onChange={(e) => setVersionRemark(e.target.value)}
+                  placeholder="Enter remark for audit trail…"
+                  className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5"
+                />
+              </label>
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
+                <button type="button" onClick={() => setVersionUploadDoc(null)} className="px-3 py-1.5 rounded-lg border border-border">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUploadingVersion || !versionFile || !versionWhatChanged.trim() || !versionRemark.trim()}
+                  className="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+                >
+                  {isUploadingVersion ? "Uploading..." : `Check in v${versionUploadDoc.currentVersionNo + 1}`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

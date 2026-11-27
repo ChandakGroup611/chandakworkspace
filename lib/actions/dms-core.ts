@@ -624,13 +624,36 @@ export async function createDocTypeAction(params: {
   }
 }
 
+export async function checkFolderDuplicateFileAction(params: {
+  folderId: string;
+  fileName: string;
+}): Promise<Result<{ exists: boolean; documentId?: string; currentVersionNo?: number; title?: string }>> {
+  try {
+    const actor = await dmsActor();
+    if (!isUuid(params.folderId) || !params.fileName?.trim()) return { success: true, exists: false };
+    const fr = await folderRights(actor, params.folderId);
+    if (!fr.view) return { success: false, error: "Access denied." };
+    const { data: dup } = await supabaseAdmin
+      .from("dms_documents")
+      .select("id, title, current_version_no")
+      .eq("folder_id", params.folderId)
+      .ilike("original_file_name", params.fileName.trim())
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle();
+    if (!dup) return { success: true, exists: false };
+    return { success: true, exists: true, documentId: dup.id, currentVersionNo: dup.current_version_no, title: dup.title };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not check file name.") };
+  }
+}
+
 /**
- * Upload a file and index it as a new document in one step, so the stored file and the record
- * can't drift apart (and nobody can point a record at a file they didn't upload).
- * FormData: file, folderId, docTypeId, title, fieldValues (JSON, keyed by field definition id),
- * masterRecordIds (JSON array, optional), ocrText (optional).
+ * Upload a file and index it as a new document in one step (v1), OR if a document with
+ * the same filename already exists in this folder, automatically check in a new version
+ * (v2, v3, ...) requiring both `whatChanged` and `remark`.
  */
-export async function addDmsDocumentAction(formData: FormData): Promise<Result<{ documentId: string; approvalStatus: string }>> {
+export async function addDmsDocumentAction(formData: FormData): Promise<Result<{ documentId: string; approvalStatus: string; versionNo?: number; isNewVersion?: boolean }>> {
   let storedKey: string | null = null;
   try {
     const actor = await dmsActor();
@@ -653,6 +676,7 @@ export async function addDmsDocumentAction(formData: FormData): Promise<Result<{
     }
 
     const file = formData.get("file") as File | null;
+    let existingDoc: { id: string; current_version_no: number } | null = null;
     if (file?.name) {
       const { validateDmsFileName } = await import("@/lib/dms/filename-rules");
       const nameErr = validateDmsFileName(file.name);
@@ -660,15 +684,50 @@ export async function addDmsDocumentAction(formData: FormData): Promise<Result<{
 
       const { data: dup } = await supabaseAdmin
         .from("dms_documents")
-        .select("id")
+        .select("id, current_version_no")
         .eq("folder_id", folderId)
         .ilike("original_file_name", file.name.trim())
         .is("deleted_at", null)
         .limit(1)
         .maybeSingle();
-      if (dup) {
-        return { success: false, error: `A document named "${file.name}" already exists in this folder (duplicates are not allowed).` };
+      if (dup) existingDoc = dup;
+    }
+
+    if (existingDoc) {
+      const whatChanged = String(formData.get("whatChanged") || "").trim();
+      const remark = String(formData.get("remark") || "").trim();
+      if (!whatChanged || !remark) {
+        return {
+          success: false,
+          error: `"${file?.name}" already exists (v${existingDoc.current_version_no}). Enter both "What changed in document" and "Remark" to upload v${existingDoc.current_version_no + 1}.`,
+        };
       }
+      const combinedNote = `Changed: ${whatChanged} | Remark: ${remark}`;
+      const stored = await storeDmsFile(file as File, folder!.workspace_id, folderId, existingDoc.id);
+      storedKey = stored.storageKey;
+      const { data: versionNo, error: vErr } = await supabaseAdmin.rpc("fn_dms_add_version", {
+        p_actor: actor.id,
+        p_base: actor.base,
+        p_document: existingDoc.id,
+        p_storage_key: stored.storageKey,
+        p_file_name: stored.fileName,
+        p_size: stored.size,
+        p_checksum: stored.checksum,
+        p_mime: stored.mimeType,
+        p_change_note: combinedNote,
+        p_ocr_text: String(formData.get("ocrText") || "") || null,
+      });
+      if (vErr) throw vErr;
+      storedKey = null;
+      await supabaseAdmin.rpc("fn_dms_audit", {
+        p_actor: actor.id,
+        p_action: "DOCUMENT_VERSION_ADDED",
+        p_entity_type: "DOCUMENT",
+        p_entity_id: existingDoc.id,
+        p_details: { version_no: versionNo, what_changed: whatChanged, remark, previous_version_locked: existingDoc.current_version_no },
+      });
+      const { data: doc } = await supabaseAdmin.from("dms_documents").select("approval_status").eq("id", existingDoc.id).single();
+      return { success: true, documentId: existingDoc.id, approvalStatus: doc?.approval_status || "PENDING", versionNo: Number(versionNo), isNewVersion: true };
     }
 
     const stored = await storeDmsFile(file as File, folder!.workspace_id, folderId, `new-${Date.now()}`);
@@ -760,19 +819,22 @@ export async function lockUnlockDocumentAction(params: {
   }
 }
 
-/** Check in a new version. FormData: documentId, file, changeNote. */
+/** Check in a new version. FormData: documentId, file, changeNote (or whatChanged + remark). */
 export async function uploadDocumentVersionAction(formData: FormData): Promise<Result<{ versionNo: number }>> {
   let storedKey: string | null = null;
   try {
     const actor = await dmsActor();
     const documentId = String(formData.get("documentId") || "");
     if (!isUuid(documentId)) return { success: false, error: "Document not found." };
-    const changeNote = String(formData.get("changeNote") || "").trim();
-    if (!changeNote) return { success: false, error: "Say what changed in this version." };
+    const whatChanged = String(formData.get("whatChanged") || "").trim();
+    const remark = String(formData.get("remark") || "").trim();
+    const rawChangeNote = String(formData.get("changeNote") || "").trim();
+    const changeNote = whatChanged && remark ? `Changed: ${whatChanged} | Remark: ${remark}` : rawChangeNote;
+    if (!changeNote) return { success: false, error: "Enter both what changed in the document and a remark." };
     const rights = await documentRights(actor, documentId);
     if (!rights.edit && !rights.upload) return { success: false, error: "You cannot add a version to this document." };
 
-    const { data: doc } = await supabaseAdmin.from("dms_documents").select("workspace_id, folder_id").eq("id", documentId).single();
+    const { data: doc } = await supabaseAdmin.from("dms_documents").select("workspace_id, folder_id, current_version_no").eq("id", documentId).single();
     const stored = await storeDmsFile(formData.get("file") as File, doc!.workspace_id, doc!.folder_id, documentId);
     storedKey = stored.storageKey;
     const { data: versionNo, error } = await supabaseAdmin.rpc("fn_dms_add_version", {
@@ -789,6 +851,18 @@ export async function uploadDocumentVersionAction(formData: FormData): Promise<R
     });
     if (error) throw error;
     storedKey = null;
+    await supabaseAdmin.rpc("fn_dms_audit", {
+      p_actor: actor.id,
+      p_action: "DOCUMENT_VERSION_ADDED",
+      p_entity_type: "DOCUMENT",
+      p_entity_id: documentId,
+      p_details: {
+        version_no: versionNo,
+        what_changed: whatChanged || changeNote,
+        remark: remark || null,
+        previous_version_locked: doc?.current_version_no || null,
+      },
+    });
     return { success: true, versionNo: versionNo as number };
   } catch (err: any) {
     if (storedKey) await removeStoredFiles([storedKey]);

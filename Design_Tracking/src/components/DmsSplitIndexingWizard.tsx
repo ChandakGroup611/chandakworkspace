@@ -32,6 +32,7 @@ import {
   DmsEligiblePrincipal,
   DmsFolderNode,
   addDmsDocumentAction,
+  checkFolderDuplicateFileAction,
   fetchDocTypesAndFieldsAction,
   fetchFolderEligiblePrincipalsAction,
   createDocTypeAction
@@ -95,6 +96,9 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
     { key: string; userId?: string; roleCode?: string; label: string; canView: boolean; canEdit: boolean; canDownload: boolean; canManage: boolean }[]
   >([]);
   const [selectedPrincipalKey, setSelectedPrincipalKey] = useState<string>("");
+  const [dupInfo, setDupInfo] = useState<{ exists: boolean; currentVersionNo?: number; title?: string } | null>(null);
+  const [whatChanged, setWhatChanged] = useState<string>("");
+  const [remark, setRemark] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -196,6 +200,14 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
     setActiveFileIndex(0);
     if (newItems.length > 0) {
       setDocTitle(newItems[0].title);
+      setWhatChanged("");
+      setRemark("");
+      if (targetFolder?.id) {
+        checkFolderDuplicateFileAction({ folderId: targetFolder.id, fileName: newItems[0].file.name }).then((r) => {
+          if (r.success && r.exists) setDupInfo({ exists: true, currentVersionNo: r.currentVersionNo, title: r.title });
+          else setDupInfo({ exists: false });
+        });
+      }
     }
   };
 
@@ -235,6 +247,15 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
       formData.append("docTypeId", selectedDocTypeId);
       formData.append("title", docTitle.trim());
       formData.append("fieldValues", JSON.stringify(customFieldValues));
+      if (dupInfo?.exists) {
+        if (!whatChanged.trim() || !remark.trim()) {
+          toast.info("Enter both 'What changed in document' and 'Remark' for the new version.");
+          setIsSubmitting(false);
+          return;
+        }
+        formData.append("whatChanged", whatChanged.trim());
+        formData.append("remark", remark.trim());
+      }
       if (docRbacGrants.length > 0) {
         formData.append(
           "documentPermissions",
@@ -267,7 +288,11 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
           onClose();
         }
         toast.success(
-          res.approvalStatus === "PENDING" ? "Document added. It is waiting for QC approval." : "Document added."
+          res.isNewVersion
+            ? `Uploaded v${res.versionNo} (previous version locked, new version is live).`
+            : res.approvalStatus === "PENDING"
+            ? "Document added (v1). It is waiting for QC approval."
+            : "Document added (v1)."
         );
       } else {
         toast.error(res.error || "Failed to index document");
@@ -536,6 +561,36 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                 </div>
               )}
 
+              {dupInfo?.exists && (
+                <div className="rounded-lg border border-warning-border bg-warning-soft/50 p-3 space-y-2.5">
+                  <div className="text-xs font-semibold text-warning-text">
+                    Existing document detected (v{dupInfo.currentVersionNo}). Uploading will lock v{dupInfo.currentVersionNo} and make v{(dupInfo.currentVersionNo || 1) + 1} live.
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-foreground">What changed in document *</label>
+                    <input
+                      type="text"
+                      required
+                      value={whatChanged}
+                      onChange={(e) => setWhatChanged(e.target.value)}
+                      placeholder="Describe changes from previous version…"
+                      className="w-full mt-1 text-xs rounded-md bg-surface border border-border px-2.5 py-1.5"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-foreground">Remark *</label>
+                    <input
+                      type="text"
+                      required
+                      value={remark}
+                      onChange={(e) => setRemark(e.target.value)}
+                      placeholder="Enter remark for audit history…"
+                      className="w-full mt-1 text-xs rounded-md bg-surface border border-border px-2.5 py-1.5"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="text-xs font-semibold text-muted-foreground">
                   Document title / dossier label *
@@ -741,7 +796,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
             </button>
             <button type="button"
               onClick={handleCommitIndexing}
-              disabled={!activeStagedFile || isSubmitting || !docTitle.trim()}
+              disabled={!activeStagedFile || isSubmitting || !docTitle.trim() || (!!dupInfo?.exists && (!whatChanged.trim() || !remark.trim()))}
               className="px-5 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shadow-xs disabled:opacity-50 flex items-center gap-2"
             >
               <CheckCircle2 className="h-4 w-4" />
