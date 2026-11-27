@@ -14,6 +14,7 @@ import {
   type DmsSearchFilters,
   type DmsSearchHit,
 } from "@/lib/actions/dms-search";
+import { setDefaultSavedViewAction } from "@/lib/actions/dms-extras";
 import { formatBytes } from "./DmsDocumentPanel";
 
 const PAGE = 50;
@@ -241,18 +242,35 @@ export function DmsSearchView({
                 {s.name}
               </button>
               {s.isMine && (
-                <button
-                  type="button"
-                  aria-label={`Delete saved search ${s.name}`}
-                  onClick={async () => {
-                    const res = await deleteSavedSearchAction(s.id);
-                    if (!res.success) return toast.error(res.error);
-                    setSaved((list) => list.filter((x) => x.id !== s.id));
-                  }}
-                  className="p-0.5 text-muted-foreground hover:text-danger-text"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
+                <>
+                  <button
+                    type="button"
+                    title="Set as default view"
+                    onClick={async () => {
+                      const res = await setDefaultSavedViewAction(s.id);
+                      if (res.success) {
+                        toast.success("Default view updated");
+                        const list = await fetchSavedSearchesAction(workspaceId);
+                        if (list.success) setSaved(list.searches);
+                      } else toast.error(res.error);
+                    }}
+                    className={`px-1 text-[10px] font-semibold ${(s as any).isDefault ? "text-emerald-600" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {(s as any).isDefault ? "★ Default" : "☆"}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Delete saved search ${s.name}`}
+                    onClick={async () => {
+                      const res = await deleteSavedSearchAction(s.id);
+                      if (!res.success) return toast.error(res.error);
+                      setSaved((list) => list.filter((x) => x.id !== s.id));
+                    }}
+                    className="p-0.5 text-muted-foreground hover:text-danger-text"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </>
               )}
             </span>
           ))}

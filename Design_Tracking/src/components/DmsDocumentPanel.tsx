@@ -1,18 +1,30 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Clock, Download, History, Link2, Lock, Trash2, Unlock, Upload, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Download, EyeOff, History, Link2, Lock, Star, Trash2, Unlock, Upload, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import {
   deleteDocumentAction,
   fetchDocumentDetailAction,
   lockUnlockDocumentAction,
+  moveDocumentAction,
   submitQcDecisionAction,
   uploadDocumentVersionAction,
   type DmsActivityItem,
   type DmsDocumentSummary,
   type DmsVersionItem,
 } from "@/lib/actions/dms-core";
+import {
+  fetchDocumentFolderTagsAction,
+  fetchDocumentLinksAction,
+  fetchFavouriteIdsAction,
+  linkDocumentAction,
+  setDocumentFolderTagAction,
+  setDocumentPrivateAction,
+  toggleFavouriteAction,
+  unlinkDocumentAction,
+  type DmsDocumentLinkItem,
+} from "@/lib/actions/dms-extras";
 import { DmsDocumentTags } from "./DmsMastersView";
 import { DmsDocumentShares, DmsShareDialog } from "./DmsShares";
 
@@ -34,6 +46,7 @@ const ACTION_LABEL: Record<string, string> = {
   DOCUMENT_QC_APPROVED: "QC approved",
   DOCUMENT_QC_REJECTED: "QC rejected",
   DOCUMENT_DELETED: "Moved to recycle bin",
+  DOCUMENT_MOVED: "Moved to another folder",
   DOCUMENT_RESTORED: "Restored",
   DOCUMENT_VIEWED: "Opened",
   DOCUMENT_DOWNLOADED: "Downloaded",
@@ -41,12 +54,13 @@ const ACTION_LABEL: Record<string, string> = {
 
 interface Props {
   documentId: string;
+  folders?: { id: string; name: string }[];
   /** called after any change, with the refreshed summary (or null when the document left the folder) */
   onChanged: (doc: DmsDocumentSummary | null) => void;
 }
 
 /** Side panel for one document: details, versions, check-out and check-in, QC and delete. */
-export function DmsDocumentPanel({ documentId, onChanged }: Props) {
+export function DmsDocumentPanel({ documentId, folders = [], onChanged }: Props) {
   const [doc, setDoc] = useState<DmsDocumentSummary | null>(null);
   const [versions, setVersions] = useState<DmsVersionItem[]>([]);
   const [fields, setFields] = useState<{ id: string; label: string; value: string }[]>([]);
@@ -61,9 +75,20 @@ export function DmsDocumentPanel({ documentId, onChanged }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [sharesKey, setSharesKey] = useState(0);
+  const [moveTargetId, setMoveTargetId] = useState("");
+  const [isFav, setIsFav] = useState(false);
+  const [taggedFolders, setTaggedFolders] = useState<string[]>([]);
+  const [docLinks, setDocLinks] = useState<DmsDocumentLinkItem[]>([]);
+  const [linkTargetId, setLinkTargetId] = useState("");
+  const [linkNote, setLinkNote] = useState("");
 
   const load = useCallback(async () => {
-    const res = await fetchDocumentDetailAction(documentId);
+    const [res, favs, fTags, dLinks] = await Promise.all([
+      fetchDocumentDetailAction(documentId),
+      fetchFavouriteIdsAction(),
+      fetchDocumentFolderTagsAction(documentId),
+      fetchDocumentLinksAction(documentId),
+    ]);
     if (!res.success) {
       setError(res.error);
       return null;
@@ -73,6 +98,9 @@ export function DmsDocumentPanel({ documentId, onChanged }: Props) {
     setVersions(res.versions);
     setFields(res.fields);
     setActivity(res.activity);
+    if (favs.success) setIsFav(favs.ids.includes(documentId));
+    if (fTags.success) setTaggedFolders(fTags.folderIds);
+    if (dLinks.success) setDocLinks(dLinks.links);
     return res.document;
   }, [documentId]);
 
@@ -330,8 +358,171 @@ export function DmsDocumentPanel({ documentId, onChanged }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {tab === "details" && (
+          <div className="flex flex-wrap items-center gap-1.5 pb-1">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={async () => {
+                const res = await toggleFavouriteAction(doc.id);
+                if (res.success) {
+                  setIsFav(res.isFavourite);
+                  toast.success(res.isFavourite ? "Added to Favourites" : "Removed from Favourites");
+                } else toast.error(res.error);
+              }}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md border text-[11px] font-medium ${
+                isFav ? "border-amber-500/50 bg-amber-500/10 text-amber-600" : "border-border bg-surface text-foreground"
+              }`}
+            >
+              <Star className={`h-3 w-3 ${isFav ? "fill-amber-500 text-amber-500" : ""}`} />
+              {isFav ? "Favourited" : "Mark Favourite"}
+            </button>
+            {(r.own || r.admin) && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  run(
+                    () => setDocumentPrivateAction({ documentId: doc.id, isPrivate: !(doc as any).isPrivate }),
+                    "Private View updated"
+                  )
+                }
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border bg-surface text-[11px] font-medium text-foreground"
+                title="Private View: visible only to the uploader and admins"
+              >
+                <EyeOff className="h-3 w-3" />
+                {(doc as any).isPrivate ? "Private: On" : "Private View"}
+              </button>
+            )}
+          </div>
+        )}
         {tab === "details" && <DmsDocumentTags documentId={doc.id} />}
+        {tab === "details" && r.edit && folders.length > 1 && (
+          <div className="rounded-lg border border-border p-2.5 space-y-1.5 bg-surface/60">
+            <div className="text-[11px] font-semibold text-muted-foreground">Also show in folders (Category Tagging)</div>
+            <div className="flex flex-wrap gap-1">
+              {folders
+                .filter((f) => f.id !== doc.folderId)
+                .slice(0, 12)
+                .map((f) => {
+                  const active = taggedFolders.includes(f.id);
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      disabled={busy}
+                      onClick={() =>
+                        run(
+                          () => setDocumentFolderTagAction({ documentId: doc.id, folderId: f.id, tagged: !active }),
+                          active ? `Untagged from ${f.name}` : `Tagged in ${f.name}`
+                        )
+                      }
+                      className={`px-2 py-0.5 rounded-full text-[11px] border ${
+                        active ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {active ? "✓ " : "+ "}
+                      {f.name}
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+        {tab === "details" && (
+          <div className="rounded-lg border border-border p-2.5 space-y-1.5 bg-surface/60">
+            <div className="text-[11px] font-semibold text-muted-foreground">Linked documents</div>
+            {docLinks.length > 0 ? (
+              <ul className="space-y-1 text-[11px]">
+                {docLinks.map((lnk) => (
+                  <li key={lnk.id} className="flex items-center justify-between gap-2">
+                    <span className="truncate text-foreground">
+                      <Link2 className="inline h-3 w-3 mr-1 text-primary" />
+                      {lnk.targetTitle} {lnk.linkNote ? `(${lnk.linkNote})` : ""}
+                    </span>
+                    {r.edit && (
+                      <button
+                        type="button"
+                        onClick={() => run(() => unlinkDocumentAction(lnk.id), "Link removed")}
+                        className="text-muted-foreground hover:text-danger-text shrink-0"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">No linked documents.</p>
+            )}
+            {r.edit && (
+              <div className="flex items-center gap-1 pt-1">
+                <input
+                  value={linkTargetId}
+                  onChange={(e) => setLinkTargetId(e.target.value)}
+                  placeholder="Target Document UUID"
+                  className="flex-1 min-w-0 rounded border border-border bg-background px-2 py-1 text-[11px]"
+                />
+                <input
+                  value={linkNote}
+                  onChange={(e) => setLinkNote(e.target.value)}
+                  placeholder="Note"
+                  className="w-20 rounded border border-border bg-background px-2 py-1 text-[11px]"
+                />
+                <button
+                  type="button"
+                  disabled={busy || !linkTargetId.trim()}
+                  onClick={() =>
+                    run(
+                      () => linkDocumentAction({ sourceDocumentId: doc.id, targetDocumentId: linkTargetId.trim(), linkNote }),
+                      "Document linked"
+                    )
+                  }
+                  className="px-2 py-1 rounded bg-primary text-primary-foreground text-[11px] font-semibold disabled:opacity-50"
+                >
+                  Link
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         {tab === "details" && <DmsDocumentShares documentId={doc.id} refreshKey={sharesKey} />}
+        {tab === "details" && r.edit && folders.length > 1 && (
+          <div className="rounded-lg border border-border p-2.5 space-y-1.5 bg-surface/60">
+            <div className="text-[11px] font-semibold text-muted-foreground">Move to another folder</div>
+            <div className="flex items-center gap-1.5">
+              <select
+                value={moveTargetId}
+                onChange={(e) => setMoveTargetId(e.target.value)}
+                aria-label="Destination folder"
+                className="flex-1 min-w-0 rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground"
+              >
+                <option value="">Choose destination folder…</option>
+                {folders
+                  .filter((f) => f.id !== doc.folderId)
+                  .map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+              </select>
+              <button
+                type="button"
+                disabled={busy || !moveTargetId}
+                onClick={() =>
+                  run(
+                    () => moveDocumentAction({ documentId: doc.id, targetFolderId: moveTargetId }),
+                    "Moved to destination folder",
+                    true
+                  )
+                }
+                className="px-2.5 py-1 rounded-md bg-primary text-primary-foreground text-[11px] font-semibold disabled:opacity-50"
+              >
+                Move
+              </button>
+            </div>
+          </div>
+        )}
         {tab === "details" && (
           <dl className="space-y-1.5">
             {[

@@ -365,12 +365,23 @@ export async function fetchFolderDocumentsAction(params: {
 
     const limit = Math.min(Math.max(params.limit || 50, 1), 200);
     const offset = Math.max(params.offset || 0, 0);
+
+    const { data: tagRows } = await supabaseAdmin
+      .from("dms_document_folder_tags")
+      .select("document_id")
+      .eq("folder_id", params.folderId);
+    const taggedIds = (tagRows || []).map((t: any) => t.document_id).filter(Boolean);
+
     let query = supabaseAdmin
       .from("dms_documents")
-      .select(DOC_SELECT)
-      .eq("folder_id", params.folderId)
+      .select(`${DOC_SELECT}, is_private`)
       .is("deleted_at", null)
       .order("updated_at", { ascending: false });
+    if (taggedIds.length > 0) {
+      query = query.or(`folder_id.eq.${params.folderId},id.in.(${taggedIds.join(",")})`);
+    } else {
+      query = query.eq("folder_id", params.folderId);
+    }
     if (isUuid(params.docTypeId)) query = query.eq("doc_type_id", params.docTypeId);
     if (params.statusFilter && ["PENDING", "APPROVED", "REJECTED"].includes(params.statusFilter)) {
       query = query.eq("approval_status", params.statusFilter);
@@ -382,7 +393,9 @@ export async function fetchFolderDocumentsAction(params: {
     const { data: rows, error } = await query.range(0, 999);
     if (error) throw error;
     const rights = await documentRightsMany(actor, (rows || []).map((r: any) => r.id));
-    const visible = (rows || []).filter((r: any) => rights.get(r.id)?.view);
+    const visible = (rows || []).filter(
+      (r: any) => rights.get(r.id)?.view && (!r.is_private || r.created_by === actor.id || actor.base.admin)
+    );
     const page = visible.slice(offset, offset + limit);
 
     const names = await namesFor(
@@ -589,6 +602,24 @@ export async function addDmsDocumentAction(formData: FormData): Promise<Result<{
     }
 
     const file = formData.get("file") as File | null;
+    if (file?.name) {
+      const { validateDmsFileName } = await import("@/lib/dms/filename-rules");
+      const nameErr = validateDmsFileName(file.name);
+      if (nameErr) return { success: false, error: nameErr };
+
+      const { data: dup } = await supabaseAdmin
+        .from("dms_documents")
+        .select("id")
+        .eq("folder_id", folderId)
+        .ilike("original_file_name", file.name.trim())
+        .is("deleted_at", null)
+        .limit(1)
+        .maybeSingle();
+      if (dup) {
+        return { success: false, error: `A document named "${file.name}" already exists in this folder (duplicates are not allowed).` };
+      }
+    }
+
     const stored = await storeDmsFile(file as File, folder!.workspace_id, folderId, `new-${Date.now()}`);
     storedKey = stored.storageKey;
 
@@ -706,6 +737,78 @@ export async function deleteDocumentAction(documentId: string): Promise<Result> 
     return { success: true };
   } catch (err: any) {
     return { success: false, error: dmsError(err, "Could not delete the document.") };
+  }
+}
+
+/** Moves a document to another folder (dMACQ Change Category), checking rights, lock, and duplicate filename. */
+export async function moveDocumentAction(params: { documentId: string; targetFolderId: string }): Promise<Result> {
+  try {
+    const actor = await dmsActor();
+    const { documentId, targetFolderId } = params;
+    if (!isUuid(documentId) || !isUuid(targetFolderId)) {
+      return { success: false, error: "Invalid document or destination folder." };
+    }
+    const dr = await documentRights(actor, documentId);
+    if (!dr.edit) return { success: false, error: "You do not have permission to move this document." };
+    const fr = await folderRights(actor, targetFolderId);
+    if (!fr.upload) return { success: false, error: "You cannot move documents into the destination folder." };
+
+    const { data: doc, error: dErr } = await supabaseAdmin
+      .from("dms_documents")
+      .select("id, folder_id, original_file_name")
+      .eq("id", documentId)
+      .is("deleted_at", null)
+      .single();
+    if (dErr || !doc) return { success: false, error: "Document not found." };
+    if (doc.folder_id === targetFolderId) return { success: false, error: "Document is already in that folder." };
+
+    const { data: dup } = await supabaseAdmin
+      .from("dms_documents")
+      .select("id")
+      .eq("folder_id", targetFolderId)
+      .ilike("original_file_name", doc.original_file_name)
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle();
+    if (dup) {
+      return { success: false, error: `Destination folder already has "${doc.original_file_name}".` };
+    }
+
+    const { error: uErr } = await supabaseAdmin
+      .from("dms_documents")
+      .update({ folder_id: targetFolderId, updated_at: new Date().toISOString() })
+      .eq("id", documentId);
+    if (uErr) throw uErr;
+
+    await supabaseAdmin.rpc("fn_dms_audit", {
+      p_actor: actor.id,
+      p_action: "DOCUMENT_MOVED",
+      p_entity_type: "DOCUMENT",
+      p_entity_id: documentId,
+      p_details: { from_folder: doc.folder_id, to_folder: targetFolderId },
+    });
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Could not move the document.") };
+  }
+}
+
+/** Deletes multiple documents to the recycle bin (dMACQ Bulk Delete). */
+export async function bulkDeleteDocumentsAction(documentIds: string[]): Promise<Result<{ deleted: number; failed: number }>> {
+  try {
+    const actor = await dmsActor();
+    const ids = Array.from(new Set((documentIds || []).filter(isUuid)));
+    if (!ids.length) return { success: false, error: "Select at least one document." };
+    let deleted = 0;
+    let failed = 0;
+    for (const id of ids) {
+      const { error } = await supabaseAdmin.rpc("fn_dms_delete_document", { p_actor: actor.id, p_base: actor.base, p_document: id });
+      if (error) failed++;
+      else deleted++;
+    }
+    return { success: true, deleted, failed };
+  } catch (err: any) {
+    return { success: false, error: dmsError(err, "Bulk delete failed.") };
   }
 }
 

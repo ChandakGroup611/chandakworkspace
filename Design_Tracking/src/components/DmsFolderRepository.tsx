@@ -43,8 +43,11 @@ import {
   createFolderAction,
   updateFolderAction,
   deleteFolderAction,
+  bulkDeleteDocumentsAction,
   type DmsRights
 } from "@/lib/actions/dms-core";
+import { isUploadedWithin24Hours } from "@/lib/dms/filename-rules";
+import { exportFolderIndexCsvAction } from "@/lib/actions/dms-extras";
 import { DmsSplitIndexingWizard } from "./DmsSplitIndexingWizard";
 import { DmsDocumentPanel, formatBytes } from "./DmsDocumentPanel";
 import { DmsQcQueueView, DmsRecycleBinView } from "./DmsBinAndQcViews";
@@ -78,6 +81,15 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [isLoadingDocuments, setIsLoadingDocuments] = useState<boolean>(false);
   const [docSearchQuery, setDocSearchQuery] = useState<string>("");
   const [docTypeFilter, setDocTypeFilter] = useState<string>("ALL");
+  const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
+  const [showFieldsMenu, setShowFieldsMenu] = useState<boolean>(false);
+  const [visibleCols, setVisibleCols] = useState({
+    docType: true,
+    version: true,
+    qc: true,
+    lock: true,
+    size: true,
+  });
 
   // Subfolder creation modal state
   const [showCreateFolderModal, setShowCreateFolderModal] = useState<boolean>(false);
@@ -559,8 +571,118 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               )}
             </div>
 
-            {/* Document Search & Filter */}
-            <div className="flex items-center gap-2">
+            {/* Document Search, Show Fields & Bulk Actions */}
+            <div className="flex flex-wrap items-center gap-2 relative">
+              {selectedDocIds.size > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-primary/30 bg-accent-soft/50 px-2.5 py-1 text-[11px]">
+                  <span className="font-semibold text-foreground">{selectedDocIds.size} selected</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const rows = documents.filter((d) => selectedDocIds.has(d.id));
+                      const csv = [
+                        ["Title", "File Name", "Doc Type", "Version", "QC Status", "Size (Bytes)"].join(","),
+                        ...rows.map((d) =>
+                          [d.title, d.originalFileName, d.docTypeCode, `v${d.currentVersionNo}`, d.approvalStatus, d.fileSizeBytes]
+                            .map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`)
+                            .join(",")
+                        ),
+                      ].join("\n");
+                      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${selectedFolder?.name || "dms"}-documents.csv`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="px-2 py-0.5 rounded bg-surface border border-border font-medium hover:bg-surface/80"
+                  >
+                    Export CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="px-2 py-0.5 rounded bg-surface border border-border font-medium hover:bg-surface/80"
+                  >
+                    Print
+                  </button>
+                  {folderRights?.delete && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const res = await bulkDeleteDocumentsAction(Array.from(selectedDocIds));
+                        if (res.success) {
+                          toast.success(`Moved ${res.deleted} document(s) to recycle bin`);
+                          setSelectedDocIds(new Set());
+                          loadFolderDocuments();
+                          loadFolderTree();
+                        } else {
+                          toast.error(res.error || "Bulk delete failed");
+                        }
+                      }}
+                      className="px-2 py-0.5 rounded bg-danger-solid text-white font-medium hover:brightness-95"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowFieldsMenu((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-surface/80"
+                >
+                  <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>Show Fields</span>
+                </button>
+                {showFieldsMenu && (
+                  <div className="absolute right-0 top-full mt-1 z-30 w-44 rounded-lg border border-border bg-elevated p-2 shadow-lg space-y-1 text-xs">
+                    {([
+                      ["docType", "Doc type"],
+                      ["version", "Version"],
+                      ["qc", "QC status"],
+                      ["lock", "Lock"],
+                      ["size", "Size"],
+                    ] as const).map(([key, label]) => (
+                      <label key={key} className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-surface cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={visibleCols[key]}
+                          onChange={(e) => setVisibleCols((prev) => ({ ...prev, [key]: e.target.checked }))}
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {selectedFolder && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const res = await exportFolderIndexCsvAction(selectedFolder.id);
+                    if (!res.success) return toast.error(res.error);
+                    const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = res.fileName;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success("Folder index template exported");
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-surface/80"
+                  title="Export folder document index CSV (Bulk Indexing template)"
+                >
+                  <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>Index CSV</span>
+                </button>
+              )}
+
               <div className="relative w-48 sm:w-60">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <input
@@ -579,12 +701,23 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             <table className="w-full text-left text-xs">
               <thead className="bg-surface/50 border-b border-border text-muted-foreground font-semibold text-[11px]">
                 <tr>
+                  <th className="py-2.5 px-3 w-8">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all documents"
+                      checked={documents.length > 0 && selectedDocIds.size === documents.length}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedDocIds(new Set(documents.map((d) => d.id)));
+                        else setSelectedDocIds(new Set());
+                      }}
+                    />
+                  </th>
                   <th className="py-2.5 px-3">Document title</th>
-                  <th className="py-2.5 px-3">Doc type</th>
-                  <th className="py-2.5 px-3">Version</th>
-                  <th className="py-2.5 px-3">QC status</th>
-                  <th className="py-2.5 px-3">Lock</th>
-                  <th className="py-2.5 px-3">Size</th>
+                  {visibleCols.docType && <th className="py-2.5 px-3">Doc type</th>}
+                  {visibleCols.version && <th className="py-2.5 px-3">Version</th>}
+                  {visibleCols.qc && <th className="py-2.5 px-3">QC status</th>}
+                  {visibleCols.lock && <th className="py-2.5 px-3">Lock</th>}
+                  {visibleCols.size && <th className="py-2.5 px-3">Size</th>}
                   <th className="py-2.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -621,11 +754,33 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                       onClick={() => setSelectedDoc(doc)}
                       className="hover:bg-surface/50 cursor-pointer transition-colors"
                     >
+                      <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${doc.title}`}
+                          checked={selectedDocIds.has(doc.id)}
+                          onChange={(e) => {
+                            setSelectedDocIds((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(doc.id);
+                              else next.delete(doc.id);
+                              return next;
+                            });
+                          }}
+                        />
+                      </td>
                       <td className="py-2.5 px-3 font-medium text-foreground">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-primary shrink-0" />
                           <div className="min-w-0">
-                            <span className="font-semibold truncate block">{doc.title}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold truncate">{doc.title}</span>
+                              {isUploadedWithin24Hours(doc.createdAt) && (
+                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase shrink-0">
+                                  New
+                                </span>
+                              )}
+                            </div>
                             <span className="text-[11px] text-muted-foreground font-mono truncate block">
                               {doc.originalFileName}
                             </span>
@@ -633,43 +788,53 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                         </div>
                       </td>
 
-                      <td className="py-2.5 px-3">
-                        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-primary">
-                          {doc.docTypeCode}
-                        </span>
-                      </td>
+                      {visibleCols.docType && (
+                        <td className="py-2.5 px-3">
+                          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-primary">
+                            {doc.docTypeCode}
+                          </span>
+                        </td>
+                      )}
 
-                      <td className="py-2.5 px-3 font-mono text-[11px]">
-                        v{doc.currentVersionNo}
-                      </td>
+                      {visibleCols.version && (
+                        <td className="py-2.5 px-3 font-mono text-[11px]">
+                          v{doc.currentVersionNo}
+                        </td>
+                      )}
 
-                      <td className="py-2.5 px-3">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                            doc.approvalStatus === "APPROVED"
-                              ? "bg-success-soft text-success-text"
-                              : doc.approvalStatus === "REJECTED"
-                              ? "bg-danger-soft text-danger-text"
-                              : "bg-info-soft text-info-text"
-                          }`}
-                        >
-                          {doc.approvalStatus === "PENDING" ? "Waiting for QC" : doc.approvalStatus === "APPROVED" ? "Approved" : "Rejected"}
-                        </span>
-                      </td>
+                      {visibleCols.qc && (
+                        <td className="py-2.5 px-3">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                              doc.approvalStatus === "APPROVED"
+                                ? "bg-success-soft text-success-text"
+                                : doc.approvalStatus === "REJECTED"
+                                ? "bg-danger-soft text-danger-text"
+                                : "bg-info-soft text-info-text"
+                            }`}
+                          >
+                            {doc.approvalStatus === "PENDING" ? "Waiting for QC" : doc.approvalStatus === "APPROVED" ? "Approved" : "Rejected"}
+                          </span>
+                        </td>
+                      )}
 
-                      <td className="py-2.5 px-3">
-                        <span
-                          className={`inline-flex items-center gap-1 text-[11px] ${doc.isLocked ? "text-warning-text" : "text-muted-foreground"}`}
-                          title={doc.isLocked ? `Checked out by ${doc.lockedByMe ? "you" : doc.lockedByName}` : "Available"}
-                        >
-                          {doc.isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-                          {doc.isLocked ? (doc.lockedByMe ? "You" : doc.lockedByName) : ""}
-                        </span>
-                      </td>
+                      {visibleCols.lock && (
+                        <td className="py-2.5 px-3">
+                          <span
+                            className={`inline-flex items-center gap-1 text-[11px] ${doc.isLocked ? "text-warning-text" : "text-muted-foreground"}`}
+                            title={doc.isLocked ? `Checked out by ${doc.lockedByMe ? "you" : doc.lockedByName}` : "Available"}
+                          >
+                            {doc.isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+                            {doc.isLocked ? (doc.lockedByMe ? "You" : doc.lockedByName) : ""}
+                          </span>
+                        </td>
+                      )}
 
-                      <td className="py-2.5 px-3 font-mono text-[11px] text-muted-foreground">
-                        {formatBytes(doc.fileSizeBytes)}
-                      </td>
+                      {visibleCols.size && (
+                        <td className="py-2.5 px-3 font-mono text-[11px] text-muted-foreground">
+                          {formatBytes(doc.fileSizeBytes)}
+                        </td>
+                      )}
 
                       <td className="py-2.5 px-3 text-right">
                         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
@@ -1024,6 +1189,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           <aside className="w-full lg:w-[360px] shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-surface overflow-y-auto">
             <DmsDocumentPanel
               documentId={selectedDoc.id}
+              folders={folders.map((f) => ({ id: f.id, name: f.name }))}
               onChanged={(updated) => {
                 loadFolderDocuments();
                 loadFolderTree();

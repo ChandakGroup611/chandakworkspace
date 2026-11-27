@@ -11,6 +11,7 @@ import {
   type DmsQcItem,
   type DmsRecycleItem,
 } from "@/lib/actions/dms-core";
+import { bulkApproveQcAction } from "@/lib/actions/dms-extras";
 
 const when = (iso?: string) => (iso ? new Date(iso).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "");
 
@@ -134,8 +135,11 @@ export function DmsRecycleBinView({ workspaceId, onRestored }: { workspaceId: st
 /** Documents waiting for this person's QC decision, oldest first. */
 export function DmsQcQueueView({ workspaceId, onOpen }: { workspaceId: string; onOpen: (item: DmsQcItem) => void }) {
   const [items, setItems] = useState<DmsQcItem[] | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkComment, setBulkComment] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     fetchQcQueueAction(workspaceId).then((res) => {
       if (res.success) setItems(res.items);
       else {
@@ -145,36 +149,99 @@ export function DmsQcQueueView({ workspaceId, onOpen }: { workspaceId: string; o
     });
   }, [workspaceId]);
 
+  useEffect(() => {
+    load();
+  }, [load]);
+
   if (!items) return <p className="py-12 text-center text-xs text-muted-foreground">Loading the QC queue…</p>;
   if (!items.length) return <p className="py-12 text-center text-xs text-muted-foreground">Nothing is waiting for QC.</p>;
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
-      <table className="w-full text-left text-xs">
-        <thead className="bg-surface/50 border-b border-border text-muted-foreground font-semibold text-[11px]">
-          <tr>
-            <th className="py-2.5 px-3">Document</th>
-            <th className="py-2.5 px-3">Folder</th>
-            <th className="py-2.5 px-3">Uploaded</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {items.map((i) => (
-            <tr key={i.documentId} onClick={() => onOpen(i)} className="hover:bg-surface/50 cursor-pointer">
-              <td className="py-2.5 px-3">
-                <span className="font-semibold text-foreground">{i.title}</span>
-                <span className="ml-1.5 font-mono text-[11px] text-muted-foreground">v{i.versionNo}</span>
-                {i.ownUpload && <span className="ml-1.5 text-[11px] text-muted-foreground">(your upload)</span>}
-              </td>
-              <td className="py-2.5 px-3">{i.folderName}</td>
-              <td className="py-2.5 px-3">
-                {when(i.uploadedAt)}
-                <div className="text-[11px] text-muted-foreground">{i.uploadedByName}</div>
-              </td>
+    <div className="space-y-2">
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-accent-soft/40 p-2.5 text-xs">
+          <span className="font-semibold">{selected.size} selected</span>
+          <input
+            value={bulkComment}
+            onChange={(e) => setBulkComment(e.target.value)}
+            placeholder="Bulk approval comment (optional)"
+            className="flex-1 min-w-[180px] rounded border border-border bg-surface px-2.5 py-1 text-xs"
+          />
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              const res = await bulkApproveQcAction(Array.from(selected), bulkComment);
+              setBusy(false);
+              if (res.success) {
+                toast.success(`Approved ${res.approved} document(s)${res.skipped ? ` (${res.skipped} skipped)` : ""}`);
+                setSelected(new Set());
+                setBulkComment("");
+                load();
+              } else toast.error(res.error);
+            }}
+            className="px-3 py-1 rounded bg-primary text-primary-foreground font-semibold disabled:opacity-50"
+          >
+            Bulk Approve
+          </button>
+        </div>
+      )}
+      <div className="overflow-x-auto rounded-lg border border-border">
+        <table className="w-full text-left text-xs">
+          <thead className="bg-surface/50 border-b border-border text-muted-foreground font-semibold text-[11px]">
+            <tr>
+              <th className="py-2.5 px-3 w-8">
+                <input
+                  type="checkbox"
+                  aria-label="Select all QC items"
+                  checked={items.filter((x) => !x.ownUpload).length > 0 && selected.size === items.filter((x) => !x.ownUpload).length}
+                  onChange={(e) => {
+                    if (e.target.checked) setSelected(new Set(items.filter((x) => !x.ownUpload).map((x) => x.documentId)));
+                    else setSelected(new Set());
+                  }}
+                />
+              </th>
+              <th className="py-2.5 px-3">Document</th>
+              <th className="py-2.5 px-3">Folder</th>
+              <th className="py-2.5 px-3">Uploaded</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {items.map((i) => (
+              <tr key={i.documentId} onClick={() => onOpen(i)} className="hover:bg-surface/50 cursor-pointer">
+                <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
+                  {!i.ownUpload && (
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${i.title}`}
+                      checked={selected.has(i.documentId)}
+                      onChange={(e) =>
+                        setSelected((prev) => {
+                          const next = new Set(prev);
+                          if (e.target.checked) next.add(i.documentId);
+                          else next.delete(i.documentId);
+                          return next;
+                        })
+                      }
+                    />
+                  )}
+                </td>
+                <td className="py-2.5 px-3">
+                  <span className="font-semibold text-foreground">{i.title}</span>
+                  <span className="ml-1.5 font-mono text-[11px] text-muted-foreground">v{i.versionNo}</span>
+                  {i.ownUpload && <span className="ml-1.5 text-[11px] text-muted-foreground">(your upload)</span>}
+                </td>
+                <td className="py-2.5 px-3">{i.folderName}</td>
+                <td className="py-2.5 px-3">
+                  {when(i.uploadedAt)}
+                  <div className="text-[11px] text-muted-foreground">{i.uploadedByName}</div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
