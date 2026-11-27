@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { clientInfo, hasShareSession, loadShareByToken, loadShareFiles, logShareAttempt, shareState, watermarkLine } from "@/lib/dms/share-session";
 import { escapeHtml } from "@/lib/dms/share-crypto";
+import { watermarkPdfBuffer } from "@/lib/dms/pdf-stamp";
 
 /**
  * Files for the public share page. Needs a live share session in this browser (set after the
@@ -68,15 +69,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   const { ip } = await clientInfo();
   let contentType = isPdf ? "application/pdf" : file.mimeType || "application/octet-stream";
   let fileName = file.fileName;
+  const line = watermarkLine(s.recipient_email, ip);
   if (isImage) {
     try {
-      body = await watermarkImage(body, watermarkLine(s.recipient_email, ip));
+      body = await watermarkImage(body, line);
       contentType = "image/png";
       fileName = fileName.replace(/\.[^.]+$/, "") + ".png";
     } catch (err) {
       console.error("[share] watermark failed", err);
       return deny(500, "Could not prepare this image.");
     }
+  } else if (isPdf) {
+    body = await watermarkPdfBuffer(body, line);
   }
 
   await logShareAttempt(s.id, download ? "FILE_DOWNLOAD" : "FILE_VIEW", true, s.recipient_email);

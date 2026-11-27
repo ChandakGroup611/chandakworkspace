@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 import { requireDesign } from '@/lib/permissions/design-guard';
 import { dmsActor, documentRights } from '@/lib/dms/access';
+import { stampQrOnPdfBuffer } from '@/lib/dms/pdf-stamp';
 
 function isDesignStorageUrl(url: string | null | undefined): boolean {
   if (!url || !url.startsWith('storage:')) return false;
@@ -189,16 +190,30 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       }
     }
 
+    let gfcVerifyInfo: { qrToken: string; caption: string } | null = null;
     if (!attachment) {
       // DMAC revision files (drawing review loop)
       const { data: revFile } = await supabaseAdmin
         .from('dmac_revision_files')
-        .select('file_name, storage_key')
+        .select('file_name, storage_key, revision_id')
         .eq('id', id)
         .maybeSingle();
       if (revFile && revFile.storage_key) {
         designFile = true;
         attachment = { file_name: revFile.file_name, file_url: revFile.storage_key, file_type: null };
+        if (revFile.revision_id) {
+          const { data: rev } = await supabaseAdmin
+            .from('dmac_drawing_revisions')
+            .select('is_gfc, qr_code_token, rev_no')
+            .eq('id', revFile.revision_id)
+            .maybeSingle();
+          if (rev?.is_gfc && rev?.qr_code_token) {
+            gfcVerifyInfo = {
+              qrToken: rev.qr_code_token,
+              caption: `GFC REV ${rev.rev_no ?? 0} · VERIFY`,
+            };
+          }
+        }
       }
     }
 
@@ -532,6 +547,22 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     }
 
     const resolvedMime = getMimeType(attachment.file_name, attachment.file_type || fileResponse.headers.get('Content-Type'));
+
+    if (gfcVerifyInfo && resolvedMime === 'application/pdf') {
+      const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+      const rawBuf = Buffer.from(await fileResponse.arrayBuffer());
+      const stamped = await stampQrOnPdfBuffer(
+        rawBuf,
+        `${origin}/verify-drawing/${gfcVerifyInfo.qrToken}`,
+        gfcVerifyInfo.caption
+      );
+      const headers = new Headers();
+      headers.set('Content-Type', resolvedMime);
+      headers.set('Content-Length', String(stamped.length));
+      headers.set('Content-Disposition', `${dispositionType}; filename="${cleanFileName}"; filename*=UTF-8''${safeEncodedFileName}`);
+      headers.set('Cache-Control', 'no-store, private');
+      return new NextResponse(new Uint8Array(stamped), { status: 200, headers });
+    }
 
     const headers = new Headers();
     headers.set('Content-Type', resolvedMime);

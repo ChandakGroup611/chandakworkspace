@@ -362,6 +362,12 @@ jobs:
       - name: Run Dead Link & Route Contract Integrity Gate
         run: npx tsx scripts/check-dead-links.ts --ci
 
+      - name: Run Database Migration & Schema Health Gate
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/ci-db-checks.mjs
+
   # =========================================================================
   # STANDALONE BUILD
   # =========================================================================
