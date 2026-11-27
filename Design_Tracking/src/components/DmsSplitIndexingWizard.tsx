@@ -34,6 +34,7 @@ import {
   fetchDocTypesAndFieldsAction,
   createDocTypeAction
 } from "@/lib/actions/dms-core";
+import { parseAutoIndexFilename, type AutoIndexSeparator } from "@/lib/dms/auto-index";
 import { toast } from "react-toastify";
 
 export type IndexingMode = "SINGLE" | "BATCH" | "SPLIT_PDF";
@@ -182,6 +183,8 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
 
   const activeStagedFile = stagedFiles[activeFileIndex] || null;
   const currentDocType = docTypes.find((dt) => dt.id === selectedDocTypeId);
+  const [autoSep, setAutoSep] = useState<AutoIndexSeparator>("_");
+  const [autoPattern, setAutoPattern] = useState("docType,title");
 
   const handleDownloadActiveFile = () => {
     if (activeStagedFile?.file) {
@@ -447,6 +450,57 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                   </button>
                 </div>
               </div>
+
+              {activeStagedFile && (
+                <div className="rounded-lg border border-border bg-surface/60 p-2.5 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-semibold text-muted-foreground">Auto-index from filename</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const parsed = parseAutoIndexFilename(
+                          activeStagedFile.file.name,
+                          autoSep,
+                          autoPattern.split(",").map((s) => s.trim())
+                        );
+                        if (parsed.title) setDocTitle(parsed.title);
+                        if (parsed.docTypeCode) {
+                          const dt = docTypes.find(
+                            (d) => d.code.toLowerCase() === parsed.docTypeCode!.toLowerCase()
+                          );
+                          if (dt) setSelectedDocTypeId(dt.id);
+                        }
+                        if (Object.keys(parsed.fields).length > 0) {
+                          setCustomFieldValues((prev) => ({ ...prev, ...parsed.fields }));
+                        }
+                        toast.success("Applied filename parts");
+                      }}
+                      className="px-2 py-0.5 rounded bg-primary text-primary-foreground text-[11px] font-semibold"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      aria-label="Filename separator"
+                      value={autoSep}
+                      onChange={(e) => setAutoSep(e.target.value as AutoIndexSeparator)}
+                      className="rounded border border-border bg-background px-2 py-1 text-[11px]"
+                    >
+                      <option value="_">_ (Underscore)</option>
+                      <option value="-">- (Hyphen)</option>
+                      <option value=".">. (Dot)</option>
+                    </select>
+                    <input
+                      value={autoPattern}
+                      onChange={(e) => setAutoPattern(e.target.value)}
+                      placeholder="docType,title,ignore"
+                      className="flex-1 min-w-0 rounded border border-border bg-background px-2 py-1 text-[11px]"
+                      title="Comma-separated roles (max 5 parts): docType, title, ignore, or fieldId"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="text-xs font-semibold text-muted-foreground">

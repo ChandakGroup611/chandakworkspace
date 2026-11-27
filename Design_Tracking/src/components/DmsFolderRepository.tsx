@@ -47,7 +47,7 @@ import {
   type DmsRights
 } from "@/lib/actions/dms-core";
 import { isUploadedWithin24Hours } from "@/lib/dms/filename-rules";
-import { exportFolderIndexCsvAction } from "@/lib/actions/dms-extras";
+import { exportFolderIndexCsvAction, importFolderIndexCsvAction } from "@/lib/actions/dms-extras";
 import { DmsSplitIndexingWizard } from "./DmsSplitIndexingWizard";
 import { DmsDocumentPanel, formatBytes } from "./DmsDocumentPanel";
 import { DmsQcQueueView, DmsRecycleBinView } from "./DmsBinAndQcViews";
@@ -661,26 +661,73 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               </div>
 
               {selectedFolder && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const res = await exportFolderIndexCsvAction(selectedFolder.id);
-                    if (!res.success) return toast.error(res.error);
-                    const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = res.fileName;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    toast.success("Folder index template exported");
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-surface/80"
-                  title="Export folder document index CSV (Bulk Indexing template)"
-                >
-                  <Download className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>Index CSV</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const res = await exportFolderIndexCsvAction(selectedFolder.id);
+                      if (!res.success) return toast.error(res.error);
+                      const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = res.fileName;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast.success("Folder index template exported");
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-surface/80"
+                    title="Export folder document index CSV (Bulk Indexing template)"
+                  >
+                    <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span>Index CSV</span>
+                  </button>
+                  {folderRights?.edit && (
+                    <label
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-surface/80 cursor-pointer"
+                      title="Import edited folder index CSV to bulk-update titles & doc types"
+                    >
+                      <Upload className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>Import CSV</span>
+                      <input
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = "";
+                          if (!file) return;
+                          const text = await file.text();
+                          const lines = text.split(/\r?\n/).filter((l) => l.trim());
+                          if (lines.length < 2) return toast.info("CSV needs a header row and at least 1 data row.");
+                          const parseRow = (line: string) => {
+                            const out: string[] = [];
+                            let cur = "";
+                            let inQ = false;
+                            for (let i = 0; i < line.length; i++) {
+                              const ch = line[i];
+                              if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+                              else if (ch === '"') inQ = !inQ;
+                              else if (ch === "," && !inQ) { out.push(cur); cur = ""; }
+                              else cur += ch;
+                            }
+                            out.push(cur);
+                            return out.map((c) => c.trim());
+                          };
+                          const rows = lines.slice(1).map((l) => {
+                            const cols = parseRow(l);
+                            return { documentId: cols[0] || "", title: cols[1] || "", docTypeCode: cols[3] || "" };
+                          });
+                          const res = await importFolderIndexCsvAction({ folderId: selectedFolder.id, rows });
+                          if (res.success) {
+                            toast.success(`Updated ${res.updated} document(s)${res.skipped ? ` (${res.skipped} skipped)` : ""}`);
+                            loadFolderDocuments();
+                          } else toast.error(res.error);
+                        }}
+                      />
+                    </label>
+                  )}
+                </>
               )}
 
               <div className="relative w-48 sm:w-60">
