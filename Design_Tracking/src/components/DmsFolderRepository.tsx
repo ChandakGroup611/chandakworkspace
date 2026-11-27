@@ -1325,48 +1325,11 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                     className="w-full h-full max-w-6xl bg-surface rounded-lg shadow-lg border border-border overflow-hidden transition-transform duration-100 origin-center flex flex-col"
                     style={{ transform: `scale(${docViewerZoom})` }}
                   >
-                    <object
-                      data={fileSrc}
-                      type="application/pdf"
-                      className="w-full h-full flex-1"
-                    >
-                      <iframe
-                        src={fileSrc}
-                        className="w-full h-full border-none"
-                        title={selectedDoc.title}
-                      >
-                        <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
-                          <FileText className="h-16 w-16 text-muted-foreground stroke-1" />
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">
-                              Inline PDF preview unavailable in this browser.
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              You can securely open the PDF directly or download it.
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={fileSrc}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground inline-flex items-center gap-1.5"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              <span>Open in browser</span>
-                            </a>
-                            <a
-                              href={`${fileSrc}?download=1`}
-                              download={selectedDoc.originalFileName}
-                              className="px-4 py-2 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-surface/80 text-foreground inline-flex items-center gap-1.5"
-                            >
-                              <Download className="h-4 w-4" />
-                              <span>Download file</span>
-                            </a>
-                          </div>
-                        </div>
-                      </iframe>
-                    </object>
+                    <iframe
+                      src={fileSrc}
+                      className="w-full h-full flex-1 border-none"
+                      title={selectedDoc.title}
+                    />
                   </div>
                 );
               }
