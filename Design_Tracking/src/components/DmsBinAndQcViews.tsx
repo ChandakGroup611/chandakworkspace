@@ -311,7 +311,7 @@ export function DmsQcQueueView({
                             onChanged?.();
                           } else toast.error(res.error);
                         }}
-                        className="px-2.5 py-1 rounded bg-success-solid text-white text-[11px] font-semibold hover:brightness-95 disabled:opacity-50 cursor-pointer"
+                        className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold disabled:opacity-50 cursor-pointer"
                       >
                         Approve
                       </button>
@@ -366,7 +366,7 @@ export function DmsQcQueueView({
                               onChanged?.();
                             } else toast.error(res.error);
                           }}
-                          className="px-3 py-1 rounded bg-danger-solid text-white text-xs font-semibold disabled:opacity-50"
+                          className="px-3 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold disabled:opacity-50"
                         >
                           Confirm Reject
                         </button>

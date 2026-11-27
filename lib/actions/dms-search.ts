@@ -106,7 +106,7 @@ export async function searchDocumentsAction(
 
     const ids = rows.map((r) => r.document_id);
     const [{ data: docs, error: dErr }, rights] = await Promise.all([
-      supabaseAdmin.from("dms_documents").select(`${DOC_SELECT}, dms_folders ( name )`).in("id", ids),
+      supabaseAdmin.from("dms_documents").select(`${DOC_SELECT}, dms_folders!dms_documents_folder_id_fkey ( name )`).in("id", ids),
       documentRightsMany(actor, ids),
     ]);
     if (dErr) throw dErr;

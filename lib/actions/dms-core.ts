@@ -962,7 +962,7 @@ export async function fetchRecycleBinAction(workspaceId?: string): Promise<Resul
     if (!wsId) return { success: true, items: [] };
     const { data: rows, error } = await supabaseAdmin
       .from("dms_documents")
-      .select("id, title, original_file_name, folder_id, deleted_at, deleted_by, dms_folders ( name )")
+      .select("id, title, original_file_name, folder_id, deleted_at, deleted_by, dms_folders!dms_documents_folder_id_fkey ( name )")
       .eq("workspace_id", wsId)
       .not("deleted_at", "is", null)
       .is("purged_at", null)
@@ -1030,7 +1030,7 @@ export async function fetchQcQueueAction(workspaceId?: string): Promise<Result<{
     const wsId = await resolveWorkspaceId(workspaceId);
     const { data: rows, error } = await supabaseAdmin
       .from("dms_documents")
-      .select("id, title, folder_id, current_version_no, workspace_id, dms_folders ( name )")
+      .select("id, title, folder_id, current_version_no, workspace_id, dms_folders!dms_documents_folder_id_fkey ( name )")
       .eq("workspace_id", wsId)
       .eq("approval_status", "PENDING")
       .is("deleted_at", null)

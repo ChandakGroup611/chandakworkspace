@@ -96,6 +96,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [bulkSharing, setBulkSharing] = useState<boolean>(false);
   const [shareSingleDoc, setShareSingleDoc] = useState<DmsDocumentSummary | null>(null);
   const [showFieldsMenu, setShowFieldsMenu] = useState<boolean>(false);
+  const [showFolderSettingsMenu, setShowFolderSettingsMenu] = useState<boolean>(false);
   const [visibleCols, setVisibleCols] = useState({
     docId: true,
     uploadedDate: true,
@@ -454,22 +455,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           })}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              if (selectedFolder) {
-                setFolderForPermissions(selectedFolder);
-                setShowPermissionsModal(true);
-              }
-            }}
-            disabled={!selectedFolder}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-sunken text-foreground transition-colors disabled:opacity-50 cursor-pointer"
-            title="Configure folder access & user permissions"
-          >
-            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-            <span>Folder access</span>
-          </button>
+        <div className="flex flex-wrap items-center gap-2 relative">
           <button
             type="button"
             onClick={() => setShowCreateFolderModal(true)}
@@ -480,6 +466,86 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             <FolderPlus className="h-3.5 w-3.5 text-warning-text" />
             <span>New folder</span>
           </button>
+          <div className="relative">
+            <button
+              type="button"
+              disabled={!selectedFolder}
+              onClick={() => setShowFolderSettingsMenu((v) => !v)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-sunken text-foreground transition-colors disabled:opacity-50 cursor-pointer"
+              title="Folder access, rename, QC & download settings"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+              <span>Folder Settings</span>
+              <ChevronDown className="h-3 w-3" />
+            </button>
+            {showFolderSettingsMenu && selectedFolder && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowFolderSettingsMenu(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-lg border border-border bg-elevated shadow-lg py-1 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFolderSettingsMenu(false);
+                      setFolderForPermissions(selectedFolder);
+                      setShowPermissionsModal(true);
+                    }}
+                    className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-left text-foreground"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Folder access &amp; RBAC
+                  </button>
+                  {(folderRights?.admin || folderRights?.manage) && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowFolderSettingsMenu(false);
+                          setRenaming(selectedFolder.name);
+                        }}
+                        className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-left text-foreground"
+                      >
+                        <Folder className="h-3.5 w-3.5 text-primary" /> Rename folder
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowFolderSettingsMenu(false);
+                          handleToggleFolderQc(selectedFolder);
+                        }}
+                        className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-left text-foreground"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                        {selectedFolder.approvalRequired ? "Stop requiring QC" : "Require QC approval"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowFolderSettingsMenu(false);
+                          setRenameSep(selectedFolder.renamePattern?.separator || "_");
+                          setRenameParts((selectedFolder.renamePattern?.parts || ["docType", "title", "version"]).join(","));
+                          setEditingRenamePattern(true);
+                        }}
+                        className="w-full px-3 py-1.5 hover:bg-surface flex items-center gap-2 text-left text-foreground"
+                      >
+                        <Download className="h-3.5 w-3.5 text-primary" /> Download rename pattern
+                      </button>
+                      {selectedFolder.parentId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowFolderSettingsMenu(false);
+                            handleDeleteFolder(selectedFolder);
+                          }}
+                          className="w-full px-3 py-1.5 hover:bg-danger-soft/50 flex items-center gap-2 text-left text-danger-text"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Delete folder
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setShowIndexingWizard(true)}
@@ -782,44 +848,6 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   </span>
                 )}
               </div>
-              {selectedFolder && (folderRights?.admin || folderRights?.manage) && renaming === null && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => setRenaming(selectedFolder.name)}
-                    className="px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-sunken text-[11px] font-medium text-foreground cursor-pointer"
-                  >
-                    Rename
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleFolderQc(selectedFolder)}
-                    className="px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-sunken text-[11px] font-medium text-foreground cursor-pointer"
-                  >
-                    {selectedFolder.approvalRequired ? "Stop requiring QC" : "Require QC"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRenameSep(selectedFolder.renamePattern?.separator || "_");
-                      setRenameParts((selectedFolder.renamePattern?.parts || ["docType", "title", "version"]).join(","));
-                      setEditingRenamePattern((v) => !v);
-                    }}
-                    className="px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-sunken text-[11px] font-medium text-foreground cursor-pointer"
-                  >
-                    Download rename
-                  </button>
-                  {selectedFolder.parentId && (
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteFolder(selectedFolder)}
-                      className="px-2.5 py-1 rounded-md border border-danger-border/60 bg-surface hover:bg-danger-soft/40 text-[11px] font-medium text-danger-text cursor-pointer"
-                    >
-                      Delete folder
-                    </button>
-                  )}
-                </div>
-              )}
               {selectedFolder && editingRenamePattern && (
                 <div className="mt-2 p-2 rounded-lg border border-border bg-surface/60 flex flex-wrap items-center gap-1.5 text-[11px]">
                   <span className="font-semibold text-muted-foreground">Auto-rename on download:</span>
@@ -934,7 +962,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                           loadFolderDocuments();
                         } else toast.error(res.error || "Bulk QC approval failed");
                       }}
-                      className="px-2 py-0.5 rounded bg-success-solid text-white font-medium hover:brightness-95"
+                      className="px-2.5 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold cursor-pointer"
                     >
                       Approve QC
                     </button>
@@ -953,7 +981,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                           toast.error(res.error || "Bulk delete failed");
                         }
                       }}
-                      className="px-2 py-0.5 rounded bg-danger-solid text-white font-medium hover:brightness-95"
+                      className="px-2.5 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white font-semibold cursor-pointer"
                     >
                       Delete
                     </button>

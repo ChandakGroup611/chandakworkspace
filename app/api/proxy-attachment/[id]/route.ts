@@ -426,7 +426,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         try {
           const { data: docMeta } = await supabaseAdmin
             .from('dms_documents')
-            .select('title, current_version_no, created_at, folder_id, dms_doc_types ( code ), dms_folders ( rename_pattern )')
+            .select('title, current_version_no, created_at, folder_id, dms_doc_types ( code ), dms_folders!dms_documents_folder_id_fkey ( rename_pattern )')
             .eq('id', dmsDocumentId)
             .maybeSingle();
           const folderRel: any = Array.isArray((docMeta as any)?.dms_folders) ? (docMeta as any).dms_folders[0] : (docMeta as any)?.dms_folders;
