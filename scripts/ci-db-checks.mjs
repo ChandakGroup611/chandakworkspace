@@ -33,8 +33,8 @@ if (supaUrl && srKey) {
     "dms_documents",
     "dms_folders",
     "dms_shares",
-    "dms_share_policies",
-    "dms_document_tags",
+    "dms_share_policy",
+    "dms_document_folder_tags",
     "notification_rules",
   ];
   for (const t of requiredTables) {

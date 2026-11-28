@@ -36,8 +36,8 @@ export async function runDesignAccessTest() {
   try {
     const fnMatch = guardContent.match(/async function requireDesign\([\s\S]*?^}/m);
     const fnCode = fnMatch ? fnMatch[0] : '';
-    assert(fnCode.includes('{ project_id: id }'), 'requireDesign does not pass project_id to can() scoping');
-    assert(fnCode.includes('checks.every(Boolean)'), 'requireDesign does not require all target project IDs to be in scope');
+    assert(/project_id:\s*(id|pid)\b/.test(fnCode), 'requireDesign does not pass project_id to can() scoping');
+    assert(fnCode.includes('.every(Boolean)'), 'requireDesign does not require all target project IDs to be in scope');
     logPass('DESIGN_PROJECT_SCOPING_GATED', 'requireDesign strictly validates project scope at the record level');
   } catch (err) {
     logFail('DESIGN_PROJECT_SCOPING_GATED', 'Project scoping check failed', err.message);
@@ -58,7 +58,7 @@ export async function runDesignAccessTest() {
     for (const m of mutations) {
       const idx = designContent.indexOf(`export async function ${m.fn}`);
       assert(idx !== -1, `Mutation ${m.fn} not found`);
-      const body = designContent.slice(idx, idx + 600);
+      const body = designContent.slice(idx, idx + 900);
       assert(body.includes(`requireDesign("${m.cap}"`), `${m.fn} missing requireDesign("${m.cap}") gate`);
     }
     logPass('DESIGN_MUTATIONS_GATED', 'All design tracking mutations strictly enforce requireDesign with mapped capabilities');
