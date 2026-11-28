@@ -2,49 +2,147 @@
 
 import React, { useId } from "react";
 
+interface FolderPalette {
+  backStart: string;
+  backEnd: string;
+  frontStart: string;
+  frontMid: string;
+  frontEnd: string;
+  stroke: string;
+  peekAccent: string;
+}
+
+const FOLDER_PALETTES: FolderPalette[] = [
+  // Royal Blue
+  {
+    backStart: "#2563EB",
+    backEnd: "#1E40AF",
+    frontStart: "#93C5FD",
+    frontMid: "#3B82F6",
+    frontEnd: "#1D4ED8",
+    stroke: "#1E3A8A",
+    peekAccent: "#DBEAFE",
+  },
+  // Golden Amber
+  {
+    backStart: "#D97706",
+    backEnd: "#92400E",
+    frontStart: "#FDE68A",
+    frontMid: "#F59E0B",
+    frontEnd: "#D97706",
+    stroke: "#78350F",
+    peekAccent: "#FEF3C7",
+  },
+  // Emerald Green
+  {
+    backStart: "#059669",
+    backEnd: "#065F46",
+    frontStart: "#6EE7B7",
+    frontMid: "#10B981",
+    frontEnd: "#047857",
+    stroke: "#064E3B",
+    peekAccent: "#D1FAE5",
+  },
+  // Violet Purple
+  {
+    backStart: "#7C3AED",
+    backEnd: "#5B21B6",
+    frontStart: "#C4B5FD",
+    frontMid: "#8B5CF6",
+    frontEnd: "#6D28D9",
+    stroke: "#4C1D95",
+    peekAccent: "#EDE9FE",
+  },
+  // Coral Rose
+  {
+    backStart: "#E11D48",
+    backEnd: "#9F1239",
+    frontStart: "#FDA4AF",
+    frontMid: "#F43F5E",
+    frontEnd: "#BE123C",
+    stroke: "#881337",
+    peekAccent: "#FFE4E6",
+  },
+  // Cyan Teal
+  {
+    backStart: "#0891B2",
+    backEnd: "#155E75",
+    frontStart: "#67E8F9",
+    frontMid: "#06B6D4",
+    frontEnd: "#0E7490",
+    stroke: "#164E63",
+    peekAccent: "#CFFAFE",
+  },
+  // Tangerine Orange
+  {
+    backStart: "#EA580C",
+    backEnd: "#9A3412",
+    frontStart: "#FDBA74",
+    frontMid: "#F97316",
+    frontEnd: "#C2410C",
+    stroke: "#7C2D12",
+    peekAccent: "#FFEDD5",
+  },
+];
+
+function pickFolderPalette(folderName?: string | null, colorIndex?: number): FolderPalette {
+  if (typeof colorIndex === "number" && Number.isFinite(colorIndex)) {
+    return FOLDER_PALETTES[Math.abs(Math.floor(colorIndex)) % FOLDER_PALETTES.length];
+  }
+  const name = String(folderName || "").trim().toLowerCase();
+  if (!name) return FOLDER_PALETTES[1]; // Default Golden Amber
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  return FOLDER_PALETTES[hash % FOLDER_PALETTES.length];
+}
+
 interface Dms3dFolderIconProps {
   open?: boolean;
   selected?: boolean;
+  folderName?: string | null;
+  colorIndex?: number;
   className?: string;
 }
 
 /**
- * 3D-styled layered folder SVG icon with specular highlight, inner sheet peek, and bevelled front flap.
+ * Colorful 3D-styled layered folder SVG icon with deterministic palette per folder,
+ * specular rim highlight, inner document peek, and bevelled front flap.
  */
-export function Dms3dFolderIcon({ open = false, selected = false, className = "h-4 w-4 shrink-0" }: Dms3dFolderIconProps) {
+export function Dms3dFolderIcon({
+  open = false,
+  selected = false,
+  folderName,
+  colorIndex,
+  className = "h-4 w-4 shrink-0",
+}: Dms3dFolderIconProps) {
   const uid = useId().replace(/:/g, "");
   const backId = `fld-back-${uid}`;
   const frontId = `fld-front-${uid}`;
   const rimId = `fld-rim-${uid}`;
-
-  // Selected uses a refined royal-blue 3D folder; default uses warm golden-amber 3D folder
-  const backStart = selected ? "#2563EB" : "#D97706";
-  const backEnd = selected ? "#1D4ED8" : "#B45309";
-  const frontStart = selected ? "#60A5FA" : "#FCD34D";
-  const frontMid = selected ? "#3B82F6" : "#F59E0B";
-  const frontEnd = selected ? "#2563EB" : "#D97706";
-  const strokeCol = selected ? "#1E40AF" : "#92400E";
+  const palette = pickFolderPalette(folderName, colorIndex);
 
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <defs>
         <linearGradient id={backId} x1="2" y1="3" x2="20" y2="14" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor={backStart} />
-          <stop offset="100%" stopColor={backEnd} />
+          <stop offset="0%" stopColor={palette.backStart} />
+          <stop offset="100%" stopColor={palette.backEnd} />
         </linearGradient>
-        <linearGradient id={frontId} x1="3" y1="8" x2="20" y2="21" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor={frontStart} />
-          <stop offset="45%" stopColor={frontMid} />
-          <stop offset="100%" stopColor={frontEnd} />
+        <linearGradient id={frontId} x1="3" y1="7" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={palette.frontStart} />
+          <stop offset="45%" stopColor={palette.frontMid} />
+          <stop offset="100%" stopColor={palette.frontEnd} />
         </linearGradient>
         <linearGradient id={rimId} x1="12" y1="8" x2="12" y2="12" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.65" />
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.75" />
           <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
         </linearGradient>
       </defs>
 
       {/* Soft ground shadow */}
-      <ellipse cx="12" cy="20.6" rx="8.5" ry="1.3" fill="#0F172A" fillOpacity="0.16" />
+      <ellipse cx="12" cy="20.7" rx="8.6" ry="1.35" fill="#0F172A" fillOpacity={selected ? "0.24" : "0.16"} />
 
       {/* Back folder tab & body */}
       <path
@@ -55,30 +153,31 @@ export function Dms3dFolderIcon({ open = false, selected = false, className = "h
       {/* Crisp inner document peek */}
       <rect
         x="4.5"
-        y={open ? "6.2" : "7.0"}
+        y={open ? "6.0" : "6.9"}
         width="15"
-        height="4.5"
+        height="4.6"
         rx="1.1"
-        fill="#F8FAFC"
-        stroke="#E2E8F0"
-        strokeWidth="0.6"
+        fill="#FFFFFF"
+        stroke={palette.peekAccent}
+        strokeWidth="0.7"
       />
+      <rect x="6.2" y={open ? "7.2" : "8.0"} width="7" height="0.9" rx="0.45" fill={palette.frontStart} fillOpacity="0.8" />
 
       {/* Front 3D bevelled flap */}
       {open ? (
         <path
-          d="M2.2 10.4C2.08 9.48 2.8 8.66 3.72 8.66H20.28C21.2 8.66 21.92 9.48 21.8 10.4L20.85 18.1C20.72 19.12 19.86 19.88 18.83 19.88H5.17C4.14 19.88 3.28 19.12 3.15 18.1L2.2 10.4Z"
+          d="M2.1 10.4C1.98 9.48 2.7 8.66 3.62 8.66H20.38C21.3 8.66 22.02 9.48 21.9 10.4L20.9 18.1C20.76 19.12 19.9 19.88 18.87 19.88H5.13C4.1 19.88 3.24 19.12 3.1 18.1L2.1 10.4Z"
           fill={`url(#${frontId})`}
-          stroke={strokeCol}
-          strokeOpacity="0.28"
+          stroke={palette.stroke}
+          strokeOpacity="0.3"
           strokeWidth="0.6"
         />
       ) : (
         <path
           d="M2.5 9.6C2.5 8.66 3.26 7.9 4.2 7.9H19.8C20.74 7.9 21.5 8.66 21.5 9.6V17.9C21.5 18.95 20.65 19.8 19.6 19.8H4.4C3.35 19.8 2.5 18.95 2.5 17.9V9.6Z"
           fill={`url(#${frontId})`}
-          stroke={strokeCol}
-          strokeOpacity="0.28"
+          stroke={palette.stroke}
+          strokeOpacity="0.3"
           strokeWidth="0.6"
         />
       )}
@@ -87,9 +186,12 @@ export function Dms3dFolderIcon({ open = false, selected = false, className = "h
       <path
         d={open ? "M3.7 9.1H20.3" : "M4.1 8.4H19.9"}
         stroke={`url(#${rimId})`}
-        strokeWidth="1.1"
+        strokeWidth="1.2"
         strokeLinecap="round"
       />
+
+      {/* Active selection dot */}
+      {selected && <circle cx="18.6" cy="16.8" r="1.3" fill="#FFFFFF" fillOpacity="0.9" />}
     </svg>
   );
 }

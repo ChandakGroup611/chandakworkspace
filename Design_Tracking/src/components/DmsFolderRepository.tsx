@@ -456,7 +456,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             ) : (
               <span className="w-3.5 h-3.5" />
             )}
-            <Dms3dFolderIcon open={isExpanded || isSelected} selected={isSelected} className="h-[18px] w-[18px] shrink-0" />
+            <Dms3dFolderIcon open={isExpanded || isSelected} selected={isSelected} folderName={node.name} className="h-[18px] w-[18px] shrink-0" />
             <span className={`truncate ${node.canOpen === false ? "text-muted-foreground italic" : ""}`}>{node.name}</span>
           </div>
 
@@ -824,7 +824,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                     className="group flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border border-border bg-surface hover:bg-sunken hover:border-primary/40 cursor-pointer transition-all text-xs"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <Dms3dFolderIcon className="h-5 w-5 shrink-0" />
+                      <Dms3dFolderIcon folderName={sub.name} className="h-5 w-5 shrink-0" />
                       <span className="font-medium truncate text-foreground">{sub.name}</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
@@ -930,7 +930,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <Dms3dFolderIcon open className="h-5 w-5 shrink-0" />
+                <Dms3dFolderIcon open folderName={selectedFolder?.name} className="h-5 w-5 shrink-0" />
                 {selectedFolder && renaming !== null ? (
                   <form
                     onSubmit={(e) => {
