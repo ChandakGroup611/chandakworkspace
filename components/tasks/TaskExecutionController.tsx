@@ -340,40 +340,27 @@ export default function TaskExecutionController({
         const res = await fetchWorkspaceStakeholders(task.workspace_id);
         const activeById = new Map<string, any>((res || []).map((u: any) => [u.id, { ...u, is_active: true }]));
 
-        // Scope selectable pool strictly to users assigned to this task (Primary, Executors, Watchers)
+        // Include all active workspace members plus any inactive users already assigned to this task (Primary, Executors, Watchers)
         const existingAssignees = [
           task.assignee || task.assigned_to_user,
           ...(task.task_assignees || []),
           ...(task.task_watchers || [])
         ].filter(Boolean);
 
-        let finalStakeholders: any[] = [];
-        if (existingAssignees.length > 0) {
-          const seen = new Set<string>();
-          for (const ea of existingAssignees) {
-            if (!ea?.id || seen.has(ea.id)) continue;
-            seen.add(ea.id);
-            const activeMatch = activeById.get(ea.id);
-            if (activeMatch) {
-              finalStakeholders.push(activeMatch);
-            } else {
-              // Inactive / removed user currently on the task: keep visible for fallback badge, but mark inactive
-              finalStakeholders.push({
-                id: ea.id,
-                full_name: ea.full_name || 'Assigned User',
-                user_code: ea.user_code || '',
-                profile_photo: ea.profile_photo || null,
-                workspace_role: 'Assignee',
-                is_active: false,
-              });
-            }
-          }
-          // Automatically remove inactive users from active Watchers selection
-          const activeTaskIds = new Set(finalStakeholders.filter(s => s.is_active !== false).map(s => s.id));
-          setSelectedWatchers(prev => prev.filter(id => activeTaskIds.has(id)));
-        } else {
-          finalStakeholders = Array.from(activeById.values());
+        const finalMap = new Map<string, any>(activeById);
+        for (const ea of existingAssignees) {
+          if (!ea?.id || finalMap.has(ea.id)) continue;
+          // Inactive / removed user currently on the task: keep visible until explicitly changed
+          finalMap.set(ea.id, {
+            id: ea.id,
+            full_name: ea.full_name || 'Assigned User',
+            user_code: ea.user_code || '',
+            profile_photo: ea.profile_photo || null,
+            workspace_role: 'Assignee',
+            is_active: false,
+          });
         }
+        const finalStakeholders = Array.from(finalMap.values());
 
         setStakeholders(finalStakeholders);
       } catch (err) {
@@ -2686,7 +2673,7 @@ export default function TaskExecutionController({
                     );
                   }
 
-                  // Watchers Multi-Select Tab (strictly active task users not assigned as executors)
+                  // Watchers Multi-Select Tab: active workspace/subworkspace users not assigned as executors (inactive users excluded from watchers list)
                   const eligibleWatchers = filteredStakeholders.filter(s => s.is_active !== false && !selectedExecutors.includes(s.id));
                   return (
                     <div className="space-y-2">
@@ -2751,6 +2738,11 @@ export default function TaskExecutionController({
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2 truncate text-[13.5px] font-medium text-foreground">
                                     <span>{s.full_name}</span>
+                                    {s.is_active === false && (
+                                      <span className="shrink-0 rounded-full bg-danger-soft px-1.5 text-[11px] font-medium text-danger-text">
+                                        Inactive User
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="truncate text-[12.5px] text-muted">{s.email || "Workspace member"}</div>
                                 </div>

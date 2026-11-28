@@ -261,14 +261,21 @@ export async function createTask(payload: {
       return { error: error.message || JSON.stringify(error) };
     }
 
-    // Insert Assignees and Watchers
+    // Insert Assignees and Watchers (exclude disabled/inactive users from new task assignments)
     if (payload.participants && payload.participants.length > 0) {
+      const candidateIds = Array.from(new Set(payload.participants.map((p: any) => p.user_id).filter(Boolean)));
+      const { data: activeUsers } = candidateIds.length > 0
+        ? await supabaseAdmin.from('user_master').select('id').in('id', candidateIds).eq('is_active', true).eq('is_deleted', false)
+        : { data: [] };
+      const activeUserSet = new Set((activeUsers || []).map((u: any) => u.id));
+
       const rolePriority = { 'OWNER': 4, 'EXECUTOR': 3, 'REVIEWER': 2, 'WATCHER': 1 };
 
       // Group by user_id and keep highest priority role
       const uniqueParticipantsMap = new Map<string, string>();
 
       for (const p of payload.participants) {
+        if (!activeUserSet.has(p.user_id)) continue;
         const existingRole = uniqueParticipantsMap.get(p.user_id);
         const newPriority = rolePriority[p.participation_role as keyof typeof rolePriority] || 0;
         const existingPriority = existingRole ? (rolePriority[existingRole as keyof typeof rolePriority] || 0) : -1;
@@ -934,10 +941,8 @@ export async function getTaskDetails(taskId: string) {
         } else if (p.participation_role === 'REVIEWER') {
           task.task_reviewers.push(u);
         } else if (p.participation_role === 'WATCHER') {
-          // Watchers must strictly be active members of the workspace
-          if (validWsMemberUserIds.has(p.user_id) && u.is_active !== false) {
-            task.task_watchers.push(u);
-          }
+          // Preserve existing watchers (including inactive users until explicitly removed)
+          task.task_watchers.push(u);
         }
       });
     }
@@ -2348,11 +2353,6 @@ export async function updateTaskWatchers(taskId: string, workspaceId: string, wa
   const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
   const stakeholders = await fetchWorkspaceStakeholders(workspaceId);
 
-  // Prepare participants array for watchers
-  const uniqueWatcherIds = Array.from(new Set(watchers));
-  const participants: any[] = [];
-  uniqueWatcherIds.forEach(id => participants.push({ task_id: taskId, user_id: id, participation_role: 'WATCHER' }));
-
   // Fetch existing watchers to identify who is newly added vs already watching
   const { data: existingWatchersData } = await supabaseAdmin
     .from('task_participants')
@@ -2360,7 +2360,25 @@ export async function updateTaskWatchers(taskId: string, workspaceId: string, wa
     .eq('task_id', taskId)
     .eq('participation_role', 'WATCHER');
   const existingWatcherIds = new Set((existingWatchersData || []).map(p => p.user_id));
+
+  // Block disabled/inactive users from being newly added as watchers, while preserving existing ones
+  const requestedIds = Array.from(new Set(watchers));
+  const candidateNewIds = requestedIds.filter(id => !existingWatcherIds.has(id));
+  let activeNewSet = new Set<string>();
+  if (candidateNewIds.length > 0) {
+    const { data: activeNewUsers } = await supabaseAdmin
+      .from('user_master')
+      .select('id')
+      .in('id', candidateNewIds)
+      .eq('is_active', true)
+      .eq('is_deleted', false);
+    activeNewSet = new Set((activeNewUsers || []).map((u: any) => u.id));
+  }
+
+  const uniqueWatcherIds = requestedIds.filter(id => existingWatcherIds.has(id) || activeNewSet.has(id));
   const newlyAddedWatcherIds = uniqueWatcherIds.filter(id => !existingWatcherIds.has(id));
+  const participants: any[] = [];
+  uniqueWatcherIds.forEach(id => participants.push({ task_id: taskId, user_id: id, participation_role: 'WATCHER' }));
 
   // Delete existing watchers for this task
   const { error: deleteError } = await supabaseAdmin
@@ -2392,9 +2410,15 @@ export async function updateTaskWatchers(taskId: string, workspaceId: string, wa
   revalidatePath(`/tasks/${taskId}`);
   revalidatePath(`/workspaces/tasks`);
 
-  // Log in activity trail
+  // Log in activity trail (resolve all watcher names from user_master including inactive users for audit history)
+  const auditUserIds = Array.from(new Set([...uniqueWatcherIds, userId].filter(Boolean)));
+  const { data: auditUsers } = auditUserIds.length > 0
+    ? await supabaseAdmin.from('user_master').select('id, full_name').in('id', auditUserIds)
+    : { data: [] };
+  const auditNameMap = new Map<string, string>((auditUsers || []).map((u: any) => [u.id, u.full_name]));
+
   const newWatcherNames = uniqueWatcherIds
-    .map(id => stakeholders.find((s: any) => s.id === id)?.full_name)
+    .map(id => auditNameMap.get(id) || stakeholders.find((s: any) => s.id === id)?.full_name)
     .filter(Boolean)
     .join(', ');
 
