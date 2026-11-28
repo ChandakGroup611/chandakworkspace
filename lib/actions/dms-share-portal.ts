@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { ensureShareSecret, escapeHtml, hmac, maskEmail, newOtp, newSessionToken, safeEqualHex, shareConfigured, verifySharePassword } from "@/lib/dms/share-crypto";
+import { isHtmlPreviewExt } from "@/lib/dms/preview-render";
 import {
   clientInfo,
   endShareSession,
@@ -54,8 +55,8 @@ export interface SharedItemDetail {
   fileName: string;
   fileSizeBytes: number;
   mimeType: string;
-  /** "image" previews carry a burned-in watermark; "pdf" is shown inline; "none" has no preview */
-  preview: "image" | "pdf" | "none";
+  /** "image" previews carry a burned-in watermark; "pdf" and "html" are shown inline; "none" has no preview */
+  preview: "image" | "pdf" | "html" | "none";
   viewUrl: string;
   downloadUrl?: string;
 }
@@ -76,6 +77,7 @@ function previewKind(mime: string, fileName: string): SharedItemDetail["preview"
   if (mime.startsWith("image/") && mime !== "image/svg+xml") return "image";
   if (["png", "jpg", "jpeg", "webp", "tif", "tiff", "gif"].includes(ext)) return "image";
   if (mime === "application/pdf" || ext === "pdf") return "pdf";
+  if (isHtmlPreviewExt(ext)) return "html";
   return "none";
 }
 

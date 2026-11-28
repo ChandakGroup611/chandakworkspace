@@ -291,9 +291,15 @@ export default function SharePortalPage({ params }: { params: Promise<{ token: s
                       // Watermark is burned into the image on the server
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={selected.viewUrl} alt={selected.title} className="max-w-full mx-auto select-none" draggable={false} />
-                    ) : selected.preview === "pdf" ? (
+                    ) : selected.preview === "pdf" || selected.preview === "html" ? (
                       <>
-                        <iframe key={selected.id} src={`${selected.viewUrl}#toolbar=0&navpanes=0`} title={selected.title} className="w-full h-full min-h-[60vh] border-0" />
+                        <iframe
+                          key={selected.id}
+                          src={selected.preview === "pdf" ? `${selected.viewUrl}#toolbar=0&navpanes=0` : selected.viewUrl}
+                          title={selected.title}
+                          sandbox={selected.preview === "html" ? "" : undefined}
+                          className="w-full h-full min-h-[60vh] border-0 bg-white"
+                        />
                         <div className="absolute inset-0 pointer-events-none select-none overflow-hidden flex flex-col justify-around opacity-20">
                           {Array.from({ length: 6 }).map((_, i) => (
                             <div key={i} className="text-sm font-mono font-semibold whitespace-nowrap -rotate-12">

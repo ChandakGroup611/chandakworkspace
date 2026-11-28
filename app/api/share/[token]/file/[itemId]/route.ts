@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { clientInfo, hasShareSession, loadShareByToken, loadShareFiles, logShareAttempt, shareState, watermarkLine } from "@/lib/dms/share-session";
 import { escapeHtml } from "@/lib/dms/share-crypto";
 import { watermarkPdfBuffer } from "@/lib/dms/pdf-stamp";
+import { isHtmlPreviewExt, renderDocumentPreviewHtml } from "@/lib/dms/preview-render";
 
 /**
  * Files for the public share page. Needs a live share session in this browser (set after the
@@ -54,7 +55,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   const ext = file.fileName.split(".").pop()?.toLowerCase() || "";
   const isImage = IMAGE_EXT.has(ext) || (file.mimeType.startsWith("image/") && file.mimeType !== "image/svg+xml");
   const isPdf = ext === "pdf" || file.mimeType === "application/pdf";
-  if (!download && !isImage && !isPdf) return deny(415, "This file type cannot be previewed here.");
+  const isHtmlPreview = !download && isHtmlPreviewExt(ext);
+  if (!download && !isImage && !isPdf && !isHtmlPreview) return deny(415, "This file type cannot be previewed here.");
 
   // Count first, so the download limit holds even with parallel requests
   const { data: allowed, error: countErr } = await supabaseAdmin.rpc("fn_dms_share_count_access", { p_share: s.id, p_download: download });
@@ -78,6 +80,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   let contentType = isPdf ? "application/pdf" : file.mimeType || "application/octet-stream";
   let fileName = file.fileName;
   const line = watermarkLine(s.recipient_email, ip);
+  let extraHeaders: Record<string, string> = {};
   if (isImage) {
     try {
       body = await watermarkImage(body, line);
@@ -89,6 +92,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     }
   } else if (isPdf) {
     body = await watermarkPdfBuffer(body, line);
+  } else if (isHtmlPreview) {
+    const html = await renderDocumentPreviewHtml(body, file.fileName, line);
+    body = Buffer.from(html, "utf8");
+    contentType = "text/html; charset=utf-8";
+    fileName = fileName.replace(/\.[^.]+$/, "") + ".html";
+    extraHeaders = { "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline';" };
   }
 
   // Consume one-time link after file preparation succeeds: on explicit download, or on view if downloads are disabled.
@@ -123,6 +132,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "no-referrer",
       "X-Robots-Tag": "noindex, nofollow",
+      ...extraHeaders,
     },
   });
 }
