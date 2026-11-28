@@ -353,8 +353,9 @@ export default function UserProfileEditor() {
                     {PRESET_AVATARS.map((avatar, idx) => (
                       <img 
                         key={idx} 
-                        src={avatar} 
+                        src={`${avatar}?v=2`} 
                         alt="Preset" 
+                        onError={(e) => { (e.target as HTMLImageElement).src = getInitialsAvatarUrl(`P${idx + 1}`); }}
                         onClick={() => !photoUploading && handlePresetAvatarSelect(avatar)}
                         className={`w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-ring transition-all ${photoUploading ? 'opacity-50 cursor-not-allowed' : 'opacity-80 hover:opacity-100'}`} 
                       />
