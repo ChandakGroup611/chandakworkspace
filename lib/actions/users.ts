@@ -77,10 +77,10 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
     // A. Update in Supabase Auth if password or email is changed and different
     const authUpdates: any = {};
     
-    // Fetch existing email and role_id to verify difference
+    // Fetch existing email, role_id, and active status to verify difference
     const { data: existingUser } = await targetClient
       .from("user_master")
-      .select("email, role_id")
+      .select("email, role_id, is_active")
       .eq("id", editUserId)
       .single();
 
@@ -148,6 +148,16 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
         delete updatePayload.role_id;
         delete updatePayload.is_active;
       }
+
+      const nowIso = new Date().toISOString();
+      if (updatePayload.is_active === false) {
+        updatePayload.deactivated_at = nowIso;
+        updatePayload.deactivated_by = authUser.id;
+        updatePayload.deactivation_reason = payload.deactivation_reason || "Deactivated by administrator";
+      } else if (existingUser && existingUser.is_active === false && updatePayload.is_active === true) {
+        updatePayload.reactivated_at = nowIso;
+        updatePayload.reactivated_by = authUser.id;
+      }
     }
 
     // B. Update in user_master (using target client based on environment capability)
@@ -161,10 +171,32 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       return { success: false, error: `Database Update Failed: ${dbError.message}` };
     }
 
-    // Automatically remove disabled user from all workspaces, sub-workspaces, tasks, and subtasks
-    if (updatePayload.is_active === false) {
-      const { cleanupDisabledUserAssignments } = await import("@/lib/actions/tasks");
-      await cleanupDisabledUserAssignments(editUserId);
+    // Immediate session revocation / restoration & permission cache invalidation (preserve all historical assignments!)
+    if (updatePayload.is_active === false || updatePayload.is_active === true) {
+      if (isServiceRoleAvailable) {
+        await adminClient.auth.admin
+          .updateUserById(editUserId, { ban_duration: updatePayload.is_active === false ? "876000h" : "none" })
+          .catch((e) => console.warn("[saveUserAction] auth ban/unban warning:", e));
+      }
+      const { invalidatePermissionCache } = await import("@/lib/permissions");
+      const { invalidateModuleAccessCache } = await import("@/lib/permissions/module-access");
+      invalidatePermissionCache(editUserId);
+      invalidateModuleAccessCache(editUserId);
+
+      try {
+        await targetClient.from("user_master_audit_logs").insert({
+          user_id: editUserId,
+          actor_id: authUser.id,
+          action: updatePayload.is_active === false ? "USER_DEACTIVATED" : "USER_REACTIVATED",
+          details: {
+            reason: updatePayload.deactivation_reason || null,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch {
+        // Audit log table insert best-effort
+      }
+      revalidatePath("/users");
       revalidatePath("/workspaces");
       revalidatePath("/tasks");
     }
@@ -553,19 +585,36 @@ export async function deleteUserAction(userId: string) {
     return { success: false, error: "CRITICAL: Cannot modify user in authentication backend. SUPABASE_SERVICE_ROLE_KEY is missing in your environment variables. Please add it to your deployment." };
   }
 
-  // Check for any activities associated with the user
-  const [taskRes, partRes, eventRes] = await Promise.all([
+  // Check for any historical activities associated with the user across core modules
+  const [taskRes, partRes, eventRes, ticketRes, reqRes, dmsRes, drawRes, meetRes, msgRes] = await Promise.all([
     supabase.from("tasks").select("*", { count: "exact", head: true }).or(`assigned_to.eq.${userId},created_by.eq.${userId}`),
     supabase.from("task_participants").select("*", { count: "exact", head: true }).eq("user_id", userId),
-    supabase.from("activity_events").select("*", { count: "exact", head: true }).eq("performed_by", userId)
+    supabase.from("activity_events").select("*", { count: "exact", head: true }).eq("performed_by", userId),
+    supabase.from("tickets").select("*", { count: "exact", head: true }).or(`creator_id.eq.${userId},assignee_id.eq.${userId}`),
+    supabase.from("requirements").select("*", { count: "exact", head: true }).eq("requester_id", userId),
+    supabase.from("dms_documents").select("*", { count: "exact", head: true }).eq("created_by", userId),
+    supabase.from("dmac_drawings").select("*", { count: "exact", head: true }).or(`created_by.eq.${userId},approved_by.eq.${userId}`),
+    supabase.from("meet_meetings").select("*", { count: "exact", head: true }).or(`created_by.eq.${userId},chair_id.eq.${userId}`),
+    supabase.from("messenger_messages").select("*", { count: "exact", head: true }).eq("sender_id", userId),
   ]);
 
   if (taskRes.error) return { success: false, error: `Error checking tasks: ${taskRes.error.message}` };
   if (partRes.error) return { success: false, error: `Error checking participation: ${partRes.error.message}` };
   if (eventRes.error) return { success: false, error: `Error checking activity events: ${eventRes.error.message}` };
 
-  if ((taskRes.count && taskRes.count > 0) || (partRes.count && partRes.count > 0) || (eventRes.count && eventRes.count > 0)) {
-    return { success: false, error: "Cannot delete user because they have associated activities in the system. Please deactivate the user instead." };
+  const hasHistory =
+    (taskRes.count || 0) > 0 ||
+    (partRes.count || 0) > 0 ||
+    (eventRes.count || 0) > 0 ||
+    (ticketRes.count || 0) > 0 ||
+    (reqRes.count || 0) > 0 ||
+    (dmsRes.count || 0) > 0 ||
+    (drawRes.count || 0) > 0 ||
+    (meetRes.count || 0) > 0 ||
+    (msgRes.count || 0) > 0;
+
+  if (hasHistory) {
+    return { success: false, error: "Cannot delete user because they have associated historical records in the system. Please deactivate the user instead." };
   }
 
   const adminClient = getAdminClient();
@@ -598,9 +647,6 @@ export async function deleteUserAction(userId: string) {
   if (dbError) {
     return { success: false, error: `Database update failed: ${dbError.message}` };
   }
-
-  const { cleanupDisabledUserAssignments } = await import("@/lib/actions/tasks");
-  await cleanupDisabledUserAssignments(userId);
 
   revalidatePath("/users");
   revalidatePath("/workspaces");

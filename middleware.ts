@@ -190,6 +190,39 @@ export async function middleware(request: NextRequest) {
   const isAuthCallback = pathname.startsWith("/auth/");
   const isServerAction = Boolean(request.headers.get("next-action"));
 
+  // Immediate access revocation for deactivated or soft-deleted users
+  if (user && !isAuthPage && !isAuthCallback && !NO_LOGIN_PAGES.test(pathname)) {
+    const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const srKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (supaUrl && srKey) {
+      try {
+        const res = await fetch(
+          `${supaUrl}/rest/v1/user_master?id=eq.${encodeURIComponent(user.id)}&select=is_active,is_deleted&limit=1`,
+          { headers: { apikey: srKey, Authorization: `Bearer ${srKey}` }, cache: "no-store" }
+        );
+        if (res.ok) {
+          const rows = await res.json();
+          const record = Array.isArray(rows) ? rows[0] : null;
+          if (!record || record.is_deleted === true || record.is_active === false) {
+            if (isApiRoute || isServerAction) {
+              return NextResponse.json({ error: "Your account has been deactivated." }, { status: 403 });
+            }
+            const disabledUrl = request.nextUrl.clone();
+            disabledUrl.pathname = "/login";
+            disabledUrl.search = "?error=account_disabled";
+            const resp = NextResponse.redirect(disabledUrl);
+            request.cookies.getAll().forEach((c) => {
+              if (c.name.startsWith("sb-")) resp.cookies.delete(c.name);
+            });
+            return resp;
+          }
+        }
+      } catch {
+        // Do not fail open on transient error? Keep non-blocking if DB unreachable; backend guards also check is_active.
+      }
+    }
+  }
+
   // If user is not authenticated and trying to access protected page routes, redirect to /login
   // Never redirect Server Action RPC calls to /login HTML, as that breaks the client action protocol with 307
   if (!user && !isAuthPage && !isApiRoute && !isAuthCallback && !isServerAction && !NO_LOGIN_PAGES.test(pathname)) {

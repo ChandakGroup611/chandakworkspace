@@ -1434,6 +1434,11 @@ export async function saveDesignUserAccessAction(payload: {
 }): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const adminUser = await requireDesign("admin");
+    const { assertUsersActive } = await import("@/lib/users/user-directory");
+    const activeCheck = await assertUsersActive([payload.userId]);
+    if (!activeCheck.ok) {
+      throw new Error(activeCheck.error);
+    }
     const { hasPermission } = await import("@/lib/permissions");
     const isSuper = await hasPermission(adminUser.id, "SUPER_ADMIN");
     if (payload.userId === adminUser.id && !isSuper) {
@@ -1643,6 +1648,13 @@ export async function fetchDesignAccessAuditAction(targetUserId?: string): Promi
 export async function toggleUserDesignModuleAccessAction(userId: string, enable: boolean): Promise<{ success: boolean; error?: string }> {
   try {
     const adminUser = await requireDesign("admin");
+    if (enable) {
+      const { assertUsersActive } = await import("@/lib/users/user-directory");
+      const activeCheck = await assertUsersActive([userId]);
+      if (!activeCheck.ok) {
+        throw new Error(activeCheck.error);
+      }
+    }
     const { data: moduleData } = await supabaseAdmin
       .from("modules_master")
       .select("id")

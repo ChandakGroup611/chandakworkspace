@@ -10,6 +10,11 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
 const permissionCache = new Map<string, { perms: Set<string>, role: string, expiresAt: number }>();
 const CACHE_TTL_MS = 60000; // 1 minute cache for lightweight performance
 
+export function invalidatePermissionCache(userId?: string) {
+  if (userId) permissionCache.delete(userId);
+  else permissionCache.clear();
+}
+
 /**
  * Internal helper to fetch and cache user permissions.
  */
@@ -22,7 +27,7 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
   const [roleRes, permRes, secondaryRolesRes] = await Promise.all([
     supabaseAdmin
       .from("user_master")
-      .select("role:roles(code), role_id, email")
+      .select("role:roles(code), role_id, email, is_active, is_deleted")
       .eq("id", userId)
       .maybeSingle(),
     supabaseAdmin
@@ -34,6 +39,10 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
       .select("role:roles(code)")
       .eq("user_id", userId)
   ]);
+
+  if (!roleRes.data || roleRes.data.is_deleted === true || roleRes.data.is_active === false) {
+    return { perms: new Set<string>(), role: "DEACTIVATED" };
+  }
 
   let dbRoleCode = Array.isArray(roleRes.data?.role)
     ? (roleRes.data?.role[0] as any)?.code

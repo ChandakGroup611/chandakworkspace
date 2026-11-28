@@ -2864,6 +2864,10 @@ export async function assignUserToTasksBatch(userId: string, assignments: { task
     const { hasPermission } = await import("@/lib/permissions");
     const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN");
 
+    const { assertUsersActive } = await import("@/lib/users/user-directory");
+    const activeCheck = await assertUsersActive([userId]);
+    if (!activeCheck.ok) return { error: activeCheck.error };
+
     for (const assignment of assignments) {
       if (!isSuperAdmin) {
         // Check if user is primary assignee or creator of this task, or manager of its workspace
@@ -2909,30 +2913,12 @@ export async function assignUserToTasksBatch(userId: string, assignments: { task
  * Removes a disabled/inactive user from all workspaces, sub-workspaces,
  * tasks, and subtasks (all participant roles, watchers, and primary assignee).
  */
-export async function cleanupDisabledUserAssignments(userId: string) {
-  if (!userId) return;
-  try {
-    await Promise.all([
-      supabaseAdmin
-        .from('workspace_members')
-        .delete()
-        .eq('user_id', userId),
-      supabaseAdmin
-        .from('task_participants')
-        .delete()
-        .eq('user_id', userId),
-      supabaseAdmin
-        .from('task_watchers')
-        .delete()
-        .eq('user_id', userId),
-      supabaseAdmin
-        .from('tasks')
-        .update({ assigned_to: null, updated_at: new Date().toISOString() })
-        .eq('assigned_to', userId)
-    ]);
-  } catch (err) {
-    console.warn("[cleanupDisabledUserAssignments] Cleanup error:", err);
-  }
+export async function cleanupDisabledUserAssignments(_userId: string) {
+  // Global Historical Reference Retention Policy:
+  // Never delete, nullify, or overwrite existing workspace_members, task_participants,
+  // task_watchers, or tasks.assigned_to when a user is deactivated.
+  // Inactive users are blocked at auth/permission/new-operation boundaries instead.
+  return;
 }
 
 export async function cleanupInactiveUserFromWatchers(userId: string) {
