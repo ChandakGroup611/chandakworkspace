@@ -71,6 +71,7 @@ import { DmsSearchView } from "./DmsSearchView";
 import { DmsMastersView } from "./DmsMastersView";
 import { DmsShareDialog, DmsSharesView } from "./DmsShares";
 import { DmsFolderPermissionsModal } from "./DmsFolderPermissionsModal";
+import { Dms3dFolderIcon, Dms3dFileIcon } from "./Dms3dIcons";
 import { toast } from "react-toastify";
 
 interface DmsFolderRepositoryProps {
@@ -206,6 +207,13 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
     });
   }, []);
 
+  const selectedFolderIdRef = useRef<string | null>(null);
+  selectedFolderIdRef.current = selectedFolder?.id ?? null;
+  const urlFolderIdRef = useRef<string | null>(urlFolderId);
+  urlFolderIdRef.current = urlFolderId;
+  const lastAppliedUrlFolderRef = useRef<string | null>(null);
+  const lastPushedQsRef = useRef<string | null>(null);
+
   // Load Folder Hierarchy on mount
   const loadFolderTree = useCallback(async () => {
     try {
@@ -220,8 +228,10 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           }
           return null;
         };
-        if (selectedFolder) {
-          const refreshed = findNodeById(res.folders, selectedFolder.id);
+        const curSelectedId = selectedFolderIdRef.current;
+        const curUrlFolderId = urlFolderIdRef.current;
+        if (curSelectedId) {
+          const refreshed = findNodeById(res.folders, curSelectedId);
           if (refreshed) setSelectedFolder(refreshed);
         } else if (res.folders.length > 0) {
           const firstOpen = (nodes: DmsFolderNode[]): DmsFolderNode | null => {
@@ -232,9 +242,12 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             }
             return null;
           };
-          const targetFromUrl = urlFolderId ? findNodeById(res.folders, urlFolderId) : null;
+          const targetFromUrl = curUrlFolderId ? findNodeById(res.folders, curUrlFolderId) : null;
           const initial = targetFromUrl && targetFromUrl.canOpen !== false ? targetFromUrl : firstOpen(res.folders);
-          if (initial) setSelectedFolder(initial);
+          if (initial) {
+            lastAppliedUrlFolderRef.current = initial.id;
+            setSelectedFolder(initial);
+          }
           setExpandedFolderIds(new Set(res.folders.map((f) => f.id)));
         }
       } else if (!res.success) {
@@ -243,7 +256,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
     } catch (err) {
       console.error("Failed to load folder tree:", err);
     }
-  }, [workspaceId, selectedFolder?.id, urlFolderId]);
+  }, [workspaceId]);
 
   useEffect(() => {
     loadFolderTree();
@@ -254,7 +267,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
     if (urlView && ["FOLDER", "SEARCH", "BIN", "MASTERS", "SHARES", "GROUPS", "SETTINGS"].includes(urlView)) {
       setView(urlView as any);
     }
-    if (urlFolderId && folders.length > 0) {
+    if (urlFolderId && urlFolderId !== lastAppliedUrlFolderRef.current && folders.length > 0) {
       const findNode = (nodes: DmsFolderNode[]): DmsFolderNode | null => {
         for (const n of nodes) {
           if (n.id === urlFolderId) return n;
@@ -264,8 +277,11 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
         return null;
       };
       const found = findNode(folders);
-      if (found && found.canOpen !== false && selectedFolder?.id !== found.id) {
-        setSelectedFolder(found);
+      if (found && found.canOpen !== false) {
+        lastAppliedUrlFolderRef.current = found.id;
+        if (selectedFolderIdRef.current !== found.id) {
+          setSelectedFolder(found);
+        }
       }
     }
     if (urlDocId && handledDeepLinkRef.current !== `${urlFolderId || ""}:${urlDocId}`) {
@@ -286,14 +302,18 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   useEffect(() => {
     const next = new URLSearchParams();
     if (view !== "FOLDER") next.set("view", view);
-    if (selectedFolder?.id) next.set("folder", selectedFolder.id);
+    if (selectedFolder?.id) {
+      next.set("folder", selectedFolder.id);
+      lastAppliedUrlFolderRef.current = selectedFolder.id;
+    }
     if (selectedDoc?.id) next.set("doc", selectedDoc.id);
     const qs = next.toString();
     const cur = searchParams.toString();
-    if (qs !== cur && selectedFolder?.id) {
-      router.push(qs ? `/design/dms?${qs}` : "/design/dms", { scroll: false });
+    if (qs !== cur && qs !== lastPushedQsRef.current && selectedFolder?.id) {
+      lastPushedQsRef.current = qs;
+      router.replace(qs ? `/design/dms?${qs}` : "/design/dms", { scroll: false });
     }
-  }, [view, selectedFolder?.id, selectedDoc?.id]);
+  }, [view, selectedFolder?.id, selectedDoc?.id, router, searchParams]);
 
   // Load Documents whenever selectedFolder changes or search triggers
   const loadFolderDocuments = useCallback(async () => {
@@ -436,11 +456,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             ) : (
               <span className="w-3.5 h-3.5" />
             )}
-            <Folder
-              className={`h-4 w-4 shrink-0 ${
-                isSelected ? "text-primary fill-theme-btn-primary/20" : "text-warning-text fill-warning"
-              }`}
-            />
+            <Dms3dFolderIcon open={isExpanded || isSelected} selected={isSelected} className="h-[18px] w-[18px] shrink-0" />
             <span className={`truncate ${node.canOpen === false ? "text-muted-foreground italic" : ""}`}>{node.name}</span>
           </div>
 
@@ -808,7 +824,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                     className="group flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border border-border bg-surface hover:bg-sunken hover:border-primary/40 cursor-pointer transition-all text-xs"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <Folder className="h-4 w-4 shrink-0 text-warning-text fill-warning" />
+                      <Dms3dFolderIcon className="h-5 w-5 shrink-0" />
                       <span className="font-medium truncate text-foreground">{sub.name}</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
@@ -914,7 +930,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <Folder className="h-4 w-4 text-warning-text fill-warning" />
+                <Dms3dFolderIcon open className="h-5 w-5 shrink-0" />
                 {selectedFolder && renaming !== null ? (
                   <form
                     onSubmit={(e) => {
@@ -1336,7 +1352,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                       )}
                       <td className="py-2.5 px-3 font-medium text-foreground">
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-primary shrink-0" />
+                          <Dms3dFileIcon fileName={doc.originalFileName} className="h-6 w-6 shrink-0" />
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
                               <span className="font-semibold truncate">{doc.title}</span>
