@@ -2,6 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 import { toast } from 'react-toastify';
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import Link from "next/link";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
@@ -111,6 +112,8 @@ const formatDate = (dateString: string | null | undefined): string => {
   }
 };
 
+const WORKSPACE_REPORT_STATE_KEY = "chandak_workspace_reports_filter_state_v1";
+
 export default function ReportsClient() {
   const { isLight: isLightMode } = useTheme();
   const { hasPermission, roleCode } = usePermissions();
@@ -118,6 +121,8 @@ export default function ReportsClient() {
 
   const [entityType, setEntityType] = useState<ReportEntityType>("WORKSPACE");
   const [scope, setScope] = useState<ReportScope>("ALL");
+  const isHydratedRef = useRef(false);
+  const prevEntityScopeRef = useRef<{ entityType: ReportEntityType; scope: ReportScope } | null>(null);
   
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -176,17 +181,69 @@ export default function ReportsClient() {
     }
   };
 
+  // Restore saved report filters on mount (so navigating back from a record preserves filters)
+  useEffect(() => {
+    try {
+      const raw = window.sessionStorage.getItem(WORKSPACE_REPORT_STATE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved.entityType) setEntityType(saved.entityType);
+        if (saved.scope) setScope(saved.scope);
+        if (typeof saved.query === "string") setQuery(saved.query);
+        if (typeof saved.selectedStatus === "string") setSelectedStatus(saved.selectedStatus);
+        if (Array.isArray(saved.selectedStatuses)) setSelectedStatuses(saved.selectedStatuses);
+        if (Array.isArray(saved.selectedWorkspaceIds)) setSelectedWorkspaceIds(saved.selectedWorkspaceIds);
+        if (Array.isArray(saved.selectedSubWorkspaceIds)) setSelectedSubWorkspaceIds(saved.selectedSubWorkspaceIds);
+        if (typeof saved.dateFrom === "string") setDateFrom(saved.dateFrom);
+        if (typeof saved.dateTo === "string") setDateTo(saved.dateTo);
+        if (saved.columnFilters && typeof saved.columnFilters === "object") setColumnFilters(saved.columnFilters);
+        prevEntityScopeRef.current = {
+          entityType: saved.entityType || "WORKSPACE",
+          scope: saved.scope || "ALL",
+        };
+      }
+    } catch { /* ignore */ }
+    isHydratedRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!isHydratedRef.current) return;
+    try {
+      window.sessionStorage.setItem(
+        WORKSPACE_REPORT_STATE_KEY,
+        JSON.stringify({
+          entityType,
+          scope,
+          query,
+          selectedStatus,
+          selectedStatuses,
+          selectedWorkspaceIds,
+          selectedSubWorkspaceIds,
+          dateFrom,
+          dateTo,
+          columnFilters,
+        })
+      );
+    } catch { /* ignore */ }
+  }, [entityType, scope, query, selectedStatus, selectedStatuses, selectedWorkspaceIds, selectedSubWorkspaceIds, dateFrom, dateTo, columnFilters]);
+
   useEffect(() => {
     refreshData();
-    // Reset filters on entity change
-    setQuery("");
-    setSelectedStatus("");
-    setSelectedStatuses([]);
-    setSelectedWorkspaceIds([]);
-    setSelectedSubWorkspaceIds([]);
-    setDateFrom("");
-    setDateTo("");
-    setColumnFilters({});
+    // Only reset filters when the user switches entity/scope after initial hydration
+    if (
+      prevEntityScopeRef.current &&
+      (prevEntityScopeRef.current.entityType !== entityType || prevEntityScopeRef.current.scope !== scope)
+    ) {
+      setQuery("");
+      setSelectedStatus("");
+      setSelectedStatuses([]);
+      setSelectedWorkspaceIds([]);
+      setSelectedSubWorkspaceIds([]);
+      setDateFrom("");
+      setDateTo("");
+      setColumnFilters({});
+    }
+    prevEntityScopeRef.current = { entityType, scope };
   }, [entityType, scope]);
 
   const uniqueStatuses = useMemo(() => Array.from(new Set(data.map(d => d.status).filter(s => s !== "—"))) as string[], [data]);
@@ -338,7 +395,7 @@ export default function ReportsClient() {
         const filterVal = columnFilters[key]?.toLowerCase();
         if (!filterVal) continue;
         
-        let itemVal = item[key];
+        let itemVal = key === "due_date" ? item.end_date : item[key];
         if (itemVal === undefined && item.custom_fields) {
           itemVal = item.custom_fields[key];
         }
@@ -800,19 +857,28 @@ export default function ReportsClient() {
                     </AppTableCell>
                   </AppTableRow>
                 ) : (
-                  filtered.map((item) => (
+                  filtered.map((item) => {
+                    const recordHref =
+                      entityType === "TASK" || entityType === "SUB_TASK"
+                        ? `/tasks/${item.id}`
+                        : `/workspaces?workspace=${encodeURIComponent(item.id)}`;
+                    return (
                     <AppTableRow key={item.id}>
                       {visibleColumns.map((col, index) => {
                         const isCode = col.field_key === "code" || index === 0;
                         switch(col.field_key) {
                           case "code": return (
                             <AppTableCell key={col.field_id} className="font-mono font-semibold text-accent-soft-text whitespace-nowrap sticky left-0 bg-surface z-20 shadow-[4px_0_8px_rgba(0,0,0,0.06)]">
-                              {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
+                              <Link href={recordHref} className="hover:underline text-primary">
+                                {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
+                              </Link>
                             </AppTableCell>
                           );
                           case "title": return (
                             <AppTableCell key={col.field_id}>
-                              <div className="text-[13px] font-semibold text-foreground whitespace-normal break-words w-full">{item.title}</div>
+                              <Link href={recordHref} className="text-[13px] font-semibold text-foreground hover:text-primary hover:underline whitespace-normal break-words w-full block">
+                                {item.title}
+                              </Link>
                             </AppTableCell>
                           );
                           case "description": return (
@@ -923,7 +989,8 @@ export default function ReportsClient() {
                         }
                       })}
                     </AppTableRow>
-                  ))
+                    );
+                  })
                 )}
               </AppTableBody>
             </AppTable>

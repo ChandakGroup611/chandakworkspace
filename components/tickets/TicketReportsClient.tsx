@@ -138,6 +138,7 @@ export default function TicketReportsClient() {
   const [dateError, setDateError] = useState<string | null>(null);
 
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const isHydratedRef = useRef(false);
 
   // Record Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -199,10 +200,12 @@ export default function TicketReportsClient() {
         if (parsed.currentPage) setCurrentPage(parsed.currentPage);
       }
     } catch { /* ignore */ }
+    isHydratedRef.current = true;
   }, []);
 
   // Save state to sessionStorage whenever filters change
   const saveStateToSession = useCallback(() => {
+    if (!isHydratedRef.current) return;
     try {
       const stateObj = {
         query,
