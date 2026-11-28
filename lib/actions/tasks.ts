@@ -941,8 +941,10 @@ export async function getTaskDetails(taskId: string) {
         } else if (p.participation_role === 'REVIEWER') {
           task.task_reviewers.push(u);
         } else if (p.participation_role === 'WATCHER') {
-          // Preserve existing watchers (including inactive users until explicitly removed)
-          task.task_watchers.push(u);
+          // Deactivated users are automatically removed from Watchers
+          if (u.is_active !== false) {
+            task.task_watchers.push(u);
+          }
         }
       });
     }

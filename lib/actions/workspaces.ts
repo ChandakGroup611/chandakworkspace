@@ -1737,7 +1737,10 @@ export async function fetchWorkspaceStakeholders(workspaceId: string): Promise<a
   return loadWorkspaceStakeholders(workspaceId);
 }
 
-async function loadWorkspaceStakeholders(workspaceId: string): Promise<any[]> {
+async function loadWorkspaceStakeholders(workspaceId: string, visited = new Set<string>()): Promise<any[]> {
+  if (!workspaceId || visited.has(workspaceId)) return [];
+  visited.add(workspaceId);
+
   // 1. Fetch workspace info to get parent_workspace_id and workspace_owner_id
   const { data: ws } = await supabaseAdmin
     .from("workspaces")
@@ -1756,10 +1759,10 @@ async function loadWorkspaceStakeholders(workspaceId: string): Promise<any[]> {
 
   const memberList = members || [];
 
-  // If no direct members and workspace has a parent, fall back to parent workspace members
-  if (memberList.length === 0 && ws?.parent_workspace_id) {
-    return loadWorkspaceStakeholders(ws.parent_workspace_id);
-  }
+  // Fetch parent workspace stakeholders so parent-tagged active users remain available in sub-workspaces
+  const parentStakeholders = ws?.parent_workspace_id
+    ? await loadWorkspaceStakeholders(ws.parent_workspace_id, visited)
+    : [];
 
   // 3. Collect all user IDs (members + workspace owner)
   const userIdsSet = new Set<string>();
@@ -1778,26 +1781,37 @@ async function loadWorkspaceStakeholders(workspaceId: string): Promise<any[]> {
   }
 
   const userIds = Array.from(userIdsSet);
-  if (userIds.length === 0) return [];
+  const directUsers: any[] = [];
+  if (userIds.length > 0) {
+    // 4. Fetch active user details for those members
+    const { data: users, error: userError } = await supabaseAdmin
+      .from("user_master")
+      .select(`id, full_name, user_code, email, is_active`)
+      .in("id", userIds)
+      .eq("is_deleted", false)
+      .eq("is_active", true);
 
-  // 4. Fetch active user details for those members
-  const { data: users, error: userError } = await supabaseAdmin
-    .from("user_master")
-    .select(`id, full_name, user_code, email, is_active`)
-    .in("id", userIds)
-    .eq("is_deleted", false)
-    .eq("is_active", true);
-
-  if (userError || !users) {
-    console.error("[Workspaces] Error fetching users for stakeholders:", userError);
-    return [];
+    if (userError || !users) {
+      console.error("[Workspaces] Error fetching users for stakeholders:", userError);
+    } else {
+      for (const user of users) {
+        directUsers.push({
+          ...user,
+          workspace_role: roleMap.get(user.id) || 'MEMBER'
+        });
+      }
+    }
   }
 
-  // 5. Map them together
-  return users.map(user => ({
-    ...user,
-    workspace_role: roleMap.get(user.id) || 'MEMBER'
-  }));
+  // 5. Merge direct + parent active stakeholders (direct workspace role takes precedence)
+  const merged = new Map<string, any>();
+  for (const ps of parentStakeholders) {
+    if (ps?.id) merged.set(ps.id, ps);
+  }
+  for (const du of directUsers) {
+    if (du?.id) merged.set(du.id, du);
+  }
+  return Array.from(merged.values());
 }
 
 export async function fetchTasksByWorkspace(workspaceId: string, includeDescendants: boolean = false) {

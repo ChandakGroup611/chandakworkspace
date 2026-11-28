@@ -363,6 +363,8 @@ export default function TaskExecutionController({
         const finalStakeholders = Array.from(finalMap.values());
 
         setStakeholders(finalStakeholders);
+        // Automatically remove deactivated users from active Watchers selection
+        setSelectedWatchers(prev => prev.filter(id => activeById.has(id)));
       } catch (err) {
         console.error("[openAssigneeModal] Error fetching stakeholders:", err);
       }
