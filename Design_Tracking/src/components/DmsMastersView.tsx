@@ -253,7 +253,7 @@ function MasterRecords({ table, onChanged, onDeleted }: { table: DmsMasterTable;
                         Edit
                       </button>
                     )}
-                    {table.canEditRows && (
+                    {(table.canDeleteRows ?? table.canEditRows) && (
                       <button
                         type="button"
                         aria-label={`Delete ${r.recordKey}`}

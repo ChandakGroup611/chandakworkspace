@@ -93,7 +93,10 @@ export function DmsRecycleBinView({ workspaceId, onRestored }: { workspaceId: st
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => setPurging(purging === i.documentId ? null : i.documentId)}
+                      onClick={() => {
+                        setReason("");
+                        setPurging(purging === i.documentId ? null : i.documentId);
+                      }}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border text-danger-text font-semibold disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" /> Purge
@@ -113,14 +116,27 @@ export function DmsRecycleBinView({ workspaceId, onRestored }: { workspaceId: st
                         placeholder="Reason for purging"
                         className="w-full rounded-lg bg-surface border border-border px-2.5 py-1.5"
                       />
-                      <button
-                        type="button"
-                        disabled={busy || reason.trim().length < 5}
-                        onClick={() => act(() => purgeDocumentAction(i.documentId, reason), "Purged.")}
-                        className="px-3 py-1 rounded-lg bg-danger text-white font-semibold disabled:opacity-50"
-                      >
-                        Purge for good
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={busy || reason.trim().length < 5}
+                          onClick={() => act(() => purgeDocumentAction(i.documentId, reason), "Purged.")}
+                          className="px-3 py-1 rounded-lg bg-danger text-white font-semibold disabled:opacity-50"
+                        >
+                          Purge for good
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => {
+                            setPurging(null);
+                            setReason("");
+                          }}
+                          className="px-3 py-1 rounded-lg border border-border bg-surface text-foreground font-semibold"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -184,7 +200,10 @@ export function DmsQcQueueView({
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => setScopeFolderOnly(true)}
+              onClick={() => {
+                setScopeFolderOnly(true);
+                setSelected(new Set());
+              }}
               className={`px-2.5 py-1 rounded-md border font-semibold ${
                 scopeFolderOnly ? "bg-accent-soft border-primary text-primary" : "border-border bg-surface text-foreground"
               }`}
@@ -193,7 +212,10 @@ export function DmsQcQueueView({
             </button>
             <button
               type="button"
-              onClick={() => setScopeFolderOnly(false)}
+              onClick={() => {
+                setScopeFolderOnly(false);
+                setSelected(new Set());
+              }}
               className={`px-2.5 py-1 rounded-md border font-semibold ${
                 !scopeFolderOnly ? "bg-accent-soft border-primary text-primary" : "border-border bg-surface text-foreground"
               }`}
@@ -307,6 +329,11 @@ export function DmsQcQueueView({
                           setBusy(false);
                           if (res.success) {
                             toast.success(`Approved "${i.title}"`);
+                            setSelected((prev) => {
+                              const next = new Set(prev);
+                              next.delete(i.documentId);
+                              return next;
+                            });
                             load();
                             onChanged?.();
                           } else toast.error(res.error);
@@ -362,6 +389,11 @@ export function DmsQcQueueView({
                               toast.success(`Rejected "${i.title}"`);
                               setRejectingId(null);
                               setRejectReason("");
+                              setSelected((prev) => {
+                                const next = new Set(prev);
+                                next.delete(i.documentId);
+                                return next;
+                              });
                               load();
                               onChanged?.();
                             } else toast.error(res.error);

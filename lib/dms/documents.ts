@@ -39,11 +39,12 @@ export function summarize(row: any, rights: DmsRights | undefined, actorId: stri
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     createdByName: names.get(row.created_by) || undefined,
+    isPrivate: Boolean(row.is_private),
     rights,
   };
 }
 
-export const DOC_SELECT = `id, folder_id, doc_type_id, title, original_file_name, current_version_no, approval_status, created_by, created_at, updated_at,
+export const DOC_SELECT = `id, folder_id, doc_type_id, title, original_file_name, current_version_no, approval_status, is_private, created_by, created_at, updated_at,
   dms_doc_types ( code, name ),
   dms_document_versions ( version_no, file_size_bytes, mime_type ),
   dms_document_locks ( locked_by, expires_at )`;

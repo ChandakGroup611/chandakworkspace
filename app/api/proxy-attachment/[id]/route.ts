@@ -295,7 +295,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       const { data: srvRecords } = await supabaseAdmin
         .from('service_records')
         .select('id, parts_replaced')
-        .not('parts_replaced', 'is', null);
+        .not('parts_replaced', 'is', null)
+        .limit(500);
 
       if (srvRecords) {
         for (const sr of srvRecords) {
@@ -374,7 +375,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         .from('requirements')
         // requirements has no attachments column; attachments are kept in custom_fields.attachments
         .select('id, custom_fields')
-        .not('custom_fields->attachments', 'is', null);
+        .not('custom_fields->attachments', 'is', null)
+        .limit(500);
 
       if (reqWithAtts) {
         for (const req of reqWithAtts) {
@@ -434,13 +436,28 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
           if (docMeta && rp && Array.isArray(rp.parts) && rp.parts.length > 0) {
             const sep = ['_', '-', '.'].includes(String(rp.separator)) ? String(rp.separator) : '_';
             const dtRel: any = Array.isArray((docMeta as any).dms_doc_types) ? (docMeta as any).dms_doc_types[0] : (docMeta as any).dms_doc_types;
-            const { data: fvRows } = await supabaseAdmin.from('dms_field_values').select('field_id, field_value').eq('document_id', dmsDocumentId);
-            const fvMap = new Map<string, string>((fvRows || []).map((r: any) => [String(r.field_id), String(r.field_value || '').trim()]));
+            const { data: fvRows } = await supabaseAdmin
+              .from('dms_field_values')
+              .select('text_value, number_value, date_value, dms_field_definitions ( field_key )')
+              .eq('document_id', dmsDocumentId);
+            const fvMap = new Map<string, string>(
+              (fvRows || []).map((r: any) => {
+                const def = Array.isArray(r.dms_field_definitions) ? r.dms_field_definitions[0] : r.dms_field_definitions;
+                const val = r.text_value ?? (r.number_value != null ? String(r.number_value) : r.date_value ? String(r.date_value) : '');
+                return [String(def?.field_key || ''), String(val).trim()];
+              })
+            );
+            const { data: verRow } = await supabaseAdmin
+              .from('dms_document_versions')
+              .select('version_no')
+              .eq('id', id)
+              .maybeSingle();
+            const verNo = verRow?.version_no || (docMeta as any).current_version_no || 1;
             const tokens = rp.parts.slice(0, 5).map((part) => {
               const p = String(part || '').trim();
               if (p === 'docType') return dtRel?.code || '[blank]';
               if (p === 'title') return (docMeta as any).title || '[blank]';
-              if (p === 'version') return `v${(docMeta as any).current_version_no || 1}`;
+              if (p === 'version') return `v${verNo}`;
               if (p === 'date') return new Date((docMeta as any).created_at || Date.now()).toISOString().slice(0, 10);
               return fvMap.get(p) || '[blank]';
             });

@@ -481,14 +481,27 @@ function PolicyEditor({ onClose }: { onClose: () => void }) {
   const [p, setP] = useState<SharePolicy | null>(null);
   const [domains, setDomains] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState("");
   useEffect(() => {
     fetchSharePolicyAction().then((r) => {
       if (r.success) {
         setP(r.policy);
         setDomains(r.policy.blockedDomains.join(", "));
+      } else {
+        setLoadError(r.error || "Could not load share policy.");
       }
     });
   }, []);
+  if (loadError) {
+    return (
+      <div className="border border-danger-border bg-danger-soft text-danger-text rounded-lg p-3 flex items-center justify-between gap-2 text-xs">
+        <span>{loadError}</span>
+        <button type="button" onClick={onClose} className="px-2 py-1 rounded border border-border bg-surface text-foreground">
+          Close
+        </button>
+      </div>
+    );
+  }
   if (!p) return <p className="text-muted-foreground">Loading…</p>;
   const num = (k: keyof SharePolicy) => (e: React.ChangeEvent<HTMLInputElement>) => setP({ ...p, [k]: Number(e.target.value) });
   return (
@@ -561,6 +574,7 @@ export function DmsSharesView() {
   const load = useCallback(() => {
     fetchShareRegisterAction({ scope }).then((r) => {
       if (!r.success) return setError(r.error);
+      setError("");
       setShares(r.shares);
       setIsAdmin(r.isAdmin);
     });

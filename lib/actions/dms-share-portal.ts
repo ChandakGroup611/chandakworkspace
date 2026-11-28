@@ -112,18 +112,19 @@ async function contentFor(rawToken: string, share: ShareRow): Promise<ShareConte
   };
 }
 
-/** Wrong address entered: immediately lock the forwarded/mismatched link and escalate to sender & admins. */
-async function wrongEmail(share: ShareRow, entered: string): Promise<string> {
+/** Wrong address entered: enforce dms_share_policy.wrong_email_limit and escalate when locked. */
+async function wrongEmail(share: ShareRow, entered: string): Promise<{ error: string; locked: boolean }> {
   await logShareAttempt(share.id, "EMAIL_MISMATCH", false, entered);
-  await supabaseAdmin.rpc("fn_dms_share_register_failure", { p_share: share.id, p_kind: "EMAIL" });
-  await supabaseAdmin
-    .from("dms_shares")
-    .update({
-      is_revoked: true,
-      revoked_at: new Date().toISOString(),
-      revoked_reason: `Locked: forwarded or mismatched email (${entered})`,
-    })
-    .eq("id", share.id);
+  const { data } = await supabaseAdmin.rpc("fn_dms_share_register_failure", { p_share: share.id, p_kind: "EMAIL" });
+  const row = Array.isArray(data) ? data[0] : data;
+  const isLocked = Boolean(row?.locked);
+
+  if (!isLocked) {
+    return {
+      error: "That email address does not match the intended recipient. Check your email and try again.",
+      locked: false,
+    };
+  }
 
   const { ip } = await clientInfo();
   const recipients = new Set<string>();
@@ -149,12 +150,15 @@ async function wrongEmail(share: ShareRow, entered: string): Promise<string> {
       "Security Escalation: Shared document link locked (email mismatch)",
       mailFrame(
         "Shared document link locked & escalated",
-        `<p>A shared document link intended for <b>${escapeHtml(share.recipient_email)}</b>${share.title ? ` (“${escapeHtml(share.title)}”)` : ""} was opened with a different email address: <b>${escapeHtml(entered)}</b> (IP: ${escapeHtml(ip)}).</p>
-<p>Per security policy, the link has been <b>expired and locked immediately</b>.</p>`
+        `<p>A shared document link intended for <b>${escapeHtml(share.recipient_email)}</b>${share.title ? ` (“${escapeHtml(share.title)}”)` : ""} exceeded the allowed email verification attempts with: <b>${escapeHtml(entered)}</b> (IP: ${escapeHtml(ip)}).</p>
+<p>Per security policy, the link is <b>now locked</b>.</p>`
       )
     ).catch(() => {});
   }
-  return "That email address does not match the intended recipient. For security, this link has expired immediately and the sender has been alerted.";
+  return {
+    error: "That email address does not match the intended recipient. This link is now locked and the sender has been alerted.",
+    locked: true,
+  };
 }
 
 async function registerFailure(share: ShareRow, kind: "OTP" | "PASSWORD"): Promise<string> {
@@ -204,8 +208,8 @@ export async function requestShareOtpAction(params: { rawToken: string; email: s
     const email = String(params.email || "").toLowerCase().trim().slice(0, 255);
     if (!email) return { success: false, error: "Enter your email address." };
     if (email !== s.recipient_email) {
-      const error = await wrongEmail(s, email);
-      return { success: false, error, locked: error.includes("now locked") };
+      const res = await wrongEmail(s, email);
+      return { success: false, error: res.error, locked: res.locked };
     }
 
     const since = new Date(Date.now() - 15 * 60_000).toISOString();
@@ -262,8 +266,8 @@ export async function verifyShareAccessAction(params: {
     const s = share!;
     const email = String(params.email || "").toLowerCase().trim().slice(0, 255);
     if (email !== s.recipient_email) {
-      const error = await wrongEmail(s, email);
-      return { success: false, error, locked: error.includes("now locked") };
+      const res = await wrongEmail(s, email);
+      return { success: false, error: res.error, locked: res.locked };
     }
 
     if (s.password_hash && !verifySharePassword(String(params.password || ""), s.password_hash)) {

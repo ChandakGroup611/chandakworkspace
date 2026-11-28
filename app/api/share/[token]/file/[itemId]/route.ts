@@ -67,16 +67,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     .eq("module_key", "dms_share_meta")
     .eq("key", s.id)
     .maybeSingle();
-  if ((metaRow?.value_json as any)?.oneTimeView) {
-    await supabaseAdmin
-      .from("dms_shares")
-      .update({
-        is_revoked: true,
-        revoked_at: new Date().toISOString(),
-        revoked_reason: "Expired after one-time view",
-      })
-      .eq("id", s.id);
-  }
+  const isOneTime = Boolean((metaRow?.value_json as any)?.oneTimeView);
 
   const [, bucket = "", ...rest] = file.storageKey.split(":");
   const { data: blob, error } = await supabaseAdmin.storage.from(bucket).download(rest.join(":"));
@@ -98,6 +89,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     }
   } else if (isPdf) {
     body = await watermarkPdfBuffer(body, line);
+  }
+
+  // Consume one-time link after file preparation succeeds: on explicit download, or on view if downloads are disabled.
+  if (isOneTime && (download || !s.allow_download)) {
+    await supabaseAdmin
+      .from("dms_shares")
+      .update({
+        is_revoked: true,
+        revoked_at: new Date().toISOString(),
+        revoked_reason: "Expired after one-time view",
+      })
+      .eq("id", s.id);
   }
 
   await logShareAttempt(s.id, download ? "FILE_DOWNLOAD" : "FILE_VIEW", true, s.recipient_email);

@@ -49,7 +49,7 @@ export function DmsSearchView({
   const [saveName, setSaveName] = useState("");
   const [showSave, setShowSave] = useState(false);
 
-  const fieldDefs = docTypes[0]?.fieldDefinitions || [];
+  const fieldDefs = (docTypes.find((d) => d.id === filters.docTypeId) || docTypes[0])?.fieldDefinitions || [];
 
   useEffect(() => {
     fetchDocTypesAndFieldsAction(workspaceId).then((r) => r.success && setDocTypes(r.docTypes || []));

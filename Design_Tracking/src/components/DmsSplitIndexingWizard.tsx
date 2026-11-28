@@ -227,6 +227,26 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
     }
   };
 
+  const handleClose = () => {
+    for (const sf of stagedFiles) {
+      if (sf.previewUrl) URL.revokeObjectURL(sf.previewUrl);
+    }
+    setStagedFiles([]);
+    setActiveFileIndex(0);
+    setDocTitle("");
+    setCustomFieldValues({});
+    setSplitPageRanges("1-5");
+    setDupInfo(null);
+    setWhatChanged("");
+    setRemark("");
+    setPreviewZoom(1);
+    setDocRbacGrants([]);
+    setSelectedPrincipalKey("");
+    setShowAddDocTypeModal(false);
+    setMode("SINGLE");
+    onClose();
+  };
+
   // Commit Indexing Action
   const handleCommitIndexing = async () => {
     if (!activeStagedFile || !targetFolder) {
@@ -236,6 +256,23 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
     if (!docTitle.trim()) {
       toast.info("Document title is required.");
       return;
+    }
+    if (mode === "SPLIT_PDF") {
+      if (!activeStagedFile.file.name.toLowerCase().endsWith(".pdf")) {
+        toast.info("Split PDF Set requires a .pdf file.");
+        return;
+      }
+      if (!splitPageRanges.trim()) {
+        toast.info("Enter page ranges to split (e.g. 1-5, 6-10).");
+        return;
+      }
+    }
+    const activeFieldDefs = docTypes.find((d) => d.id === selectedDocTypeId)?.fieldDefinitions || [];
+    for (const f of activeFieldDefs) {
+      if (f.isRequired && !String(customFieldValues[f.fieldKey] || "").trim()) {
+        toast.info(`"${f.fieldLabel}" is required.`);
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -247,6 +284,9 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
       formData.append("docTypeId", selectedDocTypeId);
       formData.append("title", docTitle.trim());
       formData.append("fieldValues", JSON.stringify(customFieldValues));
+      if (mode === "SPLIT_PDF") {
+        formData.append("splitPageRanges", splitPageRanges.trim());
+      }
       if (dupInfo?.exists) {
         if (!whatChanged.trim() || !remark.trim()) {
           toast.info("Enter both 'What changed in document' and 'Remark' for the new version.");
@@ -285,7 +325,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
           setCustomFieldValues({});
         } else {
           if (onDocumentIndexed) onDocumentIndexed();
-          onClose();
+          handleClose();
         }
         toast.success(
           res.isNewVersion
@@ -364,7 +404,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
         </div>
 
         <button aria-label="Close" type="button"
-          onClick={onClose}
+          onClick={handleClose}
           className="p-2 hover:bg-surface rounded-lg text-muted-foreground hover:text-foreground transition-colors"
         >
           <X className="h-5 w-5" />
@@ -418,16 +458,42 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
                   {mode === "BATCH" && (
                     <div className="flex items-center gap-1 mr-2">
                       <button aria-label="Previous" type="button"
-                        onClick={() => setActiveFileIndex((i) => Math.max(0, i - 1))}
+                        onClick={() => {
+                          const nextIdx = Math.max(0, activeFileIndex - 1);
+                          setActiveFileIndex(nextIdx);
+                          const target = stagedFiles[nextIdx];
+                          if (target) {
+                            setDocTitle(target.title);
+                            if (target.docTypeId) setSelectedDocTypeId(target.docTypeId);
+                            setCustomFieldValues({});
+                            if (targetFolder?.id) {
+                              checkFolderDuplicateFileAction({ folderId: targetFolder.id, fileName: target.file.name }).then((r) =>
+                                setDupInfo(r.success ? { exists: r.exists, currentVersionNo: r.currentVersionNo, title: r.title } : null)
+                              );
+                            }
+                          }
+                        }}
                         disabled={activeFileIndex === 0}
                         className="p-1 hover:bg-surface rounded-md disabled:opacity-30"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
                       <button aria-label="Next" type="button"
-                        onClick={() =>
-                          setActiveFileIndex((i) => Math.min(stagedFiles.length - 1, i + 1))
-                        }
+                        onClick={() => {
+                          const nextIdx = Math.min(stagedFiles.length - 1, activeFileIndex + 1);
+                          setActiveFileIndex(nextIdx);
+                          const target = stagedFiles[nextIdx];
+                          if (target) {
+                            setDocTitle(target.title);
+                            if (target.docTypeId) setSelectedDocTypeId(target.docTypeId);
+                            setCustomFieldValues({});
+                            if (targetFolder?.id) {
+                              checkFolderDuplicateFileAction({ folderId: targetFolder.id, fileName: target.file.name }).then((r) =>
+                                setDupInfo(r.success ? { exists: r.exists, currentVersionNo: r.currentVersionNo, title: r.title } : null)
+                              );
+                            }
+                          }
+                        }}
                         disabled={activeFileIndex === stagedFiles.length - 1}
                         className="p-1 hover:bg-surface rounded-md disabled:opacity-30"
                       >
@@ -789,7 +855,7 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
           {/* Action Footer */}
           <div className="mt-auto p-4 bg-surface border-t border-border flex items-center justify-end gap-2">
             <button type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 text-xs font-semibold rounded-lg border border-border hover:bg-surface text-muted-foreground"
             >
               Cancel

@@ -1,7 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
-import { dmsActor, dmsError, documentRights, folderRights, isUuid } from "@/lib/dms/access";
+import { dmsActor, dmsError, documentRights, documentRightsMany, folderRights, isUuid } from "@/lib/dms/access";
 
 type Result<T = unknown> = ({ success: true } & T) | { success: false; error: string };
 
@@ -194,14 +194,27 @@ export async function bulkApproveQcAction(documentIds: string[], comment: string
     const ids = Array.from(new Set((documentIds || []).filter(isUuid)));
     if (!ids.length) return { success: false, error: "Select at least one document." };
     const cleanComment = String(comment || "").trim() || "Bulk QC Approved";
+
+    const { data: docs } = await supabaseAdmin
+      .from("dms_documents")
+      .select("id, current_version_no, approval_status, deleted_at")
+      .in("id", ids);
+    const docMap = new Map((docs || []).map((d: any) => [d.id, d]));
+
     let approved = 0;
     let skipped = 0;
     for (const id of ids) {
+      const d = docMap.get(id);
+      if (!d || d.deleted_at || d.approval_status === "APPROVED") {
+        skipped++;
+        continue;
+      }
       const { error } = await supabaseAdmin.rpc("fn_dms_qc_decide", {
         p_actor: actor.id,
         p_base: actor.base,
         p_document: id,
-        p_decision: "APPROVED",
+        p_version: d.current_version_no || 1,
+        p_status: "APPROVED",
         p_comment: cleanComment,
       });
       if (error) skipped++;
@@ -232,10 +245,14 @@ export async function exportFolderIndexCsvAction(folderId: string): Promise<Resu
       .order("title");
     if (error) throw error;
 
+    const docIds = (docs || []).map((d: any) => d.id);
+    const rightsMap = await documentRightsMany(actor, docIds);
+    const permittedDocs = (docs || []).filter((d: any) => rightsMap.get(d.id)?.view);
+
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const lines = [
       ["Document ID", "Title", "File Name", "Doc Type Code", "QC Status"].map(esc).join(","),
-      ...(docs || []).map((d: any) => {
+      ...permittedDocs.map((d: any) => {
         const dt = Array.isArray(d.dms_doc_types) ? d.dms_doc_types[0] : d.dms_doc_types;
         return [d.id, d.title, d.original_file_name, dt?.code || "", d.approval_status].map(esc).join(",");
       }),
@@ -255,22 +272,54 @@ export async function importFolderIndexCsvAction(params: {
     if (!isUuid(params.folderId)) return { success: false, error: "Invalid folder." };
     const fr = await folderRights(actor, params.folderId);
     if (!fr.edit) return { success: false, error: "You cannot edit documents in this folder." };
+    if ((params.rows || []).length > 500) return { success: false, error: "CSV import is limited to 500 rows per batch." };
 
     const { data: docTypes } = await supabaseAdmin.from("dms_doc_types").select("id, code");
     const typeByCode = new Map((docTypes || []).map((t: any) => [String(t.code).toUpperCase(), t.id]));
 
+    const validIds = Array.from(new Set((params.rows || []).map((r) => r.documentId).filter(isUuid)));
+    const [rightsMap, locksRes] = await Promise.all([
+      documentRightsMany(actor, validIds),
+      validIds.length
+        ? supabaseAdmin.from("dms_document_locks").select("document_id, locked_by, expires_at").in("document_id", validIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+    const lockMap = new Map<string, any>((locksRes.data || []).map((l: any) => [l.document_id, l]));
+
     let updated = 0;
     let skipped = 0;
+    const seen = new Set<string>();
     for (const row of params.rows || []) {
-      if (!isUuid(row.documentId)) {
+      if (!isUuid(row.documentId) || seen.has(row.documentId)) {
         skipped++;
         continue;
       }
+      seen.add(row.documentId);
+
+      const dr = rightsMap.get(row.documentId);
+      if (!dr?.edit) {
+        skipped++;
+        continue;
+      }
+      const lock = lockMap.get(row.documentId);
+      if (lock && new Date(lock.expires_at).getTime() > Date.now() && lock.locked_by && lock.locked_by !== actor.id) {
+        skipped++;
+        continue;
+      }
+
       const patch: Record<string, any> = { updated_at: new Date().toISOString() };
       if (row.title && row.title.trim()) patch.title = row.title.trim().slice(0, 250);
       if (row.docTypeCode) {
         const dtId = typeByCode.get(row.docTypeCode.trim().toUpperCase());
-        if (dtId) patch.doc_type_id = dtId;
+        if (!dtId) {
+          skipped++;
+          continue;
+        }
+        patch.doc_type_id = dtId;
+      }
+      if (!patch.title && !patch.doc_type_id) {
+        skipped++;
+        continue;
       }
       const { error } = await supabaseAdmin
         .from("dms_documents")
@@ -278,8 +327,18 @@ export async function importFolderIndexCsvAction(params: {
         .eq("id", row.documentId)
         .eq("folder_id", params.folderId)
         .is("deleted_at", null);
-      if (error) skipped++;
-      else updated++;
+      if (error) {
+        skipped++;
+      } else {
+        updated++;
+        await supabaseAdmin.rpc("fn_dms_audit", {
+          p_actor: actor.id,
+          p_action: "DOCUMENT_INDEX_CSV_UPDATED",
+          p_entity_type: "DOCUMENT",
+          p_entity_id: row.documentId,
+          p_details: { folder_id: params.folderId, updated_fields: Object.keys(patch).filter((k) => k !== "updated_at") },
+        });
+      }
     }
     return { success: true, updated, skipped };
   } catch (err: any) {
@@ -322,16 +381,20 @@ export async function setDefaultSavedViewAction(viewId: string): Promise<Result>
     if (!isUuid(viewId)) return { success: false, error: "Invalid saved view." };
     const { data: view } = await supabaseAdmin
       .from("dms_saved_views")
-      .select("id, user_id, folder_id, is_default")
+      .select("id, owner_id, workspace_id, is_default")
       .eq("id", viewId)
       .single();
-    if (!view || view.user_id !== actor.id) return { success: false, error: "Saved view not found." };
+    if (!view || (view.owner_id !== actor.id && !actor.base.admin)) {
+      return { success: false, error: "Saved view not found." };
+    }
 
     const nextDefault = !view.is_default;
     if (nextDefault) {
-      let q = supabaseAdmin.from("dms_saved_views").update({ is_default: false }).eq("user_id", actor.id);
-      q = view.folder_id ? q.eq("folder_id", view.folder_id) : q.is("folder_id", null);
-      await q;
+      await supabaseAdmin
+        .from("dms_saved_views")
+        .update({ is_default: false })
+        .eq("owner_id", view.owner_id)
+        .eq("workspace_id", view.workspace_id);
     }
     const { error } = await supabaseAdmin.from("dms_saved_views").update({ is_default: nextDefault }).eq("id", viewId);
     if (error) throw error;

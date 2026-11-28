@@ -144,7 +144,7 @@ export async function fetchSavedSearchesAction(workspaceId?: string): Promise<Re
     const groupIds = (groups || []).map((g: any) => g.group_id);
     let q = supabaseAdmin
       .from("dms_saved_views")
-      .select("id, name, owner_id, shared_group_id, filter_conditions, created_at")
+      .select("id, name, owner_id, shared_group_id, filter_conditions, is_default, created_at")
       .eq("workspace_id", wsId)
       .order("name");
     q = groupIds.length ? q.or(`owner_id.eq.${actor.id},shared_group_id.in.(${groupIds.join(",")})`) : q.eq("owner_id", actor.id);
@@ -157,6 +157,7 @@ export async function fetchSavedSearchesAction(workspaceId?: string): Promise<Re
         name: v.name,
         filters: cleanFilters(Array.isArray(v.filter_conditions) ? {} : v.filter_conditions),
         isMine: v.owner_id === actor.id,
+        isDefault: Boolean(v.is_default),
         sharedWithGroupId: v.shared_group_id,
       })),
     };

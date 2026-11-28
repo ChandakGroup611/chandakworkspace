@@ -24,6 +24,8 @@ All changes to the Chandak Workspace application will be documented in this file
 
 ## Changes
 
+* **Date:** 2026-11-28 | **Release:** DMS Enterprise Stabilization (Phases 1–3 & 6): RLS USING(true) policy removal, is_private enforcement, value_json Share Settings, Split PDF Set (pdf-lib), bulk QC RPC & CSV RBAC fixes, URL deep-linking & Back/Forward, move-lock & target doc-type guards, SQL folder pagination (>1,000 docs), and optimized fn_dms_search [approved]
+
 * **Date:** 2026-11-28 | **Release:** Design & Tracking Enterprise Enhancement (14 Phases — Releases 1–4), DMS Approvals & Group Sharing, Live Tender Matrix, Expected Deliverables & Cockpit, Live Transmittals, SLA Pause/Resume & Holiday Calendar, Design Notifications, Consultant Scorecard & Design Intelligence | **Status:** Ready for Deployment [approved]
 
 * **Date:** 2026-11-23 | **Release:** Scoped Super Admin Module & Dashboard Entitlements: Allow granular scoping of operational modules and specific dashboards for Super Admins in User Master while preserving universal access for unconfigured Super Admins; update getDashboardAccess to enforce configured dashboard keys, update can() and getModuleRole() in central RBAC, and align module-switcher and route gates to respect user_module_access | **Status:** Ready for Deployment [approved]

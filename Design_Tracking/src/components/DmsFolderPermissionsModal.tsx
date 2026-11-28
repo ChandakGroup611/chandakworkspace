@@ -369,6 +369,21 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
             </button>
           </div>
 
+          {/* Notification Messages (visible across all tabs) */}
+          {errorMessage && (
+            <div className="p-3 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {saveSuccessMsg && (
+            <div className="p-3 rounded-lg bg-success-soft border border-success-border text-success-text text-xs flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <span>{saveSuccessMsg}</span>
+            </div>
+          )}
+
           {permTab === "DOCTYPE" ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -444,20 +459,6 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
             </div>
           ) : (
           <>
-          {/* Notification Messages */}
-          {errorMessage && (
-            <div className="p-3 rounded-lg bg-danger-soft border border-danger-border text-danger-text text-xs flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          {saveSuccessMsg && (
-            <div className="p-3 rounded-lg bg-success-soft border border-success-border text-success-text text-xs flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <span>{saveSuccessMsg}</span>
-            </div>
-          )}
 
           {/* 1. Inheritance Option Card */}
           <div className="p-4 rounded-lg bg-muted/30 border border-border space-y-3">
@@ -978,16 +979,18 @@ export const DmsFolderPermissionsModal: React.FC<DmsFolderPermissionsModalProps>
             >
               Cancel
             </button>
-            <button
-              type="button"
-              onClick={handleSaveChanges}
-              disabled={isSaving || !canManage}
-              title={!canManage ? "Only folder managers and Design administrators can change access" : undefined}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm cursor-pointer"
-            >
-              <Check className="h-4 w-4" />
-              <span>{isSaving ? "Saving..." : "Save Permissions"}</span>
-            </button>
+            {permTab === "FOLDER" && (
+              <button
+                type="button"
+                onClick={handleSaveChanges}
+                disabled={isSaving || !canManage}
+                title={!canManage ? "Only folder managers and Design administrators can change access" : undefined}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm cursor-pointer"
+              >
+                <Check className="h-4 w-4" />
+                <span>{isSaving ? "Saving..." : "Save Permissions"}</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

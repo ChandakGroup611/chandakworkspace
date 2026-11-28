@@ -25,6 +25,7 @@ export interface DmsMasterTable {
   fields: DmsMasterField[];
   recordCount: number;
   canEditRows: boolean;
+  canDeleteRows?: boolean;
   canManage: boolean;
 }
 
@@ -120,6 +121,7 @@ export async function fetchMasterTablesAction(workspaceId?: string): Promise<Res
           keyLabel: t.unique_key_field,
           recordCount: counts.get(t.id) || 0,
           canEditRows: !!(rights.get(t.id)?.add || rights.get(t.id)?.edit),
+          canDeleteRows: !!rights.get(t.id)?.del,
           canManage: manager,
           fields: ((t.dms_master_fields || []) as any[])
             .filter((f) => !f.deleted_at)
@@ -200,6 +202,15 @@ export async function addMasterFieldAction(params: {
     if (!actor.base.admin && !actor.base.masters) return { success: false, error: "Your Design access doesn't allow you to manage Design masters." };
     const key = cleanKey(params.label || "");
     if (!isUuid(params.tableId) || !key) return { success: false, error: "Name the column." };
+    const wsId = await resolveWorkspaceId();
+    const { data: tbl } = await supabaseAdmin
+      .from("dms_master_tables")
+      .select("id")
+      .eq("id", params.tableId)
+      .eq("workspace_id", wsId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!tbl) return { success: false, error: "Master table not found in this workspace." };
     const { error } = await supabaseAdmin.from("dms_master_fields").insert({
       master_table_id: params.tableId,
       field_key: key,
@@ -224,6 +235,15 @@ export async function deleteMasterTableAction(tableId: string): Promise<Result> 
     const actor = await dmsActor();
     if (!actor.base.admin && !actor.base.masters) return { success: false, error: "Your Design access doesn't allow you to manage Design masters." };
     if (!isUuid(tableId)) return { success: false, error: "Master table not found." };
+    const wsId = await resolveWorkspaceId();
+    const { data: tbl } = await supabaseAdmin
+      .from("dms_master_tables")
+      .select("id")
+      .eq("id", tableId)
+      .eq("workspace_id", wsId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!tbl) return { success: false, error: "Master table not found in this workspace." };
     const { count } = await supabaseAdmin
       .from("dms_document_master_tags")
       .select("id", { count: "exact", head: true })
@@ -247,6 +267,15 @@ export async function fetchMasterRecordsAction(params: {
   try {
     const actor = await dmsActor();
     if (!isUuid(params.tableId)) return { success: false, error: "Master table not found." };
+    const wsId = await resolveWorkspaceId();
+    const { data: tbl } = await supabaseAdmin
+      .from("dms_master_tables")
+      .select("id")
+      .eq("id", params.tableId)
+      .eq("workspace_id", wsId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!tbl) return { success: false, error: "Master table not found in this workspace." };
     const rights = (await tableRights(actor, [params.tableId])).get(params.tableId);
     if (!rights?.view) return { success: false, error: "You don't have access to this master table." };
     let q = supabaseAdmin
@@ -300,6 +329,15 @@ export async function saveMasterRecordAction(params: {
   try {
     const actor = await dmsActor();
     if (!isUuid(params.tableId)) return { success: false, error: "Master table not found." };
+    const wsId = await resolveWorkspaceId();
+    const { data: tbl } = await supabaseAdmin
+      .from("dms_master_tables")
+      .select("id")
+      .eq("id", params.tableId)
+      .eq("workspace_id", wsId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!tbl) return { success: false, error: "Master table not found in this workspace." };
     const rights = (await tableRights(actor, [params.tableId])).get(params.tableId);
     const editing = isUuid(params.recordId);
     if (!(editing ? rights?.edit : rights?.add)) return { success: false, error: "You cannot change rows in this master table." };
@@ -343,6 +381,16 @@ export async function saveMasterRecordAction(params: {
 export async function deleteMasterRecordAction(tableId: string, recordId: string): Promise<Result> {
   try {
     const actor = await dmsActor();
+    if (!isUuid(tableId) || !isUuid(recordId)) return { success: false, error: "Master record not found." };
+    const wsId = await resolveWorkspaceId();
+    const { data: tbl } = await supabaseAdmin
+      .from("dms_master_tables")
+      .select("id")
+      .eq("id", tableId)
+      .eq("workspace_id", wsId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!tbl) return { success: false, error: "Master table not found in this workspace." };
     const rights = (await tableRights(actor, [tableId])).get(tableId);
     if (!rights?.del) return { success: false, error: "You cannot delete rows in this master table." };
     const { count } = await supabaseAdmin

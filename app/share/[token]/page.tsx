@@ -269,7 +269,17 @@ export default function SharePortalPage({ params }: { params: Promise<{ token: s
                       <span className="text-xs font-semibold truncate">{selected.fileName}</span>
                     </div>
                     {selected.downloadUrl && content.downloadsLeft !== 0 ? (
-                      <a href={selected.downloadUrl} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shrink-0">
+                      <a
+                        href={selected.downloadUrl}
+                        onClick={() => {
+                          setContent((prev) =>
+                            prev && prev.downloadsLeft !== null
+                              ? { ...prev, downloadsLeft: Math.max(0, prev.downloadsLeft - 1) }
+                              : prev
+                          );
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-110 shrink-0"
+                      >
                         <Download className="h-3.5 w-3.5" /> Download
                       </a>
                     ) : (

@@ -82,12 +82,12 @@ function canManageShareSettings(actor: Awaited<ReturnType<typeof dmsActor>>) {
 export async function readDmsShareSettings(): Promise<DmsShareSettings> {
   const { data } = await supabaseAdmin
     .from("core_module_settings")
-    .select("value")
+    .select("value_json")
     .eq("module_key", SHARE_SETTINGS_MODULE_KEY)
     .eq("key", SHARE_SETTINGS_KEY)
     .maybeSingle();
 
-  const raw = (data?.value || {}) as Partial<DmsShareSettings>;
+  const raw = (data?.value_json || {}) as Partial<DmsShareSettings>;
   return {
     folder: {
       userWise: raw.folder?.userWise ?? true,
@@ -144,11 +144,22 @@ export async function saveDmsShareSettingsAction(
     };
 
     const wsId = await requireWorkspaceId();
+    const { data: existingRow } = await supabaseAdmin
+      .from("core_module_settings")
+      .select("value_json")
+      .eq("module_key", SHARE_SETTINGS_MODULE_KEY)
+      .eq("key", SHARE_SETTINGS_KEY)
+      .maybeSingle();
+    const mergedValue = {
+      ...((existingRow?.value_json as Record<string, unknown>) || {}),
+      ...next,
+    };
+
     const { error } = await supabaseAdmin.from("core_module_settings").upsert(
       {
         module_key: SHARE_SETTINGS_MODULE_KEY,
         key: SHARE_SETTINGS_KEY,
-        value: next,
+        value_json: mergedValue,
         updated_by: actor.id,
         updated_at: new Date().toISOString(),
       },
@@ -408,10 +419,12 @@ export async function updateDmsGroupAction(params: {
     }
     const departmentId = isUuid(params.departmentId) ? params.departmentId! : null;
 
+    const wsId = await requireWorkspaceId();
     const { data: existing } = await supabaseAdmin
       .from("dms_groups")
       .select("name, code, description, department_id, is_active")
       .eq("id", params.id)
+      .eq("workspace_id", wsId)
       .is("deleted_at", null)
       .maybeSingle();
     if (!existing) return { success: false, error: "Group not found." };
@@ -464,10 +477,12 @@ export async function setDmsGroupMembersAction(params: {
     }
     if (!isUuid(params.groupId)) return { success: false, error: "Invalid group." };
 
+    const wsId = await requireWorkspaceId();
     const { data: group } = await supabaseAdmin
       .from("dms_groups")
       .select("id, name")
       .eq("id", params.groupId)
+      .eq("workspace_id", wsId)
       .is("deleted_at", null)
       .maybeSingle();
     if (!group) return { success: false, error: "Group not found." };
@@ -539,10 +554,12 @@ export async function deleteDmsGroupAction(groupId: string): Promise<{ success: 
       };
     }
 
+    const wsId = await requireWorkspaceId();
     const { data: existing } = await supabaseAdmin
       .from("dms_groups")
       .select("name")
       .eq("id", groupId)
+      .eq("workspace_id", wsId)
       .is("deleted_at", null)
       .maybeSingle();
     if (!existing) return { success: false, error: "Group not found." };

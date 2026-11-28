@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   FolderTree,
   Folder,
@@ -46,6 +47,7 @@ import {
   DmsDocumentSummary,
   fetchFolderTreeAction,
   fetchFolderDocumentsAction,
+  fetchDocumentDetailAction,
   createFolderAction,
   updateFolderAction,
   deleteFolderAction,
@@ -149,6 +151,14 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [folderRights, setFolderRights] = useState<DmsRights | null>(null);
   const [docsError, setDocsError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState<boolean>(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlView = searchParams.get("view");
+  const urlFolderId = searchParams.get("folder");
+  const urlDocId = searchParams.get("doc");
+  const handledDeepLinkRef = useRef<string>("");
 
   const flatFolders = useMemo(() => {
     const out: { id: string; name: string }[] = [];
@@ -202,7 +212,18 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
       const res = await fetchFolderTreeAction(workspaceId);
       if (res.success && res.folders) {
         setFolders(res.folders);
-        if (res.folders.length > 0 && !selectedFolder) {
+        const findNodeById = (nodes: DmsFolderNode[], targetId: string): DmsFolderNode | null => {
+          for (const n of nodes) {
+            if (n.id === targetId) return n;
+            const c = findNodeById(n.children || [], targetId);
+            if (c) return c;
+          }
+          return null;
+        };
+        if (selectedFolder) {
+          const refreshed = findNodeById(res.folders, selectedFolder.id);
+          if (refreshed) setSelectedFolder(refreshed);
+        } else if (res.folders.length > 0) {
           const firstOpen = (nodes: DmsFolderNode[]): DmsFolderNode | null => {
             for (const n of nodes) {
               if (n.canOpen !== false) return n;
@@ -211,8 +232,9 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             }
             return null;
           };
-          const first = firstOpen(res.folders);
-          if (first) setSelectedFolder(first);
+          const targetFromUrl = urlFolderId ? findNodeById(res.folders, urlFolderId) : null;
+          const initial = targetFromUrl && targetFromUrl.canOpen !== false ? targetFromUrl : firstOpen(res.folders);
+          if (initial) setSelectedFolder(initial);
           setExpandedFolderIds(new Set(res.folders.map((f) => f.id)));
         }
       } else if (!res.success) {
@@ -221,11 +243,57 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
     } catch (err) {
       console.error("Failed to load folder tree:", err);
     }
-  }, [workspaceId, selectedFolder]);
+  }, [workspaceId, selectedFolder?.id, urlFolderId]);
 
   useEffect(() => {
     loadFolderTree();
   }, [loadFolderTree]);
+
+  // Sync URL query params (?view=&folder=&doc=) for deep-linking & browser Back/Forward
+  useEffect(() => {
+    if (urlView && ["FOLDER", "SEARCH", "BIN", "MASTERS", "SHARES", "GROUPS", "SETTINGS"].includes(urlView)) {
+      setView(urlView as any);
+    }
+    if (urlFolderId && folders.length > 0) {
+      const findNode = (nodes: DmsFolderNode[]): DmsFolderNode | null => {
+        for (const n of nodes) {
+          if (n.id === urlFolderId) return n;
+          const c = findNode(n.children || []);
+          if (c) return c;
+        }
+        return null;
+      };
+      const found = findNode(folders);
+      if (found && found.canOpen !== false && selectedFolder?.id !== found.id) {
+        setSelectedFolder(found);
+      }
+    }
+    if (urlDocId && handledDeepLinkRef.current !== `${urlFolderId || ""}:${urlDocId}`) {
+      handledDeepLinkRef.current = `${urlFolderId || ""}:${urlDocId}`;
+      fetchDocumentDetailAction(urlDocId).then((res) => {
+        if (res.success && res.document) {
+          setDocModalMode("DETAILS");
+          setPanelInitialTab("details");
+          setPanelInitialEditing(false);
+          setSelectedDoc(res.document);
+        } else {
+          toast.error((!res.success && res.error) || "Document not found or access denied.");
+        }
+      });
+    }
+  }, [urlView, urlFolderId, urlDocId, folders]);
+
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (view !== "FOLDER") next.set("view", view);
+    if (selectedFolder?.id) next.set("folder", selectedFolder.id);
+    if (selectedDoc?.id) next.set("doc", selectedDoc.id);
+    const qs = next.toString();
+    const cur = searchParams.toString();
+    if (qs !== cur && selectedFolder?.id) {
+      router.push(qs ? `/design/dms?${qs}` : "/design/dms", { scroll: false });
+    }
+  }, [view, selectedFolder?.id, selectedDoc?.id]);
 
   // Load Documents whenever selectedFolder changes or search triggers
   const loadFolderDocuments = useCallback(async () => {
@@ -582,8 +650,6 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               setBulkSharing(false);
             }}
             onCreated={() => {
-              setShareSingleDoc(null);
-              setBulkSharing(false);
               setSelectedDocIds(new Set());
             }}
           />
@@ -809,7 +875,29 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
               ) : view === "MASTERS" ? (
                 <DmsMastersView workspaceId={workspaceId} />
               ) : view === "SEARCH" ? (
-                <DmsSearchView workspaceId={workspaceId} currentFolder={selectedFolder} onOpen={(doc) => setSelectedDoc(doc)} />
+                <DmsSearchView
+                  workspaceId={workspaceId}
+                  currentFolder={selectedFolder}
+                  onOpen={(doc) => {
+                    const findNode = (nodes: DmsFolderNode[]): DmsFolderNode | null => {
+                      for (const n of nodes) {
+                        if (n.id === doc.folderId) return n;
+                        const c = findNode(n.children || []);
+                        if (c) return c;
+                      }
+                      return null;
+                    };
+                    const targetFolder = findNode(folders);
+                    if (targetFolder && targetFolder.canOpen !== false) {
+                      setSelectedFolder(targetFolder);
+                    }
+                    setView("FOLDER");
+                    setDocModalMode("PREVIEW");
+                    setPanelInitialTab("details");
+                    setPanelInitialEditing(false);
+                    setSelectedDoc(doc);
+                  }}
+                />
               ) : (
                 <DmsRecycleBinView
                   workspaceId={workspaceId}
@@ -902,6 +990,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                         toast.success("Download rename cleared");
                         setEditingRenamePattern(false);
                         await loadFolderTree();
+                      } else {
+                        toast.error(res.error || "Could not clear download rename pattern");
                       }
                     }}
                     className="px-2 py-0.5 rounded border border-border text-muted-foreground"
@@ -962,15 +1052,21 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   {folderRights?.qc && (
                     <button
                       type="button"
+                      disabled={bulkBusy}
                       onClick={async () => {
-                        const res = await bulkApproveQcAction(Array.from(selectedDocIds), "Bulk approved from folder");
-                        if (res.success) {
-                          toast.success(`Approved ${res.approved} document(s)${res.skipped ? ` (${res.skipped} skipped)` : ""}`);
-                          setSelectedDocIds(new Set());
-                          loadFolderDocuments();
-                        } else toast.error(res.error || "Bulk QC approval failed");
+                        setBulkBusy(true);
+                        try {
+                          const res = await bulkApproveQcAction(Array.from(selectedDocIds), "Bulk approved from folder");
+                          if (res.success) {
+                            toast.success(`Approved ${res.approved} document(s)${res.skipped ? ` (${res.skipped} skipped)` : ""}`);
+                            setSelectedDocIds(new Set());
+                            loadFolderDocuments();
+                          } else toast.error(res.error || "Bulk QC approval failed");
+                        } finally {
+                          setBulkBusy(false);
+                        }
                       }}
-                      className="px-2.5 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold cursor-pointer"
+                      className="px-2.5 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold cursor-pointer"
                     >
                       Approve QC
                     </button>
@@ -978,18 +1074,24 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   {folderRights?.delete && (
                     <button
                       type="button"
+                      disabled={bulkBusy}
                       onClick={async () => {
-                        const res = await bulkDeleteDocumentsAction(Array.from(selectedDocIds));
-                        if (res.success) {
-                          toast.success(`Moved ${res.deleted} document(s) to recycle bin`);
-                          setSelectedDocIds(new Set());
-                          loadFolderDocuments();
-                          loadFolderTree();
-                        } else {
-                          toast.error(res.error || "Bulk delete failed");
+                        setBulkBusy(true);
+                        try {
+                          const res = await bulkDeleteDocumentsAction(Array.from(selectedDocIds));
+                          if (res.success) {
+                            toast.success(`Moved ${res.deleted} document(s) to recycle bin`);
+                            setSelectedDocIds(new Set());
+                            loadFolderDocuments();
+                            loadFolderTree();
+                          } else {
+                            toast.error(res.error || "Bulk delete failed");
+                          }
+                        } finally {
+                          setBulkBusy(false);
                         }
                       }}
-                      className="px-2.5 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white font-semibold cursor-pointer"
+                      className="px-2.5 py-0.5 rounded bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-semibold cursor-pointer"
                     >
                       Delete
                     </button>
@@ -1032,7 +1134,9 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   <span>Show Fields</span>
                 </button>
                 {showFieldsMenu && (
-                  <div className="absolute right-0 top-full mt-1 z-30 w-44 rounded-lg border border-border bg-elevated p-2 shadow-lg space-y-1 text-xs">
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setShowFieldsMenu(false)} />
+                    <div className="absolute right-0 top-full mt-1 z-30 w-44 rounded-lg border border-border bg-elevated p-2 shadow-lg space-y-1 text-xs">
                     {([
                       ["docId", "ID"],
                       ["uploadedDate", "Uploaded Date"],
@@ -1052,7 +1156,8 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                         <span>{label}</span>
                       </label>
                     ))}
-                  </div>
+                    </div>
+                  </>
                 )}
               </div>
 
@@ -1198,7 +1303,12 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                   displayedDocuments.map((doc, rowIdx) => (
                     <tr
                       key={doc.id}
-                      onClick={() => setSelectedDoc(doc)}
+                      onClick={() => {
+                        setDocModalMode("PREVIEW");
+                        setPanelInitialTab("details");
+                        setPanelInitialEditing(false);
+                        setSelectedDoc(doc);
+                      }}
                       className="hover:bg-surface/50 cursor-pointer transition-colors"
                     >
                       <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>

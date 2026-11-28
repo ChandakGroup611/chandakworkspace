@@ -137,6 +137,15 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
     load();
   }, [load, initialTab, initialEditing]);
 
+  useEffect(() => {
+    if (editing && doc) {
+      setEditTitle(doc.title || "");
+      const fv: Record<string, string> = {};
+      for (const f of fields) fv[f.id] = f.value || "";
+      setEditFields(fv);
+    }
+  }, [editing, doc, fields]);
+
   const run = async (fn: () => Promise<{ success: boolean; error?: string }>, ok: string, leaves = false) => {
     setBusy(true);
     try {
@@ -473,6 +482,7 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
                 const res = await toggleFavouriteAction(doc.id);
                 if (res.success) {
                   setIsFav(res.isFavourite);
+                  onChanged(doc);
                   toast.success(res.isFavourite ? "Added to Favourites" : "Removed from Favourites");
                 } else toast.error(res.error);
               }}
@@ -594,12 +604,16 @@ export function DmsDocumentPanel({ documentId, folders = [], folderDocs = [], in
                 <button
                   type="button"
                   disabled={busy || !linkTargetId.trim()}
-                  onClick={() =>
-                    run(
+                  onClick={async () => {
+                    const ok = await run(
                       () => linkDocumentAction({ sourceDocumentId: doc.id, targetDocumentId: linkTargetId.trim(), linkNote }),
                       "Document linked"
-                    )
-                  }
+                    );
+                    if (ok) {
+                      setLinkTargetId("");
+                      setLinkNote("");
+                    }
+                  }}
                   className="px-2 py-1 rounded bg-primary text-primary-foreground text-[11px] font-semibold disabled:opacity-50"
                 >
                   Link
