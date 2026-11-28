@@ -484,12 +484,29 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   }, [priorities]);
 
   const assigneeOptions = useMemo(() => {
-    return (allUsers || []).map((u: any) => ({
-      id: u.id,
-      label: u.full_name || 'User',
-      sublabel: u.user_code ? `(${u.user_code})` : undefined
-    }));
-  }, [allUsers]);
+    const map = new Map<string, { id: string; label: string; sublabel?: string }>();
+    (allUsers || []).forEach((u: any) => {
+      if (u?.id) {
+        map.set(u.id, {
+          id: u.id,
+          label: u.full_name || 'User',
+          sublabel: u.user_code ? `(${u.user_code})` : undefined
+        });
+      }
+    });
+    (tasks || []).forEach((t: any) => {
+      const a = Array.isArray(t.assignee) ? t.assignee[0] : (t.assignee || t.assigned_to_user);
+      const aId = a?.id || t.assigned_to;
+      if (aId && a?.full_name && !map.has(aId)) {
+        map.set(aId, {
+          id: aId,
+          label: `${a.full_name} (Inactive)`,
+          sublabel: a.user_code ? `(${a.user_code})` : undefined
+        });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+  }, [allUsers, tasks]);
 
   const handleExpandAllBranches = async () => {
     setIsExpandingAll(true);

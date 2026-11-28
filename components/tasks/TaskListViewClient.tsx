@@ -547,9 +547,22 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
       }
 
       if ((key === "assignee" || key === "creator_name") && masterAssignees.length > 0) {
-        optionsMap[fieldId] = [...masterAssignees]
-          .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""))
-          .map(u => ({ label: u.full_name, value: u.full_name }));
+        const namesSet = new Set<string>();
+        masterAssignees.forEach((u) => {
+          if (u.full_name) namesSet.add(String(u.full_name).trim());
+        });
+        // Preserve inactive users who are still assigned to (or created) existing tasks so they remain filterable
+        tasks.forEach((t) => {
+          if (key === "assignee") {
+            const a = Array.isArray(t.assignee) ? t.assignee[0] : t.assignee;
+            if (a?.full_name) namesSet.add(String(a.full_name).trim());
+          } else {
+            if (t.creator?.full_name) namesSet.add(String(t.creator.full_name).trim());
+          }
+        });
+        optionsMap[fieldId] = Array.from(namesSet)
+          .sort((a, b) => a.localeCompare(b))
+          .map((name) => ({ label: name, value: name }));
         return;
       }
 
@@ -715,12 +728,30 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
   }, [departments]);
 
   const assigneeFilterOptions = useMemo(() => {
-    return (masterAssignees || []).map(u => ({
-      id: u.id,
-      label: u.full_name,
-      sublabel: u.user_code ? `(${u.user_code})` : undefined
-    }));
-  }, [masterAssignees]);
+    const map = new Map<string, { id: string; label: string; sublabel?: string }>();
+    (masterAssignees || []).forEach((u) => {
+      if (u?.id) {
+        map.set(u.id, {
+          id: u.id,
+          label: u.full_name,
+          sublabel: u.user_code ? `(${u.user_code})` : undefined,
+        });
+      }
+    });
+    // Include inactive assignees who still have existing tasks
+    (tasks || []).forEach((t) => {
+      const a = Array.isArray(t.assignee) ? t.assignee[0] : t.assignee;
+      const aId = a?.id || t.assigned_to;
+      if (aId && a?.full_name && !map.has(aId)) {
+        map.set(aId, {
+          id: aId,
+          label: `${a.full_name} (Inactive)`,
+          sublabel: a.user_code ? `(${a.user_code})` : undefined,
+        });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => (a.label || "").localeCompare(b.label || ""));
+  }, [masterAssignees, tasks]);
 
   const totalActiveFilterCount = useMemo(() => {
     let count = 0;
